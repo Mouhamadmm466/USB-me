@@ -114,7 +114,12 @@ Evaluation (Mac CPU smoke, 30 stratified cases, prompt v1): 76.7% case pass, rel
 
 ## Verification
 
-- Unit + integration + fixture tests: `swift test` (see the latest run below).
+- `swift test` on the build Mac (2026-09-19, commit 3da03ae+): **637 tests in 79 suites passed**
+  in 202 s, 1 known issue (barge-in over the assistant without echo cancellation, documented).
+  Includes the ASR/VAD fixture tests on the real Whisper base.en and Silero models and the
+  evaluation-dataset integrity checks.
+- Clean clone (fresh `git clone` → `Scripts/bootstrap_dependencies.sh` → `swift build` →
+  `xcodebuild -scheme VoiceAgent -configuration Release`): **all succeeded** (6.6 + 5 + 9 min).
 - UI tests (simulator, demo mode): launch; confirm a message from the card; cancel a call from the
   card; Settings → Licenses shows the NVIDIA notice — all pass.
 - Live model download through the app's downloader (opt-in): passes.

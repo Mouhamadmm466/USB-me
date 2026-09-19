@@ -1,0 +1,920 @@
+{
+  "asrTranscript" : "Text Alex that I will be 20 minutes late.",
+  "asrWordErrorRate" : 0,
+  "availableMemoryAtStartMB" : 6131.077339172363,
+  "batteryEnd" : 1,
+  "batteryStart" : 1,
+  "environment" : {
+    "appVersion" : "1.0.0",
+    "deviceModel" : "iPhone16,1",
+    "isSimulator" : false,
+    "physicalMemoryGB" : 7.4999847412109375,
+    "processorCount" : 6,
+    "systemVersion" : "Version 26.6.1 (Build 23G83)"
+  },
+  "errors" : [
+
+  ],
+  "finishedAt" : "2026-09-19T18:36:09Z",
+  "llmOutputs" : {
+    "Text Alex that I will be 20 minutes late" : "{\"type\":\"proposed_action\",\"tool\":\"compose_message\",\"arguments\":{\"contact_query\":\"Alex\",\"message\":\"I'll be 20 minutes late.\"},\"requires_confirmation\":true}",
+    "call mom" : "{\"type\":\"proposed_action\",\"tool\":\"initiate_call\",\"arguments\":{\"contact_query\":\"mom\"},\"requires_confirmation\":true}",
+    "move my team sync to 4 pm" : "{\"type\":\"proposed_action\",\"tool\":\"update_calendar_event\",\"arguments\":{\"event_query\":\"team sync\",\"new_start\":\"4 pm\"},\"requires_confirmation\":true}",
+    "remind me to call the dentist tomorrow at 10" : "{\"type\":\"proposed_action\",\"tool\":\"create_reminder\",\"arguments\":{\"title\":\"Call dentist\",\"due\":\"tomorrow at 10\"},\"requires_confirmation\":true}",
+    "what's 15 percent of 80" : "{\"type\":\"answer\",\"speech\":\"15 percent of 80 is 12.\"}",
+    "what's on my calendar tomorrow" : "{\"type\":\"proposed_action\",\"tool\":\"get_calendar_events\",\"arguments\":{\"when\":\"tomorrow\"},\"requires_confirmation\":false}"
+  },
+  "metrics" : [
+    {
+      "name" : "cold_load",
+      "p50" : 201.7925,
+      "p95" : 201.7925,
+      "samples" : [
+        201.7925
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "final_transcript",
+      "p50" : 196.026208,
+      "p95" : 196.762958,
+      "samples" : [
+        175.041959,
+        191.290958,
+        196.762958,
+        196.026208,
+        196.395
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "partial_1_5s",
+      "p50" : 55.035125,
+      "p95" : 56.719166,
+      "samples" : [
+        45.867083,
+        55.035125,
+        56.719166,
+        51.603875,
+        56.675792
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 19.41353933653606,
+      "p95" : 21.74085871605219,
+      "samples" : [
+        21.74085871605219,
+        19.894105501839768,
+        19.34084818952559,
+        19.41353933653606,
+        19.37708444716006
+      ],
+      "stage" : "asr",
+      "unit" : "x"
+    },
+    {
+      "name" : "silero_frame",
+      "p50" : 0.198417,
+      "p95" : 0.32375,
+      "samples" : [
+        0.744458,
+        0.339417,
+        0.320958,
+        0.317708,
+        0.34925,
+        0.32375,
+        0.3145,
+        0.323208,
+        0.314292,
+        0.324875,
+        0.313417,
+        0.268292,
+        0.253458,
+        0.254792,
+        0.247125,
+        0.257208,
+        0.256875,
+        0.245334,
+        0.261291,
+        0.249459,
+        0.256166,
+        0.24525,
+        0.248584,
+        0.245083,
+        0.257333,
+        0.245458,
+        0.252292,
+        0.249416,
+        0.256,
+        0.245333,
+        0.262334,
+        0.254042,
+        0.255625,
+        0.248833,
+        0.237417,
+        0.203666,
+        0.203625,
+        0.2005,
+        0.211875,
+        0.211667,
+        0.203458,
+        0.203916,
+        0.204041,
+        0.213167,
+        0.3305,
+        0.211625,
+        0.201541,
+        0.1995,
+        0.206791,
+        0.198417,
+        0.198334,
+        0.198083,
+        0.198083,
+        0.21425,
+        0.204208,
+        0.209375,
+        0.198709,
+        0.209666,
+        0.198541,
+        0.205458,
+        0.198917,
+        0.200208,
+        0.199,
+        0.1725,
+        0.178708,
+        0.1785,
+        0.167333,
+        0.178792,
+        0.16775,
+        0.173041,
+        0.168875,
+        0.168833,
+        0.174833,
+        0.179208,
+        0.170458,
+        0.173041,
+        0.16825,
+        0.167666,
+        0.167583,
+        0.178542,
+        0.168459,
+        0.179125,
+        0.167209,
+        0.179042,
+        0.167625,
+        0.173833,
+        0.183667,
+        0.169041,
+        0.167958,
+        0.179,
+        0.168,
+        0.169291,
+        0.167917,
+        0.169125,
+        0.167959,
+        0.172667,
+        0.167458,
+        0.183375,
+        0.167333,
+        0.179458,
+        0.166667,
+        0.177958,
+        0.166709,
+        0.168792,
+        0.167917,
+        0.179333,
+        0.167375,
+        0.168083,
+        0.167875,
+        0.156333,
+        0.1455,
+        0.157042,
+        0.14575,
+        0.156541,
+        0.14475,
+        0.155708,
+        0.14475,
+        0.156208
+      ],
+      "stage" : "vad",
+      "unit" : "ms"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 328.616667,
+      "p95" : 328.616667,
+      "samples" : [
+        328.616667
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_state_load",
+      "p50" : 121.05025,
+      "p95" : 121.05025,
+      "samples" : [
+        121.05025
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 240.084792,
+      "p95" : 245.469542,
+      "samples" : [
+        240.084792,
+        235.325083,
+        244.85525,
+        243.004041,
+        228.114917,
+        245.469542
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 241.927875,
+      "p95" : 247.28675,
+      "samples" : [
+        241.927875,
+        237.230458,
+        246.629958,
+        244.822625,
+        229.91525,
+        247.28675
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 1294.965,
+      "p95" : 1784.372542,
+      "samples" : [
+        1784.372542,
+        868.529667,
+        1687.9747499999999,
+        1294.965,
+        1041.010667,
+        1341.0308340000001
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 111.00919230769229,
+      "p95" : 135.482625,
+      "samples" : [
+        102.95251666666667,
+        126.64091680000001,
+        111.00919230769229,
+        116.884551,
+        135.482625,
+        84.27394553846155
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 23,
+      "p95" : 27,
+      "samples" : [
+        24,
+        23,
+        24,
+        27,
+        22,
+        8
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_ms_per_call",
+      "p50" : 128.75834284615385,
+      "p95" : 172.32043050000001,
+      "samples" : [
+        117.93102200000001,
+        172.2845332,
+        128.75834284615385,
+        142.4514583333333,
+        172.32043050000001,
+        102.20574038461538
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampling_ms_per_request",
+      "p50" : 9.078209,
+      "p95" : 11.402167,
+      "samples" : [
+        11.402167,
+        3.7867090000000005,
+        10.310459000000002,
+        9.078209,
+        4.0219190000000005,
+        9.775039
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "grammar_fallbacks",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_calls",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "unprimed_structured_result_total",
+      "p50" : 1518.746667,
+      "p95" : 2002.578709,
+      "samples" : [
+        2002.578709,
+        1093.918167,
+        1928.236125,
+        1518.746667,
+        1271.94725,
+        1571.04425
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "unprimed_suffix_prompt_eval",
+      "p50" : 446.880125,
+      "p95" : 456.956833,
+      "samples" : [
+        449.424834,
+        438.486041,
+        453.73275,
+        446.880125,
+        435.206625,
+        456.956833
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "primed_tokens",
+      "p50" : 28,
+      "p95" : 28,
+      "samples" : [
+        28,
+        28,
+        28,
+        28,
+        28,
+        28
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "batch_profile_1",
+      "p50" : 78.7545,
+      "p95" : 78.7545,
+      "samples" : [
+        78.7545
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_2",
+      "p50" : 102.549667,
+      "p95" : 102.549667,
+      "samples" : [
+        102.549667
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_3",
+      "p50" : 139.587208,
+      "p95" : 139.587208,
+      "samples" : [
+        139.587208
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_4",
+      "p50" : 177.654667,
+      "p95" : 177.654667,
+      "samples" : [
+        177.654667
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_5",
+      "p50" : 223.095333,
+      "p95" : 223.095333,
+      "samples" : [
+        223.095333
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_6",
+      "p50" : 251.148375,
+      "p95" : 251.148375,
+      "samples" : [
+        251.148375
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_7",
+      "p50" : 299.424791,
+      "p95" : 299.424791,
+      "samples" : [
+        299.424791
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_8",
+      "p50" : 333.818166,
+      "p95" : 333.818166,
+      "samples" : [
+        333.818166
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_9",
+      "p50" : 213.854125,
+      "p95" : 213.854125,
+      "samples" : [
+        213.854125
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_10",
+      "p50" : 216.271583,
+      "p95" : 216.271583,
+      "samples" : [
+        216.271583
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_12",
+      "p50" : 220.29725,
+      "p95" : 220.29725,
+      "samples" : [
+        220.29725
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_16",
+      "p50" : 231.413666,
+      "p95" : 231.413666,
+      "samples" : [
+        231.413666
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_24",
+      "p50" : 245.992542,
+      "p95" : 245.992542,
+      "samples" : [
+        245.992542
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_32",
+      "p50" : 264.909667,
+      "p95" : 264.909667,
+      "samples" : [
+        264.909667
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_48",
+      "p50" : 455.978375,
+      "p95" : 455.978375,
+      "samples" : [
+        455.978375
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_2",
+      "p50" : 102.253792,
+      "p95" : 102.253792,
+      "samples" : [
+        102.253792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_4",
+      "p50" : 189.066,
+      "p95" : 189.066,
+      "samples" : [
+        189.066
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_6",
+      "p50" : 276.004833,
+      "p95" : 276.004833,
+      "samples" : [
+        276.004833
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_8",
+      "p50" : 368.177875,
+      "p95" : 368.177875,
+      "samples" : [
+        368.177875
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_9",
+      "p50" : 225.527417,
+      "p95" : 225.527417,
+      "samples" : [
+        225.527417
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_12",
+      "p50" : 232.103708,
+      "p95" : 232.103708,
+      "samples" : [
+        232.103708
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_1",
+      "p50" : 77.095958,
+      "p95" : 82.481291,
+      "samples" : [
+        81.765792,
+        77.095958,
+        81.539917,
+        76.853041,
+        76.904125,
+        78.198791,
+        77.2025,
+        76.873042,
+        76.876916,
+        76.793083,
+        81.900167,
+        77.133917,
+        83.300125,
+        77.436583,
+        81.718166,
+        76.952375,
+        77.068583,
+        77.076042,
+        76.962083,
+        76.977,
+        81.512,
+        77.004833,
+        81.088791,
+        76.939917,
+        79.244958,
+        76.759375,
+        82.481291,
+        77.832375,
+        76.916625,
+        76.912375,
+        77.829083,
+        76.870625,
+        76.855917,
+        76.778417,
+        78.116792,
+        77.240125,
+        77.946
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_2_3",
+      "p50" : 142.841167,
+      "p95" : 144.335458,
+      "samples" : [
+        143.568958,
+        105.078291,
+        105.28925,
+        142.841167,
+        144.030042,
+        104.965458,
+        144.335458
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_4_8",
+      "p50" : 252.937708,
+      "p95" : 299.636083,
+      "samples" : [
+        252.581792,
+        247.751541,
+        252.937708,
+        253.928,
+        299.636083,
+        254.405542,
+        255.069625,
+        250.588167,
+        227.638916
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_9plus",
+      "p50" : 214.341583,
+      "p95" : 219.309834,
+      "samples" : [
+        214.341583,
+        219.309834
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "draft_tokens",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "accepted_draft_tokens",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 929.456625,
+      "p95" : 929.456625,
+      "samples" : [
+        929.456625
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "first_chunk_synthesis",
+      "p50" : 364.728375,
+      "p95" : 429.768041,
+      "samples" : [
+        255.795,
+        395.999541,
+        414.4725,
+        285.404541,
+        364.728375,
+        429.768041,
+        285.238917,
+        371.804667,
+        419.680458,
+        284.240708,
+        363.701375,
+        423.967417,
+        282.70525,
+        358.299375,
+        422.035916
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 5.035116489943477,
+      "p95" : 5.6686018100431985,
+      "samples" : [
+        5.6686018100431985,
+        4.545459814055693,
+        5.126998775552057,
+        5.080507811541794,
+        4.935179501731939,
+        4.944527738859949,
+        5.083457808809448,
+        4.8412517640613695,
+        5.0633760983934115,
+        5.101310119168434,
+        4.949115190999759,
+        5.012177622130806,
+        5.129016882424363,
+        5.023731900174261,
+        5.035116489943477
+      ],
+      "stage" : "tts",
+      "unit" : "x"
+    },
+    {
+      "name" : "endpoint_to_first_audio",
+      "p50" : 3247.6635,
+      "p95" : 3360.4837079999998,
+      "samples" : [
+        2401.155083,
+        3166.135375,
+        3360.4837079999998,
+        3251.095417,
+        3247.6635
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "command_text_alex_that",
+      "p50" : 3301.167708,
+      "p95" : 3301.167708,
+      "samples" : [
+        3301.167708
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "command_whats_on_my",
+      "p50" : 2108.605792,
+      "p95" : 2108.605792,
+      "samples" : [
+        2108.605792
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "command_remind_me_to",
+      "p50" : 3373.402917,
+      "p95" : 3373.402917,
+      "samples" : [
+        3373.402917
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "command_move_my_team",
+      "p50" : 2896.8407079999997,
+      "p95" : 2896.8407079999997,
+      "samples" : [
+        2896.8407079999997
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "command_call_mom",
+      "p50" : 2163.27875,
+      "p95" : 2163.27875,
+      "samples" : [
+        2163.27875
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "command_whats_percent_of",
+      "p50" : 2781.431667,
+      "p95" : 2781.431667,
+      "samples" : [
+        2781.431667
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    },
+    {
+      "name" : "endpoint_to_first_audio_all_commands",
+      "p50" : 2781.431667,
+      "p95" : 3373.402917,
+      "samples" : [
+        3301.167708,
+        2108.605792,
+        3373.402917,
+        2896.8407079999997,
+        2163.27875,
+        2781.431667
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    }
+  ],
+  "notes" : [
+    "llm valid outputs: 6\/6",
+    "end_to_end heard 'Text Alex that I will be 20 minutes late.' for 'Text Alex that I will be 20 minutes late'",
+    "end_to_end heard 'What's on my calendar tomorrow?' for 'what's on my calendar tomorrow'",
+    "end_to_end heard 'Remind me to call the dentist tomorrow at 10.' for 'remind me to call the dentist tomorrow at 10'",
+    "end_to_end heard 'Move my team sync to 4pm.' for 'move my team sync to 4 pm'",
+    "end_to_end heard 'Call Mom.' for 'call mom'",
+    "end_to_end heard 'What's 15% of 80?' for 'what's 15 percent of 80'",
+    "verified ggml-base.en.bin for loading in 0 ms",
+    "verified ggml-silero-v6.2.0.bin for loading in 2 ms",
+    "verified NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf for loading in 0 ms",
+    "verified kokoro-v1_0.safetensors for loading in 0 ms",
+    "verified af_heart.safetensors for loading in 0 ms"
+  ],
+  "peakFootprintMB" : 1368.0507507324219,
+  "startedAt" : "2026-09-19T18:34:47Z",
+  "thermalStates" : [
+    "nominal"
+  ]
+}

@@ -81,6 +81,7 @@ func runCommand() async throws {
     if let category = value("--category") { cases = cases.filter { $0.category == category }; filters.append("category=\(category)") }
     if let tag = value("--tag") { cases = cases.filter { $0.tags.contains(tag) }; filters.append("tag=\(tag)") }
     if let limit = value("--limit").flatMap(Int.init) { cases = EvalSelection.stratified(cases, limit: limit); filters.append("limit=\(limit)") }
+    if let drafts = value("--draft-tokens") { filters.append("draft-tokens=\(drafts)") }
 
     let output = URL(fileURLWithPath: value("--output") ?? cwd.appendingPathComponent("Tests/AgentEval/Results").path)
     let runDirectory: URL
