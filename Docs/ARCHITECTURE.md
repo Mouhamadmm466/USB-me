@@ -92,6 +92,17 @@ all other transitions are enumerated and unit tested (`Tests/Unit/Core`).
   recurrent-state rollback (`n_rs_seq`) is implemented and tested, but disabled: on the A17 Pro,
   2–8 token decode calls cost nearly linearly more than one token (`Docs/DEVICE_MATRIX.md`).
 
+## Early confirmation lead-in (Agent/ConfirmationLead.swift, TTS/SpeechQueue.swift)
+
+A message confirmation starts with the recipient ("Text Alex Kim: “…” Should I send it?"). While
+Nemotron streams the proposal, the coordinator watches for a `compose_message` whose
+`contact_query` value is complete, resolves it natively (read-only; skipped unless Contacts access
+is already granted and exactly one contact matches) and has the speech queue start speaking
+"Text Alex Kim:" while the model is still writing the body. When the complete output has been
+validated, resolved and turned into a versioned `PendingAction`, the Swift-authored confirmation is
+spoken: the queue continues after the lead-in if the text starts with it, otherwise cuts it. A
+barge-in over the lead-in cancels the rest. Nothing is proposed or executed early.
+
 ## Voice loop safety (Agent/VoiceLoop/VoiceSessionController.swift)
 
 - Utterances enter the agent only after endpointing, as `FinalTranscript`s.

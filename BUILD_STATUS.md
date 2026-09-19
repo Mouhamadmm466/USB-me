@@ -97,6 +97,30 @@ Evaluation (Mac CPU smoke, 30 stratified cases, prompt v1): 76.7% case pass, rel
 4. TestFlight: enroll in the paid Apple Developer Program, set `DEVELOPMENT_TEAM` in `App/project.yml`,
    archive the `VoiceAgent` scheme (Release) and upload from Xcode Organizer.
 
+## Final handoff (PRD checklist)
+
+| # | Item | Where |
+|---|---|---|
+| 1 | Repository structure | `README.md` (layout), `Docs/ARCHITECTURE.md` (modules, dependency direction) |
+| 2 | Build / run | `Docs/BUILD.md` (Debug / Profile / Release, simulator, device, archive) |
+| 3 | Model download / install | In-app downloader (Settings → Models, onboarding); `Scripts/download_models.sh` + sideload via `Scripts/benchmark_device.sh`; pins in `Docs/MODEL_MANIFEST.md` |
+| 4 | Supported devices | `Docs/DEVICE_MATRIX.md` |
+| 5 | Benchmarks / evaluation | `Docs/DEVICE_MATRIX.md`, `Docs/EVALUATION.md`, `Tests/Benchmarks/Results/`, `Tests/AgentEval/Results/` |
+| 6 | Human-only steps | this file, below |
+| 7 | Known limitations | `Docs/KNOWN_LIMITATIONS.md` |
+| 8 | Security / privacy review | `Docs/SECURITY.md`, `Docs/PRIVACY.md`, `App/Resources/PrivacyInfo.xcprivacy` |
+| 9 | Demo script | `Docs/DEMO.md` |
+| 10 | Tests and clean build | `swift test` (unit, integration, ASR/VAD fixtures on the real models, eval-dataset integrity), `xcodebuild test` (UI flows in the simulator), clean-clone build log — see "Verification" below |
+
+## Verification
+
+- Unit + integration + fixture tests: `swift test` (see the latest run below).
+- UI tests (simulator, demo mode): launch; confirm a message from the card; cancel a call from the
+  card; Settings → Licenses shows the NVIDIA notice — all pass.
+- Live model download through the app's downloader (opt-in): passes.
+- Release (App Store) configuration builds for iOS with no developer launch modes in the binary.
+- Networking: only `Models/` (the model downloader) uses URLSession; nothing else can reach the network.
+
 ## Next actions
 
 - Collect the voice self-test result; run the full evaluation on the phone and document it.
