@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26.5
+        run: sudo xcode-select -s /Applications/Xcode_26.5.app
+      - name: Metal toolchain (MLX)
+        run: xcodebuild -downloadComponent MetalToolchain
+      - name: Cache vendor dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            Vendor/Downloads
+            Vendor/Frameworks
+            Vendor/Packages
+            Vendor/src/llama.cpp/build-apple
+          key: vendor-${{ hashFiles('Scripts/bootstrap_dependencies.sh', 'Vendor/Patches/**') }}
+      - name: Bootstrap pinned runtimes
+        run: Scripts/bootstrap_dependencies.sh
+      - name: Package build
+        run: swift build
+      - name: Unit, integration and eval-dataset tests
+        run: swift test
+      - name: Simulator app build
+        run: xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgentSim -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath .build/xcode-ci build
+      - name: Device app build (unsigned)
+        run: xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -destination 'generic/platform=iOS' -derivedDataPath .build/xcode-ci CODE_SIGNING_ALLOWED=NO build

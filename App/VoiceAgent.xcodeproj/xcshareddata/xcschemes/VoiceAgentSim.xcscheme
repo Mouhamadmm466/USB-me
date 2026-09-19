@@ -15,9 +15,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "3701476F3043D36BC6752ABE"
-               BuildableName = "VoiceAgent.app"
-               BlueprintName = "VoiceAgent"
+               BlueprintIdentifier = "8F3EE36F93EDC02606A46DA9"
+               BuildableName = "VoiceAgentSim.app"
+               BlueprintName = "VoiceAgentSim"
+               ReferencedContainer = "container:VoiceAgent.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FAD3496F297B765CDF4EC9D7"
+               BuildableName = "VoiceAgentUITests.xctest"
+               BlueprintName = "VoiceAgentUITests"
                ReferencedContainer = "container:VoiceAgent.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -32,14 +46,27 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3701476F3043D36BC6752ABE"
-            BuildableName = "VoiceAgent.app"
-            BlueprintName = "VoiceAgent"
+            BlueprintIdentifier = "8F3EE36F93EDC02606A46DA9"
+            BuildableName = "VoiceAgentSim.app"
+            BlueprintName = "VoiceAgentSim"
             ReferencedContainer = "container:VoiceAgent.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FAD3496F297B765CDF4EC9D7"
+               BuildableName = "VoiceAgentUITests.xctest"
+               BlueprintName = "VoiceAgentUITests"
+               ReferencedContainer = "container:VoiceAgent.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -55,9 +82,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3701476F3043D36BC6752ABE"
-            BuildableName = "VoiceAgent.app"
-            BlueprintName = "VoiceAgent"
+            BlueprintIdentifier = "8F3EE36F93EDC02606A46DA9"
+            BuildableName = "VoiceAgentSim.app"
+            BlueprintName = "VoiceAgentSim"
             ReferencedContainer = "container:VoiceAgent.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -74,9 +101,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3701476F3043D36BC6752ABE"
-            BuildableName = "VoiceAgent.app"
-            BlueprintName = "VoiceAgent"
+            BlueprintIdentifier = "8F3EE36F93EDC02606A46DA9"
+            BuildableName = "VoiceAgentSim.app"
+            BlueprintName = "VoiceAgentSim"
             ReferencedContainer = "container:VoiceAgent.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

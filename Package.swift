@@ -18,6 +18,9 @@ let package = Package(
                 "LLM", "ASR", "TTS", "Audio", "Agent", "DeviceBenchmark",
             ]
         ),
+        // Kokoro/MLX is a separate product: MLX cannot link for (or run in) the iOS Simulator, so
+        // only the device app target links it (see App/project.yml).
+        .library(name: "KokoroTTS", targets: ["KokoroTTS"]),
         .library(name: "AgentEval", targets: ["AgentEval"]),
         .executable(name: "agent-eval", targets: ["AgentEvalRunner"]),
     ],
@@ -40,15 +43,14 @@ let package = Package(
         .target(name: "Tools", dependencies: ["Core", "Permissions", "Telemetry"], path: "Tools"),
         .target(name: "LLM", dependencies: ["Core", "Telemetry", "llama"], path: "LLM"),
         .target(name: "ASR", dependencies: ["Core", "Telemetry", "whisper"], path: "ASR"),
+        .target(name: "TTS", dependencies: ["Core", "Telemetry"], path: "TTS", exclude: ["Kokoro"]),
         .target(
-            name: "TTS",
+            name: "KokoroTTS",
             dependencies: [
-                "Core", "Telemetry",
-                // MLX has no Intel-Mac or simulator GPU support; macOS builds compile
-                // the engine-agnostic parts only (see TTS/KokoroRuntime.swift).
-                .product(name: "KokoroSwift", package: "kokoro-ios", condition: .when(platforms: [.iOS])),
+                "TTS", "Core", "Telemetry",
+                .product(name: "KokoroSwift", package: "kokoro-ios"),
             ],
-            path: "TTS"
+            path: "TTS/Kokoro"
         ),
         .target(name: "Audio", dependencies: ["Core", "Telemetry"], path: "Audio"),
         .target(
@@ -58,7 +60,7 @@ let package = Package(
         ),
         .target(
             name: "DeviceBenchmark",
-            dependencies: ["Core", "Telemetry", "LLM", "ASR", "TTS", "Audio", "Agent", "Tools"],
+            dependencies: ["Core", "Telemetry", "LLM", "ASR", "TTS"],
             path: "Tests/Benchmarks/DeviceBenchmark"
         ),
 

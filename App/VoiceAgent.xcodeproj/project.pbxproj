@@ -7,16 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		91620F670582B4E47B90B4E5 /* VoiceAgentKit in Frameworks */ = {isa = PBXBuildFile; productRef = 811DAC5686FB1F030E63B89C /* VoiceAgentKit */; };
 		B2A2A3212FB0181D51F2B549 /* VoiceAgentKit in Frameworks */ = {isa = PBXBuildFile; productRef = 59FC1C311AFD93265250A01A /* VoiceAgentKit */; };
+		E885C6011D3117CBFC2EDE61 /* KokoroTTS in Frameworks */ = {isa = PBXBuildFile; productRef = 60FDDA5BB563E19F2B725025 /* KokoroTTS */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		00C0F1BF0F32E6291CEA546A /* PBXContainerItemProxy */ = {
+		31E17E20A667258BD5C4116F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7F12F4B8EE9106EBD74D244F /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 3701476F3043D36BC6752ABE;
-			remoteInfo = VoiceAgent;
+			remoteGlobalIDString = 8F3EE36F93EDC02606A46DA9;
+			remoteInfo = VoiceAgentSim;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -24,9 +26,17 @@
 		56BB67146E59A0068CFF096D /* OfflineVoiceAgent */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OfflineVoiceAgent; path = ..; sourceTree = SOURCE_ROOT; };
 		82ED9B919D4FA40E757026AB /* VoiceAgentUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoiceAgentUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA874247CE0042458BC4B95E /* VoiceAgent.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceAgentSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1995E3D2D0857B0BAE8CB3AB /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */;
+		};
 		A102D58E3F73102238009A05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -55,18 +65,7 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
-		B62F12D2061B2B2290A5674B /* AppEntry */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A102D58E3F73102238009A05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = AppEntry;
-			sourceTree = "<group>";
-		};
+		B62F12D2061B2B2290A5674B /* AppEntry */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A102D58E3F73102238009A05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 1995E3D2D0857B0BAE8CB3AB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = AppEntry; sourceTree = "<group>"; };
 		D523CA305E17F6C269F22DB1 /* E2E */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			explicitFileTypes = {
@@ -80,11 +79,20 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2A28347EAACC788F05546F74 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				91620F670582B4E47B90B4E5 /* VoiceAgentKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F8FD6CECBBE442299B670ECA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				B2A2A3212FB0181D51F2B549 /* VoiceAgentKit in Frameworks */,
+				E885C6011D3117CBFC2EDE61 /* KokoroTTS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				DA874247CE0042458BC4B95E /* VoiceAgent.app */,
+				EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */,
 				82ED9B919D4FA40E757026AB /* VoiceAgentUITests.xctest */,
 			);
 			name = Products;
@@ -160,9 +169,35 @@
 			name = VoiceAgent;
 			packageProductDependencies = (
 				59FC1C311AFD93265250A01A /* VoiceAgentKit */,
+				60FDDA5BB563E19F2B725025 /* KokoroTTS */,
 			);
 			productName = VoiceAgent;
 			productReference = DA874247CE0042458BC4B95E /* VoiceAgent.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 70A682FC74CAC54644F51F88 /* Build configuration list for PBXNativeTarget "VoiceAgentSim" */;
+			buildPhases = (
+				DCD0510EC043DC81DFEB001C /* Sources */,
+				DDEB5ABA41A49DA7BA56D4CA /* Resources */,
+				2A28347EAACC788F05546F74 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B62F12D2061B2B2290A5674B /* AppEntry */,
+				217FB9D79F749DF838E37376 /* Resources */,
+				4E5AC4D63B8C6D9469837FF3 /* UI */,
+			);
+			name = VoiceAgentSim;
+			packageProductDependencies = (
+				811DAC5686FB1F030E63B89C /* VoiceAgentKit */,
+			);
+			productName = VoiceAgentSim;
+			productReference = EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */;
 			productType = "com.apple.product-type.application";
 		};
 		FAD3496F297B765CDF4EC9D7 /* VoiceAgentUITests */ = {
@@ -175,7 +210,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				612F84331389E1F08B4584B0 /* PBXTargetDependency */,
+				E7F3D074B353A8ECCA9519B2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D523CA305E17F6C269F22DB1 /* E2E */,
@@ -200,10 +235,14 @@
 						DevelopmentTeam = 3MK9V84J42;
 						ProvisioningStyle = Automatic;
 					};
+					8F3EE36F93EDC02606A46DA9 = {
+						DevelopmentTeam = 3MK9V84J42;
+						ProvisioningStyle = Automatic;
+					};
 					FAD3496F297B765CDF4EC9D7 = {
 						DevelopmentTeam = 3MK9V84J42;
 						ProvisioningStyle = Automatic;
-						TestTargetID = 3701476F3043D36BC6752ABE;
+						TestTargetID = 8F3EE36F93EDC02606A46DA9;
 					};
 				};
 			};
@@ -225,6 +264,7 @@
 			projectRoot = "";
 			targets = (
 				3701476F3043D36BC6752ABE /* VoiceAgent */,
+				8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */,
 				FAD3496F297B765CDF4EC9D7 /* VoiceAgentUITests */,
 			);
 		};
@@ -239,6 +279,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		DB54906C9518A1C958CE1F3F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DDEB5ABA41A49DA7BA56D4CA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -262,13 +309,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DCD0510EC043DC81DFEB001C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		612F84331389E1F08B4584B0 /* PBXTargetDependency */ = {
+		E7F3D074B353A8ECCA9519B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 3701476F3043D36BC6752ABE /* VoiceAgent */;
-			targetProxy = 00C0F1BF0F32E6291CEA546A /* PBXContainerItemProxy */;
+			target = 8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */;
+			targetProxy = 31E17E20A667258BD5C4116F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -292,6 +346,34 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent;
 				PRODUCT_NAME = VoiceAgent;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) KOKORO_TTS";
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		22631EB1DAFDE9B78780ACE3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = AppEntry/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent;
+				PRODUCT_NAME = VoiceAgent;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -300,6 +382,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -308,8 +391,9 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent.uitests;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = VoiceAgent;
+				TEST_TARGET_NAME = VoiceAgentSim;
 			};
 			name = Release;
 		};
@@ -317,6 +401,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -325,8 +410,34 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent.uitests;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = VoiceAgent;
+				TEST_TARGET_NAME = VoiceAgentSim;
+			};
+			name = Debug;
+		};
+		9AF4AF0BADCA08ED79476A92 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = AppEntry/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent;
+				PRODUCT_NAME = VoiceAgent;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphonesimulator;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -349,6 +460,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent;
 				PRODUCT_NAME = VoiceAgent;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) KOKORO_TTS";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -483,6 +597,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		70A682FC74CAC54644F51F88 /* Build configuration list for PBXNativeTarget "VoiceAgentSim" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9AF4AF0BADCA08ED79476A92 /* Debug */,
+				22631EB1DAFDE9B78780ACE3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		AFFCBC2B1EB540B7B9A65520 /* Build configuration list for PBXNativeTarget "VoiceAgent" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -521,6 +644,14 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		59FC1C311AFD93265250A01A /* VoiceAgentKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VoiceAgentKit;
+		};
+		60FDDA5BB563E19F2B725025 /* KokoroTTS */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = KokoroTTS;
+		};
+		811DAC5686FB1F030E63B89C /* VoiceAgentKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VoiceAgentKit;
 		};

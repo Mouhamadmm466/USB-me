@@ -4,7 +4,11 @@ import SwiftUI
 struct VoiceAgentApp: App {
     var body: some Scene {
         WindowGroup {
-            Text("Voice Agent")
+            if ProcessInfo.processInfo.arguments.contains("-DesignGallery") {
+                DesignGalleryView()
+            } else {
+                Text("Voice Agent")
+            }
         }
     }
 }

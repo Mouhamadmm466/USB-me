@@ -16,6 +16,7 @@ packages:
   VoiceAgentKit:
     path: ..
 targets:
+  # Device app (production). Links Kokoro TTS (MLX), which cannot link for or run in the Simulator.
   VoiceAgent:
     type: application
     platform: iOS
@@ -30,6 +31,8 @@ targets:
     dependencies:
       - package: VoiceAgentKit
         product: VoiceAgentKit
+      - package: VoiceAgentKit
+        product: KokoroTTS
     entitlements:
       path: AppEntry/VoiceAgent.entitlements
       properties:
@@ -58,12 +61,45 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent
         PRODUCT_NAME: VoiceAgent
+        SUPPORTED_PLATFORMS: iphoneos
+        SUPPORTS_MACCATALYST: NO
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS"
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
+  # Simulator build for UI development and UI tests. Same sources; no Kokoro (MLX has no
+  # simulator support), so speech output is disabled and the UI says so. Never shipped.
+  VoiceAgentSim:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: AppEntry
+        type: syncedFolder
+      - path: UI
+        type: syncedFolder
+      - path: Resources
+        type: syncedFolder
+    dependencies:
+      - package: VoiceAgentKit
+        product: VoiceAgentKit
+    settings:
+      base:
+        INFOPLIST_FILE: AppEntry/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ""
+        PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent
+        PRODUCT_NAME: VoiceAgent
+        SUPPORTED_PLATFORMS: iphonesimulator
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+        CODE_SIGNING_ALLOWED: NO
   VoiceAgentUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -72,21 +108,29 @@ targets:
       - path: ../Tests/E2E
         type: syncedFolder
     dependencies:
-      - target: VoiceAgent
+      - target: VoiceAgentSim
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent.uitests
-        TEST_TARGET_NAME: VoiceAgent
+        TEST_TARGET_NAME: VoiceAgentSim
+        SUPPORTED_PLATFORMS: iphonesimulator
+        CODE_SIGNING_ALLOWED: NO
 schemes:
   VoiceAgent:
     build:
       targets:
         VoiceAgent: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  VoiceAgentSim:
+    build:
+      targets:
+        VoiceAgentSim: all
         VoiceAgentUITests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets: [VoiceAgentUITests]
-    archive:
-      config: Release

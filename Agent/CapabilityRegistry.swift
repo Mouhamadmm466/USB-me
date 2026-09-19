@@ -33,24 +33,3 @@ public struct CapabilityRegistry: Sendable {
         }
     }
 }
-
-/// How the coordinator speaks. The voice layer implements it with Kokoro TTS + playback; text
-/// mode, tests and the evaluation harness use `SilentSpeechOutput`.
-public protocol SpeechOutput: Sendable {
-    /// Speaks `text` and returns when playback finishes or is interrupted by barge-in.
-    func speak(_ text: String) async -> SpeechOutputResult
-    /// Stops any speech immediately.
-    func stop() async
-}
-
-public enum SpeechOutputResult: Sendable, Equatable {
-    case finished
-    /// The user started talking over the assistant (credible barge-in).
-    case interrupted
-}
-
-public struct SilentSpeechOutput: SpeechOutput {
-    public init() {}
-    public func speak(_ text: String) async -> SpeechOutputResult { .finished }
-    public func stop() async {}
-}
