@@ -23,8 +23,9 @@ the chosen models, or what could be verified in this environment.
 - Kokoro TTS runs on MLX, which only works on Apple-silicon GPUs: **no speech output in the iOS
   Simulator** (the `VoiceAgentSim` target shows replies as text). MLX also does not link for the
   x86_64 Simulator.
-- A free (personal) Apple team can install on a device for 7 days at a time and may not grant the
-  Increased Memory Limit entitlement; TestFlight needs a paid team.
+- Installing on a device needs an Apple development team; this build was signed by team 3MK9V84J42
+  (one-year development profile) with the Increased Memory Limit entitlement. A free personal team
+  would get 7-day profiles and may be refused that entitlement.
 - Background operation is not supported: a session stops when the app leaves the foreground;
   model downloads pause in the background and resume from the last byte on return.
 

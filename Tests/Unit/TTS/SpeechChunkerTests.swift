@@ -197,13 +197,17 @@ actor RecordingSynthesizer: SpeechSynthesizer {
     }
 
     @Test func bargeInOverTheLeadInterruptsTheReply() async {
+        let tracker = SpokenTextTracker(echoTail: 0)
         let player = FakePlayer()
         await player.setHold(true)
-        let queue = SpeechQueue(synthesizer: RecordingSynthesizer(), player: player)
+        let queue = SpeechQueue(synthesizer: RecordingSynthesizer(), player: player, tracker: tracker)
         await queue.speakLead("Text Alex Kim:")
         try? await Task.sleep(for: .milliseconds(30))
+        #expect(tracker.isSpeaking)
         await queue.interrupt()
+        #expect(!tracker.isSpeaking, "listening goes back to normal thresholds after the barge-in")
         #expect(await queue.speak(confirmation) == .interrupted)
+        #expect(!tracker.isSpeaking)
     }
 
     @Test func emptyLeadIsIgnored() async {

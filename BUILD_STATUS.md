@@ -11,7 +11,7 @@ _Last updated: 2026-09-19 (session 1, evening)._
 |---|---|
 | Build Mac is an **Intel Core i7-1068NG7 (x86_64), 16 GB**, macOS 26.6.2, Xcode 26.5, Swift 6.3.2 | MLX (Kokoro) cannot run on this Mac or in the x86_64 Simulator, so TTS runs only on the iPhone. whisper.cpp and llama.cpp run here on the CPU: unit/fixture tests and small evaluation runs use the **real** models, but a turn takes 5–40 s, so full evaluation runs use the phone. |
 | Device: **iPhone 15 Pro (iPhone16,1, 8 GB), iOS 26.6.1**, connected by cable (drops off `devicectl` intermittently) | All device results below come from this phone. |
-| Signing: **free Personal Team 3MK9V84J42** | Device builds work (7-day profiles) and the Increased Memory Limit entitlement **was granted**. TestFlight/App Store need a paid team (human step). |
+| Signing: team **3MK9V84J42** (Mouhamad Mamane), Xcode-managed development profile created 2026-09-19, valid until 2027-09-19 | A one-year development profile indicates a paid Apple Developer Program membership (free teams get 7-day profiles). Device builds work and the Increased Memory Limit entitlement is granted. TestFlight upload needs an Apple Distribution certificate and an App Store Connect app record — account changes left to the owner. |
 | Official llama.cpp b11046 XCFramework ships no iOS-simulator slice | Device + macOS slices are the official binaries byte-for-byte; the simulator slice is built from the same tag (`Scripts/bootstrap_dependencies.sh`). |
 
 ## Pinned components (verified)
@@ -82,9 +82,16 @@ Evaluation (Mac CPU smoke, 30 stratified cases, prompt v1): 76.7% case pass, rel
 1. **Keep the iPhone connected, unlocked, trusted, Developer Mode on** for device runs:
    `Scripts/benchmark_device.sh`, `Scripts/eval_device.sh` (≈ 2 h for all 3,249 cases; keep the app
    in the foreground), `-VoiceSelfTest`.
-2. **Talk to it.** Launch Voice Agent normally, finish onboarding, tap the orb, allow the microphone,
-   and say "Text <a contact> that I'll be late", answer "yes", tap Send in Messages. Contacts,
-   Calendar and Reminders permissions are requested the first time a request needs them.
+2. **Talk to it** (the parts no script can do: your voice through the real microphone, iOS permission
+   prompts, Apple's own sheets). Launch Voice Agent normally and follow `Docs/DEMO.md`, ideally in
+   Airplane Mode. Checklist:
+   - [ ] Onboarding shows the models as installed; "Start" reaches the assistant.
+   - [ ] First mic tap: the explainer sheet, then the iOS microphone prompt; the session starts.
+   - [ ] "Text <contact> that I'll be late": live transcript, spoken read-back starting with
+         "Text <name>:", card with name/number/text; "yes" opens Messages pre-filled; you tap Send.
+   - [ ] Contacts, Calendar and Reminders prompts appear only on the first request that needs them.
+   - [ ] Interrupting the assistant mid-sentence stops it and handles what you said.
+   - [ ] Speaker playback does not trigger the assistant itself (no self-replies) at normal volume.
 3. First install on a device: *Settings → General → VPN & Device Management → Apple Development:
    Mouhamad Mamane → Trust*.
 4. TestFlight: enroll in the paid Apple Developer Program, set `DEVELOPMENT_TEAM` in `App/project.yml`,

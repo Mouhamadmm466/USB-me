@@ -95,6 +95,7 @@ public actor SpeechQueue: SpeechOutput {
             if leadInterrupted {
                 // The user barged in over the lead-in: the rest of this reply is not spoken.
                 leadInterrupted = false
+                tracker.end()
                 return .interrupted
             }
             let trimmed = text.trimmingCharacters(in: .whitespaces)
@@ -187,7 +188,11 @@ public actor SpeechQueue: SpeechOutput {
     /// that would have continued an interrupted lead-in).
     public func interrupt() async {
         interruptedGeneration = generation
-        if lead != nil { leadInterrupted = true }
+        if lead != nil {
+            leadInterrupted = true
+            // Nobody else will end the audible text of a lead-in no `speak` picked up yet.
+            if activeSpeaks == 0 { tracker.end() }
+        }
         generation += 1
         await player?.stopPlayback()
     }

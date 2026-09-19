@@ -47,6 +47,7 @@ Full instructions: [Docs/BUILD.md](Docs/BUILD.md).
 | [Docs/DEVICE_MATRIX.md](Docs/DEVICE_MATRIX.md) | Supported devices, memory budget, benchmarks |
 | [Docs/THIRD_PARTY.md](Docs/THIRD_PARTY.md) | Pinned dependencies and licenses |
 | [Docs/KNOWN_LIMITATIONS.md](Docs/KNOWN_LIMITATIONS.md) | What V1 does not do |
+| [Docs/DEMO.md](Docs/DEMO.md) | Five-minute demo script (Airplane Mode on) |
 
 ## Repository layout
 
