@@ -17,9 +17,23 @@ public struct ContextManager: Sendable {
         self.maxFieldCharacters = maxFieldCharacters
     }
 
-    /// The per-turn context lines, ending with the user's utterance.
-    public func render(session: SessionState, utterance: String, clock: AgentClock, lastAssistantQuestion: String? = nil) -> String {
-        renderHead(session: session, clock: clock, lastAssistantQuestion: lastAssistantQuestion) + " " + utteranceText(utterance)
+    /// The per-turn context lines, ending with the user's utterance and — when the utterance names
+    /// something the personal intelligence knows about — a block of notes about it.
+    ///
+    /// The notes come after the utterance on purpose: they depend on what was said, while
+    /// `renderHead` must stay identical from the moment the user starts speaking so the runtime can
+    /// evaluate it ahead of the endpoint.
+    public func render(
+        session: SessionState,
+        utterance: String,
+        clock: AgentClock,
+        lastAssistantQuestion: String? = nil,
+        personalContext: String? = nil
+    ) -> String {
+        var text = renderHead(session: session, clock: clock, lastAssistantQuestion: lastAssistantQuestion)
+            + " " + utteranceText(utterance)
+        if let personalContext, !personalContext.isEmpty { text += "\n" + personalContext }
+        return text
     }
 
     /// Everything `render` produces before the utterance itself (ends with "User:"). Known while

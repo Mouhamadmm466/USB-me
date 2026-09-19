@@ -206,6 +206,41 @@ public actor IntelligenceStore {
         return rows.map(Self.entity(from:))
     }
 
+    /// Entities whose title or alias is exactly one of `names` (folded). One indexed query, used by
+    /// the context builder to link what the user just said to what is already known.
+    public func entitiesNamed(_ names: [String]) throws -> [IntelligenceEntity] {
+        let folded = Set(names.map(\.intelligenceFolded)).filter { !$0.isEmpty }
+        guard !folded.isEmpty else { return [] }
+        let bindings = folded.map { SQLValue.text($0) }
+        let placeholders = (1...bindings.count).map { "?\($0)" }.joined(separator: ", ")
+        let rows = try db.query(
+            """
+            SELECT \(IntelligenceSchema.entityColumns) FROM entities
+            WHERE archived_at IS NULL AND (
+                title_folded IN (\(placeholders))
+                OR id IN (SELECT entity_id FROM entity_aliases WHERE alias_folded IN (\(placeholders)))
+            )
+            ORDER BY importance DESC, updated_at DESC LIMIT 40;
+            """,
+            bindings  // the numbered placeholders appear twice; SQLite binds each parameter once
+        )
+        return rows.map(Self.entity(from:))
+    }
+
+    /// Outstanding work dated inside a window, for "what's happening Friday".
+    public func entities(between start: Date, and end: Date, limit: Int = 20) throws -> [IntelligenceEntity] {
+        let rows = try db.query(
+            """
+            SELECT \(IntelligenceSchema.entityColumns) FROM entities
+            WHERE archived_at IS NULL
+              AND ((due_at BETWEEN ?1 AND ?2) OR (starts_at BETWEEN ?1 AND ?2))
+            ORDER BY COALESCE(due_at, starts_at) ASC LIMIT \(max(1, limit));
+            """,
+            [.init(start), .init(end)]
+        )
+        return rows.map(Self.entity(from:))
+    }
+
     @discardableResult
     public func create(
         kind: EntityKind,

@@ -71,7 +71,7 @@ let package = Package(
         .target(name: "Audio", dependencies: ["Core", "Telemetry"], path: "Audio"),
         .target(
             name: "Agent",
-            dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions"],
+            dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions", "Intelligence"],
             path: "Agent",
             exclude: ["VoiceLoop"]
         ),

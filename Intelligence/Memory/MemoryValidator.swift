@@ -1,12 +1,5 @@
 import Foundation
 
-/// Resolves a date the way the user said it ("next Friday", "tomorrow at 3") into an instant.
-/// Implemented outside this module by V1's deterministic parser: the model never does calendar
-/// arithmetic, it only repeats the phrase.
-public protocol MemoryDateResolving: Sendable {
-    func resolve(_ phrase: String, now: Date) -> Date?
-}
-
 /// Where a batch of proposals came from, and the most it is allowed to become. A page the agent
 /// read cannot produce a statement with the authority of the user's own voice.
 public struct MemoryOrigin: Sendable, Equatable {
@@ -50,12 +43,12 @@ public struct MemoryValidation: Sendable, Equatable {
 /// not resolve, values that are too long, commitments attributed to the user from something the
 /// user did not say. The store trusts its caller, so this is where the model stops being trusted.
 public struct MemoryValidator: Sendable {
-    public var dates: any MemoryDateResolving
+    public var dates: any DatePhraseResolving
     /// Below this the model is guessing, and a guess is not worth asking the user about.
     public var minimumConfidence: Double
     public var maximumNameLength: Int
 
-    public init(dates: any MemoryDateResolving, minimumConfidence: Double = 0.35, maximumNameLength: Int = 80) {
+    public init(dates: any DatePhraseResolving, minimumConfidence: Double = 0.35, maximumNameLength: Int = 80) {
         self.dates = dates
         self.minimumConfidence = minimumConfidence
         self.maximumNameLength = maximumNameLength

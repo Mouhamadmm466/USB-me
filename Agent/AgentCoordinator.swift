@@ -1,5 +1,6 @@
 import Core
 import Foundation
+import Intelligence
 import LLM
 import Observation
 import Permissions
@@ -15,6 +16,9 @@ public struct AgentDependencies: Sendable {
     public var permissions: any PermissionProviding
     public var speech: any SpeechOutput
     public var capabilities: DeviceCapabilities
+    /// The user's personal intelligence. Absent in V1-shaped deployments and in tests that only
+    /// exercise the action path; when absent, every turn behaves exactly as it did in V1.
+    public var intelligence: PersonalIntelligence?
     public var clock: AgentClock
     public var logger: PrivacySafeLogger
     public var metrics: PerformanceMetrics?
@@ -26,6 +30,7 @@ public struct AgentDependencies: Sendable {
         permissions: any PermissionProviding,
         speech: any SpeechOutput = SilentSpeechOutput(),
         capabilities: DeviceCapabilities = .allAvailable,
+        intelligence: PersonalIntelligence? = nil,
         clock: AgentClock = AgentClock(),
         logger: PrivacySafeLogger = .shared,
         metrics: PerformanceMetrics? = nil
@@ -36,6 +41,7 @@ public struct AgentDependencies: Sendable {
         self.permissions = permissions
         self.speech = speech
         self.capabilities = capabilities
+        self.intelligence = intelligence
         self.clock = clock
         self.logger = logger
         self.metrics = metrics
@@ -58,6 +64,11 @@ public final class AgentCoordinator {
 
     /// Called after every user or assistant turn (persistence hook; never logged).
     @ObservationIgnored public var onTurnRecorded: (@MainActor (ConversationTurn) -> Void)?
+    /// Called when a turn's background learning finishes, with what was learned or asked about.
+    /// Never on the path to an answer: by the time this fires, the user already has their reply.
+    @ObservationIgnored public var onMemoryLearned: (@MainActor (MemoryReport) -> Void)?
+    /// The in-flight learning task for the last turn, so callers can wait for it deterministically.
+    @ObservationIgnored public private(set) var learningTask: Task<MemoryReport, Never>?
 
     @ObservationIgnored private let dependencies: AgentDependencies
     @ObservationIgnored private let configuration: AgentConfiguration
@@ -208,6 +219,7 @@ public final class AgentCoordinator {
             await runModel(text, modifying: nil, report: &report)
         }
         finish(&report)
+        learn(from: text, report: report)
         return report
     }
 
@@ -421,14 +433,49 @@ public final class AgentCoordinator {
         Task { await model.prime(cacheablePrefix: prefix, suffixHead: head) }
     }
 
+    /// What the intelligence knows about this utterance, or nil when there is no intelligence or
+    /// the utterance names nothing it holds. Bounded so a slow lookup can never hold up a turn.
+    private func personalContext(for text: String) async -> PersonalContext? {
+        guard let intelligence = dependencies.intelligence else { return nil }
+        let now = dependencies.clock.now()
+        let watch = Stopwatch()
+        let context = try? await intelligence.context(for: text, now: now)
+        await dependencies.metrics?.record(.personalContext, milliseconds: watch.elapsedMilliseconds)
+        guard let context, !context.isEmpty else { return nil }
+        return context
+    }
+
+    /// Learning happens after the user has their answer, never on the path to it.
+    ///
+    /// The task is kept so the UI can show what was learned when it finishes, and so tests can wait
+    /// for it instead of sleeping. Utility rather than background priority: it is not urgent, but
+    /// it must not be starved while the app is busy either.
+    private func learn(from text: String, report: TurnReport) {
+        guard let intelligence = dependencies.intelligence else { return }
+        let turn = MemoryTurn(
+            userText: text,
+            assistantText: report.spokenResponses.last,
+            turnID: report.id.uuidString,
+            now: dependencies.clock.now()
+        )
+        learningTask = Task(priority: .utility) { [weak self] in
+            let learned = await intelligence.observe(turn: turn)
+            await MainActor.run { self?.onMemoryLearned?(learned) }
+            return learned
+        }
+    }
+
     private func runModel(_ text: String, modifying pending: PendingAction?, report: inout TurnReport) async {
         transition(to: .thinking, reason: pending == nil ? .transcriptReady : .userModified)
+        let personal = await personalContext(for: text)
+        report.personalContextTokens = personal?.estimatedTokens ?? 0
         let request = promptBuilder.request(
             session: session.excludingCurrentUserTurn(),
             utterance: text,
             clock: dependencies.clock,
             lastAssistantQuestion: lastAssistantQuestion,
-            maxOutputTokens: configuration.llm.maxOutputTokens
+            maxOutputTokens: configuration.llm.maxOutputTokens,
+            personalContext: personal?.render()
         )
         var output = ""
         let watch = Stopwatch()

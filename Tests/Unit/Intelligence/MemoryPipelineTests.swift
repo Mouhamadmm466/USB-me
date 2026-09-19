@@ -4,7 +4,7 @@ import Testing
 
 /// A stand-in for V1's date parser: the pipeline must never do calendar arithmetic itself, so the
 /// tests pin exactly which phrases resolve and what happens to the ones that do not.
-struct FixedDateResolver: MemoryDateResolving {
+struct FixedDateResolver: DatePhraseResolving {
     var offsets: [String: TimeInterval] = [
         "today": 0, "tomorrow": 86_400, "next friday": 4 * 86_400, "friday": 4 * 86_400,
         "next week": 7 * 86_400, "monday": 3 * 86_400,

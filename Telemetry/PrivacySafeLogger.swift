@@ -82,6 +82,8 @@ public enum LatencyStage: String, Sendable, Codable, CaseIterable, SafeLabelConv
     case modelLoadLLM
     case modelLoadTTS
     case contactResolution
+    /// Linking an utterance to the user's own world and building the notes block (V2).
+    case personalContext
 }
 
 /// Privacy-safe logger. Production output contains only `TelemetryEvent`s.
