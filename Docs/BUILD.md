@@ -106,8 +106,23 @@ and calendar; its report is `Documents/SelfTest/latest.json` in the app containe
 
 ## 7. Archive / TestFlight
 
-1. Paid Apple Developer Program team in `App/project.yml` (`DEVELOPMENT_TEAM`).
-2. Enable the *Increased Memory Limit* capability for the App ID.
-3. `xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -configuration Release -archivePath build/VoiceAgent.xcarchive archive`
-4. Upload with Xcode Organizer (or `xcodebuild -exportArchive`), then complete App Store Connect
-   steps (privacy label "Data Not Collected", export compliance: standard encryption only).
+Prerequisites (done for team 3MK9V84J42): paid Apple Developer Program team in `App/project.yml`
+(`DEVELOPMENT_TEAM`), App ID `com.mouhamadmamane.voiceagent` with the *Increased Memory Limit*
+capability, an App Store Connect app record for that bundle ID, and the account signed into Xcode.
+
+```bash
+# 1. Bump the build number for every upload (App/project.yml → CURRENT_PROJECT_VERSION), then:
+xcodegen generate --spec App/project.yml
+# 2. Archive (Release: no developer launch modes)
+xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath .build/archive/VoiceAgent.xcarchive \
+  -allowProvisioningUpdates archive
+# 3. Re-sign for App Store Connect and upload (creates the distribution signing assets if needed)
+xcodebuild -exportArchive -archivePath .build/archive/VoiceAgent.xcarchive \
+  -exportOptionsPlist App/ExportOptions-AppStore.plist -exportPath .build/export -allowProvisioningUpdates
+```
+
+Then App Store Connect → TestFlight: internal testers need no review; external testers need Beta
+App Review. Export compliance is answered by `ITSAppUsesNonExemptEncryption = NO` (HTTPS only, for
+model downloads). Privacy: `App/Resources/PrivacyInfo.xcprivacy`; App Store label "Data Not
+Collected".

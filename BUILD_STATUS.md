@@ -126,12 +126,20 @@ Evaluation (Mac CPU smoke, 30 stratified cases, prompt v1): 76.7% case pass, rel
 - Release (App Store) configuration builds for iOS with no developer launch modes in the binary.
 - Networking: only `Models/` (the model downloader) uses URLSession; nothing else can reach the network.
 
+## TestFlight
+
+- **2026-09-19: build 1.0.0 (1) uploaded to App Store Connect** (`xcodebuild -exportArchive` with
+  `App/ExportOptions-AppStore.plist`; upload-time package and SPI analysis passed with no warnings).
+  App record and internal testing are managed by the owner in App Store Connect.
+- Before the upload: app icons re-encoded without an alpha channel (rejected otherwise), privacy
+  manifest added, Release configuration verified free of developer launch modes.
+- Next upload: bump `CURRENT_PROJECT_VERSION` in `App/project.yml` (build numbers must increase).
+
 ## Not done (testing stopped at the owner's request)
 
 - Voice self-test on the phone, the updated benchmark (per-command end-to-end, lead-in effect) and
   the full 3,249-case on-device evaluation. All three run unattended with `Scripts/device_suite.sh`
   once the phone is unlocked and left on the desk (~2 h 10 min).
-- `xcodebuild archive` for TestFlight (the Release build itself succeeds).
 
 ## Next actions
 
