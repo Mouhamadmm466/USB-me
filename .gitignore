@@ -1,0 +1,27 @@
+# Build products
+.build/
+.swiftpm/
+DerivedData/
+build/
+*.xcresult
+xcuserdata/
+*.xcuserstate
+
+# Large local model files (downloaded by Scripts/download_models.sh, never committed)
+ModelCache/
+
+# Third-party binaries and sources (fetched/built by Scripts/bootstrap_dependencies.sh)
+Vendor/Frameworks/
+Vendor/Downloads/
+Vendor/src/
+
+# Eval run scratch (committed reports live in Tests/AgentEval/Results/*.md|json)
+Tests/AgentEval/Results/tmp/
+Tests/Benchmarks/Results/tmp/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+Vendor/Packages/

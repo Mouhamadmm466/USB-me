@@ -1,0 +1,89 @@
+diff --git a/Resources/gb_bart.safetensors b/MisakiSwiftData/gb_bart.safetensors
+similarity index 100%
+rename from Resources/gb_bart.safetensors
+rename to MisakiSwiftData/gb_bart.safetensors
+diff --git a/Resources/gb_bart_config.json b/MisakiSwiftData/gb_bart_config.json
+similarity index 100%
+rename from Resources/gb_bart_config.json
+rename to MisakiSwiftData/gb_bart_config.json
+diff --git a/Resources/gb_gold.json b/MisakiSwiftData/gb_gold.json
+similarity index 100%
+rename from Resources/gb_gold.json
+rename to MisakiSwiftData/gb_gold.json
+diff --git a/Resources/gb_silver.json b/MisakiSwiftData/gb_silver.json
+similarity index 100%
+rename from Resources/gb_silver.json
+rename to MisakiSwiftData/gb_silver.json
+diff --git a/Resources/us_bart.safetensors b/MisakiSwiftData/us_bart.safetensors
+similarity index 100%
+rename from Resources/us_bart.safetensors
+rename to MisakiSwiftData/us_bart.safetensors
+diff --git a/Resources/us_bart_config.json b/MisakiSwiftData/us_bart_config.json
+similarity index 100%
+rename from Resources/us_bart_config.json
+rename to MisakiSwiftData/us_bart_config.json
+diff --git a/Resources/us_gold.json b/MisakiSwiftData/us_gold.json
+similarity index 100%
+rename from Resources/us_gold.json
+rename to MisakiSwiftData/us_gold.json
+diff --git a/Resources/us_silver.json b/MisakiSwiftData/us_silver.json
+similarity index 100%
+rename from Resources/us_silver.json
+rename to MisakiSwiftData/us_silver.json
+diff --git a/Package.swift b/Package.swift
+index ef08b7e..9d660f9 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -28,7 +28,7 @@ let package = Package(
+         .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary")
+      ],
+      resources: [
+-      .copy("../../Resources/")
++      .copy("../../MisakiSwiftData/")
+      ]
+     ),
+     .testTarget(
+diff --git a/Sources/MisakiSwift/English/FallbackNetwork/EnglishFallbackNetwork.swift b/Sources/MisakiSwift/English/FallbackNetwork/EnglishFallbackNetwork.swift
+index 9916467..e0b2905 100644
+--- a/Sources/MisakiSwift/English/FallbackNetwork/EnglishFallbackNetwork.swift
++++ b/Sources/MisakiSwift/English/FallbackNetwork/EnglishFallbackNetwork.swift
+@@ -76,7 +76,7 @@ final class EnglishFallbackNetwork {
+     let fileName = "\(british ? "gb" : "us")_bart_config"
+     
+     
+-    guard let url = Bundle.module.url(forResource: fileName, withExtension: "json", subdirectory: "Resources"),
++    guard let url = Bundle.module.url(forResource: fileName, withExtension: "json", subdirectory: "MisakiSwiftData"),
+           let data = try? Data(contentsOf: url),
+           let config = try? JSONDecoder().decode(BARTConfig.self, from: data) else {
+         return nil
+@@ -86,7 +86,7 @@ final class EnglishFallbackNetwork {
+   
+   private static func loadWeights(british: Bool) -> [String: MLXArray]? {
+     let fileName = "\(british ? "gb" : "us")_bart"
+-    guard let url = Bundle.module.url(forResource: fileName, withExtension: "safetensors", subdirectory: "Resources"),
++    guard let url = Bundle.module.url(forResource: fileName, withExtension: "safetensors", subdirectory: "MisakiSwiftData"),
+           let weights = try? MLX.loadArrays(url: url) else {
+       return nil
+     }
+diff --git a/Sources/MisakiSwift/English/Lexicon/DataResourcesUtil.swift b/Sources/MisakiSwift/English/Lexicon/DataResourcesUtil.swift
+index cea0d7b..2df3def 100644
+--- a/Sources/MisakiSwift/English/Lexicon/DataResourcesUtil.swift
++++ b/Sources/MisakiSwift/English/Lexicon/DataResourcesUtil.swift
+@@ -6,7 +6,7 @@ final class DataResourcesUtil {
+     static func loadGold(british: Bool) -> [String: Any] {
+         let filename = british ? "gb_gold" : "us_gold"
+         
+-      guard let url = Bundle.module.url(forResource: filename, withExtension: "json", subdirectory: "Resources"),
++      guard let url = Bundle.module.url(forResource: filename, withExtension: "json", subdirectory: "MisakiSwiftData"),
+               let data = try? Data(contentsOf: url),
+               let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+             return [:]
+@@ -18,7 +18,7 @@ final class DataResourcesUtil {
+     static func loadSilver(british: Bool) -> [String: Any] {
+       let filename = british ? "gb_silver" : "us_silver"
+       
+-      guard let url = Bundle.module.url(forResource: filename, withExtension: "json",  subdirectory: "Resources"),
++      guard let url = Bundle.module.url(forResource: filename, withExtension: "json",  subdirectory: "MisakiSwiftData"),
+             let data = try? Data(contentsOf: url),
+             let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+           return [:]

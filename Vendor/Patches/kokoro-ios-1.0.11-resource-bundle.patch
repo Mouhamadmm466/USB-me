@@ -1,0 +1,39 @@
+diff --git a/Resources/config.json b/KokoroSwiftData/config.json
+similarity index 100%
+rename from Resources/config.json
+rename to KokoroSwiftData/config.json
+diff --git a/Package.swift b/Package.swift
+index cfc9bfa..22269f7 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -18,7 +18,7 @@ let package = Package(
+   dependencies: [
+     .package(url: "https://github.com/ml-explore/mlx-swift", exact: "0.30.2"),
+     // .package(url: "https://github.com/mlalma/eSpeakNGSwift", from: "1.0.1"),
+-    .package(url: "https://github.com/mlalma/MisakiSwift", exact: "1.0.6"),
++    .package(path: "../MisakiSwift"),
+     .package(url: "https://github.com/mlalma/MLXUtilsLibrary.git", exact: "0.0.6")
+   ],
+   targets: [
+@@ -34,7 +34,7 @@ let package = Package(
+         .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary")
+       ],
+       resources: [
+-       .copy("../../Resources/")
++       .copy("../../KokoroSwiftData/")
+       ]
+     ),
+     .testTarget(
+diff --git a/Sources/KokoroSwift/TTSEngine/KokoroConfig.swift b/Sources/KokoroSwift/TTSEngine/KokoroConfig.swift
+index 3c13dcc..fce71f2 100644
+--- a/Sources/KokoroSwift/TTSEngine/KokoroConfig.swift
++++ b/Sources/KokoroSwift/TTSEngine/KokoroConfig.swift
+@@ -154,7 +154,7 @@ struct KokoroConfig: Decodable {
+   ///         and should fail fast if the file is missing or malformed
+   nonisolated static func loadConfig() -> KokoroConfig {
+     // Locate config.json in the module bundle
+-    let fileURL = Bundle.module.url(forResource: "config", withExtension: "json", subdirectory: "Resources")!
++    let fileURL = Bundle.module.url(forResource: "config", withExtension: "json", subdirectory: "KokoroSwiftData")!
+     
+     // Read file contents
+     let configJSON = try! String(contentsOf: fileURL, encoding: .utf8)

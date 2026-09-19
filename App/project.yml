@@ -1,0 +1,92 @@
+name: VoiceAgent
+options:
+  bundleIdPrefix: com.mouhamadmamane
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: 3MK9V84J42
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+packages:
+  VoiceAgentKit:
+    path: ..
+targets:
+  VoiceAgent:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: AppEntry
+        type: syncedFolder
+      - path: UI
+        type: syncedFolder
+      - path: Resources
+        type: syncedFolder
+    dependencies:
+      - package: VoiceAgentKit
+        product: VoiceAgentKit
+    entitlements:
+      path: AppEntry/VoiceAgent.entitlements
+      properties:
+        com.apple.developer.kernel.increased-memory-limit: true
+    info:
+      path: AppEntry/Info.plist
+      properties:
+        CFBundleDisplayName: Voice Agent
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiredDeviceCapabilities: [arm64, iphone-performance-gaming-tier]
+        ITSAppUsesNonExemptEncryption: false
+        NSMicrophoneUsageDescription: Voice Agent listens while you talk to it so it can understand your request. Speech is processed on this iPhone and never uploaded.
+        NSContactsUsageDescription: Voice Agent looks up the people you ask it to call or message. Your contacts stay on this iPhone.
+        NSCalendarsFullAccessUsageDescription: Voice Agent reads and updates the events you ask about. Your calendar stays on this iPhone.
+        NSRemindersFullAccessUsageDescription: Voice Agent creates the reminders you ask for. Your reminders stay on this iPhone.
+        UIAppFonts: [Fonts/DMSans-Regular.ttf, Fonts/DMSans-Medium.ttf, Fonts/DMSans-SemiBold.ttf, Fonts/DMSans-Bold.ttf]
+        LSApplicationQueriesSchemes: [tel, sms, maps, music, message, mailto, calshow, itms-apps, shortcuts]
+        UIFileSharingEnabled: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent
+        PRODUCT_NAME: VoiceAgent
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+  VoiceAgentUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: ../Tests/E2E
+        type: syncedFolder
+    dependencies:
+      - target: VoiceAgent
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent.uitests
+        TEST_TARGET_NAME: VoiceAgent
+schemes:
+  VoiceAgent:
+    build:
+      targets:
+        VoiceAgent: all
+        VoiceAgentUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [VoiceAgentUITests]
+    archive:
+      config: Release
