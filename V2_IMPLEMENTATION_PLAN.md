@@ -202,8 +202,8 @@ text) and shows agent progress as a checklist of actions — never chain-of-thou
 | 1 | Intelligence store: entities, assertions, provenance, projects/goals/people/decisions/commitments, migrations, tests | done — `Intelligence/Model`, `Intelligence/Store`, 22 tests |
 | 2 | Memory extraction: grammar, validator, policy, conflict resolution, corrections | done — `Intelligence/Memory`, 26 tests (model-side wiring in phase 3) |
 | 3 | Retrieval + ContextBuilder + budget; personal-context-aware conversation | done — `Intelligence/Context`, `PersonalIntelligence`, coordinator wiring, 17 tests |
-| 4 | Intelligence UI: Home, Projects, My Intelligence, Activity | |
-| 5 | Knowledge: import, parse, index, search, project association (+ benchmark) | |
+| 4 | Intelligence UI: Home, Projects, My Intelligence, Activity | done — `App/UI/Intelligence`, activity log, verified in the simulator |
+| 5 | Knowledge: import, parse, index, search, project association (+ benchmark) | done — `Intelligence/Knowledge`, FTS5 BM25, 16 tests (device benchmark with phase 14) |
 | 6 | Goal planner: goals, plans, steps, dependencies, replanning | |
 | 7 | Agent runtime: loop, checkpoints, failure recovery, limits, cancellation | |
 | 8 | Artifacts: documents, reports, briefs, versions, viewer/export | |

@@ -95,6 +95,16 @@ struct IntelligencePresenter: Sendable {
         )
     }
 
+    func documentRow(_ document: KnowledgeDocument, now: Date = Date()) -> IntelligenceViewState.DocumentRow {
+        var parts: [String] = []
+        if let pages = document.pageCount { parts.append(pages == 1 ? "1 page" : "\(pages) pages") }
+        parts.append(document.chunkCount == 1 ? "1 passage" : "\(document.chunkCount) passages")
+        parts.append(relative(document.importedAt, now: now))
+        return IntelligenceViewState.DocumentRow(
+            id: document.id, title: document.title, meta: parts.joined(separator: " · ")
+        )
+    }
+
     // MARK: Entity detail
 
     func detail(

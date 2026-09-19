@@ -37,6 +37,36 @@ extension AppModel {
 
     // MARK: Reading
 
+    /// Reads files the user picked and indexes them. Security-scoped access is opened and closed
+    /// around the read, and the file itself is never copied into the app — only its text.
+    func importDocuments(_ urls: [URL]) {
+        guard let intelligence, !urls.isEmpty else { return }
+        intelligenceState.memory.isImporting = true
+        intelligenceState.memory.importError = nil
+        Task { @MainActor in
+            defer { intelligenceState.memory.isImporting = false }
+            for url in urls {
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    let data = try Data(contentsOf: url)
+                    _ = try await intelligence.importDocument(
+                        data: data,
+                        fileName: url.lastPathComponent,
+                        mediaType: nil,
+                        origin: .files,
+                        sourceID: url.lastPathComponent
+                    )
+                } catch let error as DocumentParseError {
+                    intelligenceState.memory.importError = error.description
+                } catch {
+                    intelligenceState.memory.importError = "\(url.lastPathComponent) couldn't be read."
+                }
+            }
+            await refreshIntelligence()
+        }
+    }
+
     /// Re-reads everything the V2 tabs show. Cheap: five indexed queries against a local file.
     func refreshIntelligence() async {
         guard let intelligence else { return }
@@ -46,6 +76,10 @@ extension AppModel {
             var state = presenter.viewState(from: snapshot, settings: settings)
             state.memory.searchText = intelligenceState.memory.searchText
             state.memory.results = intelligenceState.memory.results
+            state.memory.isImporting = intelligenceState.memory.isImporting
+            state.memory.importError = intelligenceState.memory.importError
+            state.memory.documents = (try? await intelligence.documents(limit: 50))?
+                .map { presenter.documentRow($0) } ?? []
             intelligenceState = state
         } catch {
             PrivacySafeLogger.shared.log(.error(domain: "intelligence", code: "snapshot_failed"))
@@ -107,6 +141,15 @@ extension AppModel {
             },
             setConfirmInferences: { [weak self] enabled in
                 self?.updateMemoryPolicy { $0.confirmInferences = enabled }
+            },
+            addDocument: { [weak self] in self?.isDocumentPickerPresented = true },
+            forgetDocument: { [weak self] id in
+                guard let self, let intelligence else { return }
+                Task { @MainActor in
+                    try? await intelligence.store.forgetDocument(id)
+                    self.entityDetails[id] = nil
+                    await self.refreshIntelligence()
+                }
             },
             exportEverything: { [weak self] in self?.exportIntelligence() },
             deleteEverything: { [weak self] in

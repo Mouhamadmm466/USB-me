@@ -20,6 +20,7 @@ struct MemoryScreen: View {
                     results
                 } else {
                     summary
+                    documents
                     if !state.questions.isEmpty {
                         VStack(alignment: .leading, spacing: Spacing.m) {
                             Text("Waiting on you")
@@ -96,6 +97,87 @@ struct MemoryScreen: View {
                         .padding(.horizontal, Spacing.l)
                         .padding(.vertical, Spacing.m)
                         .accessibilityElement(children: .combine)
+                    }
+                }
+                .background(Palette.surface, in: .rounded(Radius.large))
+                .overlay(RoundedRectangle(cornerRadius: Radius.large, style: .continuous)
+                    .strokeBorder(Palette.hairline, lineWidth: 0.5))
+            }
+        }
+    }
+
+    /// What the user has shared with the assistant, and the way to share more.
+    private var documents: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            HStack(spacing: Spacing.s) {
+                Text("Documents")
+                    .textStyle(.title3)
+                    .foregroundStyle(Palette.ink)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 0)
+                Button {
+                    intents.addDocument()
+                } label: {
+                    Label("Add", systemImage: "plus")
+                }
+                .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
+                .disabled(state.memory.isImporting)
+            }
+
+            if let error = state.memory.importError {
+                Text(error)
+                    .textStyle(.footnote)
+                    .foregroundStyle(Palette.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if state.memory.isImporting {
+                HStack(spacing: Spacing.s) {
+                    ProgressView()
+                    Text("Reading it…")
+                        .textStyle(.footnote)
+                        .foregroundStyle(Palette.inkSecondary)
+                }
+            }
+
+            if state.memory.documents.isEmpty, !state.memory.isImporting {
+                Text("Share a PDF, a Word file, a page or a note and I can answer from it — quoting the page it came from.")
+                    .textStyle(.footnote)
+                    .foregroundStyle(Palette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(state.memory.documents.enumerated()), id: \.element.id) { index, document in
+                        if index > 0 { Hairline().padding(.leading, 56) }
+                        Button { intents.openEntity(document.id) } label: {
+                            HStack(spacing: Spacing.m) {
+                                IconTile(systemImage: "doc.text", tone: .sky, size: 32)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(document.title)
+                                        .textStyle(.body, weight: .medium)
+                                        .foregroundStyle(Palette.ink)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                    Text(document.meta)
+                                        .textStyle(.footnote)
+                                        .foregroundStyle(Palette.inkSecondary)
+                                }
+                                Spacer(minLength: Spacing.s)
+                                Image(systemName: "chevron.right")
+                                    .textStyle(.footnote, weight: .semibold)
+                                    .foregroundStyle(Palette.inkTertiary)
+                            }
+                            .padding(.horizontal, Spacing.l)
+                            .padding(.vertical, Spacing.m)
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(RowButtonStyle())
+                        .accessibilityElement(children: .combine)
+                        .contextMenu {
+                            Button("Forget this document", systemImage: "trash", role: .destructive) {
+                                intents.forgetDocument(document.id)
+                            }
+                        }
                     }
                 }
                 .background(Palette.surface, in: .rounded(Radius.large))

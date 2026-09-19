@@ -54,6 +54,14 @@ struct IntelligenceViewState: Equatable {
         var entityID: UUID?
     }
 
+    /// A document the user brought in.
+    struct DocumentRow: Identifiable, Equatable {
+        let id: UUID
+        var title: String
+        /// "12 pages · shared · today".
+        var meta: String
+    }
+
     /// The My Intelligence tab: what is held, and the controls over it.
     struct Memory: Equatable {
         struct KindCount: Identifiable, Equatable {
@@ -72,6 +80,11 @@ struct IntelligenceViewState: Equatable {
         /// Results of the current search, empty when the field is empty.
         var results: [Item] = []
         var searchText = ""
+        var documents: [DocumentRow] = []
+        /// Set while a file is being read and indexed.
+        var isImporting = false
+        /// Why the last import failed, in the user's words.
+        var importError: String?
     }
 
     var overdue: [Item] = []
@@ -102,6 +115,8 @@ struct IntelligenceIntents {
     var search: @MainActor (_ text: String) -> Void = { _ in }
     var setLearningEnabled: @MainActor (_ enabled: Bool) -> Void = { _ in }
     var setConfirmInferences: @MainActor (_ enabled: Bool) -> Void = { _ in }
+    var addDocument: @MainActor () -> Void = {}
+    var forgetDocument: @MainActor (_ documentID: UUID) -> Void = { _ in }
     var exportEverything: @MainActor () -> Void = {}
     var deleteEverything: @MainActor () -> Void = {}
     var refresh: @MainActor () async -> Void = {}

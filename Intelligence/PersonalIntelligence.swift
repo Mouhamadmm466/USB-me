@@ -16,6 +16,9 @@ public actor PersonalIntelligence {
     private let builder: ContextBuilder
     private let pipeline: MemoryPipeline
     private let extractor: any MemoryExtracting
+    private let parser: any DocumentParsing
+    private let chunker: DocumentChunker
+    private let reranker: any PassageReranking
     private let logger: PrivacySafeLogger?
 
     private let calendar: Calendar
@@ -30,11 +33,17 @@ public actor PersonalIntelligence {
         settings: MemoryPolicySettings = .default,
         budgetTokens: Int = 600,
         calendar: Calendar = .current,
+        parser: any DocumentParsing = DocumentParser(),
+        chunker: DocumentChunker = DocumentChunker(),
+        reranker: any PassageReranking = NoReranker(),
         logger: PrivacySafeLogger? = nil
     ) {
         self.store = store
         self.settings = settings
         self.extractor = extractor
+        self.parser = parser
+        self.chunker = chunker
+        self.reranker = reranker
         self.logger = logger
         self.calendar = calendar
         let linker = EntityLinker(store: store, dates: dates)
@@ -167,6 +176,56 @@ public actor PersonalIntelligence {
         guard let subject = try await store.entity(assertion.subjectID) else { return "" }
         let object: IntelligenceEntity? = if let objectID = assertion.objectID { try await store.entity(objectID) } else { nil }
         return StatementText.sentence(assertion, subject: subject, object: object, now: now, calendar: calendar)
+    }
+
+    // MARK: - Knowledge
+
+    /// Reads a file the user shared, cuts it into passages and indexes them.
+    ///
+    /// Nothing is learned as a *memory* here: a document is something the user can be shown and
+    /// quoted from, not a set of statements about their world. Facts only leave a document when the
+    /// user asks a question it answers, and then they are quoted with their page.
+    @discardableResult
+    public func importDocument(
+        data: Data,
+        fileName: String,
+        mediaType: String? = nil,
+        origin: DocumentOrigin = .share,
+        sourceID: String? = nil,
+        projectID: UUID? = nil,
+        now: Date = Date()
+    ) async throws -> KnowledgeDocument {
+        let parsed = try parser.parse(data: data, fileName: fileName, mediaType: mediaType)
+        let documentID = UUID()
+        let chunks = chunker.chunks(of: parsed, documentID: documentID)
+        let title = parsed.title?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            ?? (fileName as NSString).deletingPathExtension
+        let document = try await store.importDocument(
+            parsed, chunks: chunks, title: title, origin: origin, sourceID: sourceID,
+            mediaType: mediaType, bytes: Int64(data.count), projectID: projectID, now: now
+        )
+        try await store.record(ActivityEntry(
+            kind: .imported,
+            headline: document.title,
+            detail: document.pageCount.map { "\($0) pages, \(document.chunkCount) passages" }
+                ?? "\(document.chunkCount) passages",
+            entityID: document.id, undo: .forget(document.id), createdAt: now
+        ))
+        knownNamesLoadedAt = .distantPast
+        logger?.log(.counter(name: "intelligence.document.imported", value: 1))
+        return document
+    }
+
+    /// Passages that answer a question, with the document and page they came from.
+    public func passages(
+        for question: String, limit: Int = 4, projectID: UUID? = nil, now: Date = Date()
+    ) async throws -> [KnowledgePassage] {
+        let found = try await store.passages(matching: question, limit: limit, projectID: projectID, now: now)
+        return try await reranker.rerank(found, question: question)
+    }
+
+    public func documents(limit: Int = 100) async throws -> [KnowledgeDocument] {
+        try await store.documents(limit: limit)
     }
 
     // MARK: - Snapshots for the UI

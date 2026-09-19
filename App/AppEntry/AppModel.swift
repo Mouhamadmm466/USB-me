@@ -63,6 +63,8 @@ final class AppModel {
     var entityDetails: [UUID: EntityDetailViewState] = [:]
     /// Set when an export is ready; the share sheet is presented from it.
     var exportedFile: URL?
+    /// Presents the Files picker for importing a document.
+    var isDocumentPickerPresented = false
     @ObservationIgnored private(set) var intelligence: PersonalIntelligence?
     @ObservationIgnored let presenter = IntelligencePresenter()
 

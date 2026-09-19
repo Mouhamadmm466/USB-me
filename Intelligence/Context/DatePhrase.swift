@@ -8,3 +8,8 @@ import Foundation
 public protocol DatePhraseResolving: Sendable {
     func resolve(_ phrase: String, now: Date) -> Date?
 }
+
+extension String {
+    /// The string, unless it is blank.
+    var nilIfEmpty: String? { isEmpty ? nil : self }
+}

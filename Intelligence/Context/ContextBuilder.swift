@@ -13,6 +13,9 @@ public struct ContextBuilder: Sendable {
     /// Roughly 600 tokens for a turn, 900 for an agent step (PRD §45).
     public var budgetTokens: Int
     public var calendar: Calendar
+    /// How many document passages a question may bring in, and how much of each is quoted.
+    public var maximumPassages: Int
+    public var passageCharacters: Int
     private let logger: PrivacySafeLogger?
 
     public init(
@@ -20,12 +23,16 @@ public struct ContextBuilder: Sendable {
         linker: EntityLinker,
         budgetTokens: Int = 600,
         calendar: Calendar = .current,
+        maximumPassages: Int = 2,
+        passageCharacters: Int = 400,
         logger: PrivacySafeLogger? = nil
     ) {
         self.store = store
         self.linker = linker
         self.budgetTokens = budgetTokens
         self.calendar = calendar
+        self.maximumPassages = maximumPassages
+        self.passageCharacters = passageCharacters
         self.logger = logger
     }
 
@@ -36,9 +43,13 @@ public struct ContextBuilder: Sendable {
     ) async throws -> PersonalContext {
         let linked = try await linker.link(utterance, now: now)
         let time = linker.linkTime(utterance, now: now, calendar: calendar)
+        // A question can be about a document without naming anything the store knows ("when is the
+        // midterm?"), so the passages are looked up before deciding the turn has nothing to add.
+        let passages = try await knowledge(for: utterance, linked: linked, now: now)
 
-        // Nothing known is named and no day is mentioned: the turn keeps V1's cost exactly.
-        guard !linked.isEmpty || time != nil || !activity.isEmpty else { return .empty }
+        // Nothing known is named, no day is mentioned and no document answers it: the turn keeps
+        // V1's cost exactly.
+        guard !linked.isEmpty || time != nil || !activity.isEmpty || !passages.isEmpty else { return .empty }
 
         let formatter = ContextFormatter(now: now, calendar: calendar)
         var lines = activity.map { ContextLine($0, priority: .activity) }
@@ -70,6 +81,8 @@ public struct ContextBuilder: Sendable {
         for line in try await obligations(for: linked.map(\.entity), formatter: formatter, seen: &seen) {
             lines.append(line)
         }
+
+        lines.append(contentsOf: passages)
 
         return trim(lines)
     }
@@ -114,6 +127,41 @@ public struct ContextBuilder: Sendable {
             }
         }
         return lines
+    }
+
+    // MARK: - Documents
+
+    /// Passages from the user's own documents, when the utterance is a question. Quoted with their
+    /// source so an answer can say where it came from — and only ever quoted, never paraphrased
+    /// into a remembered fact.
+    private func knowledge(
+        for utterance: String, linked: [LinkedEntity], now: Date
+    ) async throws -> [ContextLine] {
+        guard maximumPassages > 0, Self.isQuestion(utterance) else { return [] }
+        let projectID = linked.first { $0.entity.kind == .project }?.entity.id
+        let documentID = linked.first { $0.entity.kind == .document }?.entity.id
+        let passages = try await store.passages(
+            matching: utterance, limit: maximumPassages, projectID: projectID, documentID: documentID, now: now
+        )
+        return passages.map { passage in
+            let text = passage.chunk.text
+                .replacingOccurrences(of: "\n", with: " ")
+                .replacingOccurrences(of: " +", with: " ", options: .regularExpression)
+            let quoted = text.count > passageCharacters
+                ? String(text.prefix(passageCharacters)).trimmingCharacters(in: .whitespaces) + "…"
+                : text
+            return ContextLine(
+                "from \(passage.citation): \"\(quoted)\"", priority: .knowledge, entityID: passage.document.id
+            )
+        }
+    }
+
+    /// Worth searching documents for: a question, or a request to find or check something.
+    static func isQuestion(_ utterance: String) -> Bool {
+        if utterance.hasSuffix("?") { return true }
+        let opener = utterance.lowercased().split(separator: " ").first.map(String.init) ?? ""
+        return ["what", "when", "where", "who", "why", "how", "which", "is", "are", "does", "did",
+                "can", "should", "find", "look", "check", "remind", "summarize", "summarise"].contains(opener)
     }
 
     // MARK: - Budget

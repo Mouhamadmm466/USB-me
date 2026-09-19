@@ -261,7 +261,7 @@ public actor IntelligenceStore {
             kind: kind, title: trimmed, subtitle: subtitle, status: status, projectID: projectID,
             startsAt: startsAt, endsAt: endsAt, dueAt: dueAt, importance: importance, attributes: attributes
         )
-        try insert(entity)
+        try insertEntity(entity)
         return entity
     }
 
@@ -704,7 +704,7 @@ public actor IntelligenceStore {
 
     // MARK: - Private: writing
 
-    private func insert(_ entity: IntelligenceEntity) throws {
+    func insertEntity(_ entity: IntelligenceEntity) throws {
         try db.run(
             """
             INSERT INTO entities (id, kind, title, title_folded, subtitle, status, project_id,

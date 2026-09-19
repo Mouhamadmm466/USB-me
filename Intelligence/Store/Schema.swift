@@ -8,7 +8,7 @@ import Foundation
 /// must still open the database and fall back to prefix matching.
 enum IntelligenceSchema {
     /// Index 0 is schema version 1.
-    static let migrations: [String] = [v1, v2]
+    static let migrations: [String] = [v1, v2, v3]
 
     static var currentVersion: Int32 { Int32(migrations.count) }
 
@@ -116,10 +116,49 @@ enum IntelligenceSchema {
     id, kind, headline, detail, entity_id, assertion_id, undo, created_at, undone_at
     """
 
+    // MARK: - v3: documents and their passages
+
+    private static let v3 = """
+    CREATE TABLE documents (
+        id TEXT PRIMARY KEY REFERENCES entities(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        origin TEXT NOT NULL,
+        source_id TEXT,
+        media_type TEXT,
+        bytes INTEGER NOT NULL DEFAULT 0,
+        page_count INTEGER,
+        content_hash TEXT NOT NULL,
+        imported_at REAL NOT NULL
+    );
+
+    CREATE INDEX documents_hash ON documents(content_hash);
+    CREATE INDEX documents_imported ON documents(imported_at);
+
+    CREATE TABLE chunks (
+        id TEXT PRIMARY KEY,
+        document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+        ordinal INTEGER NOT NULL,
+        heading TEXT,
+        page INTEGER,
+        text TEXT NOT NULL,
+        characters INTEGER NOT NULL
+    );
+
+    CREATE INDEX chunks_document ON chunks(document_id, ordinal);
+    """
+
+    /// Columns of `documents`, in the order every read selects them.
+    static let documentColumns = """
+    id, title, origin, source_id, media_type, bytes, page_count, content_hash, imported_at, \
+    (SELECT COUNT(*) FROM chunks WHERE document_id = documents.id)
+    """
+
+    static let chunkColumns = "id, document_id, ordinal, heading, page, text"
+
     // MARK: - Full text
 
     /// Version of the FTS layer, stored in `meta` so it can be rebuilt independently of migrations.
-    static let fullTextVersion = "1"
+    static let fullTextVersion = "2"
 
     /// Creates the FTS5 tables and the triggers that keep them in step, then backfills. Safe to call
     /// on every launch: it is a no-op once `meta.fts_version` matches.
@@ -136,6 +175,21 @@ enum IntelligenceSchema {
         text,
         tokenize = 'unicode61 remove_diacritics 2'
     );
+
+    CREATE VIRTUAL TABLE chunks_fts USING fts5(
+        chunk_id UNINDEXED,
+        document_id UNINDEXED,
+        text,
+        tokenize = 'porter unicode61 remove_diacritics 2'
+    );
+
+    CREATE TRIGGER chunks_fts_insert AFTER INSERT ON chunks BEGIN
+        INSERT INTO chunks_fts(chunk_id, document_id, text) VALUES (new.id, new.document_id, new.text);
+    END;
+
+    CREATE TRIGGER chunks_fts_delete AFTER DELETE ON chunks BEGIN
+        DELETE FROM chunks_fts WHERE chunk_id = old.id;
+    END;
 
     CREATE TRIGGER entities_fts_insert AFTER INSERT ON entities BEGIN
         INSERT INTO entities_fts(entity_id, text)
@@ -172,6 +226,7 @@ enum IntelligenceSchema {
     INSERT INTO entities_fts(entity_id, text) SELECT entity_id, alias FROM entity_aliases;
     INSERT INTO assertions_fts(assertion_id, subject_id, text)
         SELECT id, subject_id, value_text FROM assertions WHERE value_text IS NOT NULL;
+    INSERT INTO chunks_fts(chunk_id, document_id, text) SELECT id, document_id, text FROM chunks;
     """
 
     static let dropFullText = """
@@ -181,8 +236,11 @@ enum IntelligenceSchema {
     DROP TRIGGER IF EXISTS alias_fts_insert;
     DROP TRIGGER IF EXISTS assertions_fts_insert;
     DROP TRIGGER IF EXISTS assertions_fts_delete;
+    DROP TRIGGER IF EXISTS chunks_fts_insert;
+    DROP TRIGGER IF EXISTS chunks_fts_delete;
     DROP TABLE IF EXISTS entities_fts;
     DROP TABLE IF EXISTS assertions_fts;
+    DROP TABLE IF EXISTS chunks_fts;
     """
 
     /// Columns of `entities`, in the order every entity read selects them.

@@ -66,6 +66,13 @@ struct RootView: View {
         .sheet(item: $model.exportedFile) { file in
             ShareSheet(items: [file])
         }
+        .fileImporter(
+            isPresented: $model.isDocumentPickerPresented,
+            allowedContentTypes: [.pdf, .plainText, .rtf, .html, .text, .data],
+            allowsMultipleSelection: true
+        ) { result in
+            if case let .success(urls) = result { model.importDocuments(urls) }
+        }
         .sheet(isPresented: $model.isSettingsPresented) {
             SettingsScreen(state: model.settingsState, actions: model.settingsActions, initialSection: model.settingsInitialSection)
                 .fileImporter(isPresented: $model.isFolderPickerPresented, allowedContentTypes: [.folder]) { result in
