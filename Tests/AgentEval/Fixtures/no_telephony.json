@@ -1,0 +1,877 @@
+{
+  "id": "no_telephony",
+  "contacts": [
+    {
+      "id": "c-alex-chen",
+      "given": "Alex",
+      "family": "Chen",
+      "organization": "Globex",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (415) 555-0142"
+        }
+      ]
+    },
+    {
+      "id": "c-alex-kim",
+      "given": "Alex",
+      "family": "Kim",
+      "organization": "Acme Corp",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (212) 555-0134"
+        }
+      ]
+    },
+    {
+      "id": "c-anita-patel",
+      "given": "Anita",
+      "family": "Patel",
+      "organization": "Riverside Dental",
+      "phones": [
+        {
+          "label": "work",
+          "number": "+1 (212) 555-0177"
+        }
+      ]
+    },
+    {
+      "id": "c-ava-thompson",
+      "given": "Ava",
+      "family": "Thompson",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (347) 555-0119"
+        }
+      ]
+    },
+    {
+      "id": "c-carlos-mendoza",
+      "given": "Carlos",
+      "family": "Mendoza",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (305) 555-0158"
+        }
+      ]
+    },
+    {
+      "id": "c-chris-taylor",
+      "given": "Chris",
+      "family": "Taylor",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (617) 555-0103"
+        }
+      ]
+    },
+    {
+      "id": "c-dad",
+      "given": "Dad",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (914) 555-0161"
+        },
+        {
+          "label": "home",
+          "number": "+1 (914) 555-0172"
+        }
+      ]
+    },
+    {
+      "id": "c-daniel-kim",
+      "given": "Daniel",
+      "family": "Kim",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (201) 555-0148"
+        }
+      ]
+    },
+    {
+      "id": "c-david-cohen",
+      "given": "David",
+      "family": "Cohen",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (646) 555-0191"
+        },
+        {
+          "label": "home",
+          "number": "+1 (718) 555-0126"
+        },
+        {
+          "label": "work",
+          "number": "+1 (212) 555-0183"
+        }
+      ]
+    },
+    {
+      "id": "c-emily-davis",
+      "given": "Emily",
+      "family": "Davis",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (503) 555-0137"
+        }
+      ]
+    },
+    {
+      "id": "c-ethan-park",
+      "given": "Ethan",
+      "family": "Park",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (206) 555-0164"
+        }
+      ]
+    },
+    {
+      "id": "c-fatima-hassan",
+      "given": "Fatima",
+      "family": "Hassan",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (312) 555-0145"
+        }
+      ]
+    },
+    {
+      "id": "c-grace-mensah",
+      "given": "Grace",
+      "family": "Mensah",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (240) 555-0171"
+        }
+      ]
+    },
+    {
+      "id": "c-grandma",
+      "given": "Grandma",
+      "phones": [
+        {
+          "label": "home",
+          "number": "+1 (914) 555-0131"
+        },
+        {
+          "label": "home",
+          "number": "+1 (561) 555-0144"
+        }
+      ]
+    },
+    {
+      "id": "c-hannah-schmidt",
+      "given": "Hannah",
+      "family": "Schmidt",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (773) 555-0128"
+        }
+      ]
+    },
+    {
+      "id": "c-ines-moreau",
+      "given": "Ines",
+      "family": "Moreau",
+      "phones": []
+    },
+    {
+      "id": "c-jessica-martinez",
+      "given": "Jessica",
+      "family": "Martinez",
+      "nickname": "Jess",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (512) 555-0152"
+        }
+      ]
+    },
+    {
+      "id": "c-joe-rossi",
+      "given": "Joe",
+      "family": "Rossi",
+      "organization": "Rossi Plumbing",
+      "phones": [
+        {
+          "label": "work",
+          "number": "+1 (718) 555-0199"
+        }
+      ]
+    },
+    {
+      "id": "c-jordan-lee",
+      "given": "Jordan",
+      "family": "Lee",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (415) 555-0186"
+        },
+        {
+          "label": "work",
+          "number": "+1 (650) 555-0117"
+        }
+      ]
+    },
+    {
+      "id": "c-kevin-obrien",
+      "given": "Kevin",
+      "family": "O'Brien",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (617) 555-0174"
+        }
+      ]
+    },
+    {
+      "id": "c-kofi-boateng",
+      "given": "Kofi",
+      "family": "Boateng",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (646) 555-0176"
+        },
+        {
+          "label": "mobile",
+          "number": "+1 (929) 555-0118"
+        }
+      ]
+    },
+    {
+      "id": "c-liam-murphy",
+      "given": "Liam",
+      "family": "Murphy",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (857) 555-0109"
+        },
+        {
+          "label": "home",
+          "number": "+1 (617) 555-0132"
+        }
+      ]
+    },
+    {
+      "id": "c-lucas-silva",
+      "given": "Lucas",
+      "family": "Silva",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (408) 555-0167"
+        }
+      ]
+    },
+    {
+      "id": "c-maya-patel",
+      "given": "Maya",
+      "family": "Patel",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (646) 555-0112"
+        }
+      ]
+    },
+    {
+      "id": "c-michael-brown",
+      "given": "Michael",
+      "family": "Brown",
+      "nickname": "Mike",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (929) 555-0140"
+        }
+      ]
+    },
+    {
+      "id": "c-mom",
+      "given": "Mom",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (914) 555-0105"
+        }
+      ]
+    },
+    {
+      "id": "c-nina-alvarez",
+      "given": "Nina",
+      "family": "Alvarez",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (415) 555-0173"
+        },
+        {
+          "label": "mobile",
+          "number": "+1 (628) 555-0195"
+        }
+      ]
+    },
+    {
+      "id": "c-noah-brooks",
+      "given": "Noah",
+      "family": "Brooks",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (720) 555-0153"
+        }
+      ]
+    },
+    {
+      "id": "c-oliver-bennett",
+      "given": "Oliver",
+      "family": "Bennett",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+44 7700 900123"
+        }
+      ]
+    },
+    {
+      "id": "c-olivia-wright",
+      "given": "Olivia",
+      "family": "Wright",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (619) 555-0121"
+        }
+      ]
+    },
+    {
+      "id": "c-oluwaseun-adeyemi",
+      "given": "Oluwaseun",
+      "family": "Adeyemi",
+      "nickname": "Seun",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (832) 555-0188"
+        }
+      ]
+    },
+    {
+      "id": "c-priya-sharma",
+      "given": "Priya",
+      "family": "Sharma",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (917) 555-0123"
+        }
+      ]
+    },
+    {
+      "id": "c-rachel-green",
+      "given": "Rachel",
+      "family": "Green",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (212) 555-0169"
+        }
+      ]
+    },
+    {
+      "id": "c-raj-malhotra",
+      "given": "Raj",
+      "family": "Malhotra",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (732) 555-0136"
+        }
+      ]
+    },
+    {
+      "id": "c-robert-miller",
+      "given": "Robert",
+      "family": "Miller",
+      "nickname": "Bob",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (646) 555-0187"
+        },
+        {
+          "label": "work",
+          "number": "+1 (212) 555-0165"
+        }
+      ]
+    },
+    {
+      "id": "c-sam-rivera",
+      "given": "Sam",
+      "family": "Rivera",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (718) 555-0147"
+        }
+      ]
+    },
+    {
+      "id": "c-sarah-johnson",
+      "given": "Sarah",
+      "family": "Johnson",
+      "organization": "Initech",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (212) 555-0198"
+        }
+      ]
+    },
+    {
+      "id": "c-sarah-wilson",
+      "given": "Sarah",
+      "family": "Wilson",
+      "organization": "Hooli",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (415) 555-0156"
+        }
+      ]
+    },
+    {
+      "id": "c-siobhan-oconnell",
+      "given": "Siobhan",
+      "family": "O'Connell",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (617) 555-0115"
+        }
+      ]
+    },
+    {
+      "id": "c-sophie-dubois",
+      "given": "Sophie",
+      "family": "Dubois",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (514) 555-0179"
+        }
+      ]
+    },
+    {
+      "id": "c-thanh-nguyen",
+      "given": "Thanh",
+      "family": "Nguyen",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (714) 555-0133"
+        }
+      ]
+    },
+    {
+      "id": "c-tom-becker",
+      "given": "Tom",
+      "family": "Becker",
+      "phones": [
+        {
+          "label": "work",
+          "number": "+1 (312) 555-0192"
+        }
+      ]
+    },
+    {
+      "id": "c-victor-okafor",
+      "given": "Victor",
+      "family": "Okafor",
+      "phones": [
+        {
+          "label": "home",
+          "number": "+1 (718) 555-0138"
+        },
+        {
+          "label": "work",
+          "number": "+1 (212) 555-0116"
+        }
+      ]
+    },
+    {
+      "id": "c-xiaoming-zhao",
+      "given": "Xiaoming",
+      "family": "Zhao",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (626) 555-0181"
+        }
+      ]
+    },
+    {
+      "id": "c-yuki-tanaka",
+      "given": "Yuki",
+      "family": "Tanaka",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (310) 555-0125"
+        }
+      ]
+    },
+    {
+      "id": "c-zoe-laurent",
+      "given": "Zoë",
+      "family": "Laurent",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (212) 555-0107"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ev-weekly-planning",
+      "title": "Weekly planning",
+      "start": "2026-09-14T09:00",
+      "end": "2026-09-14T09:30",
+      "location": "Zoom"
+    },
+    {
+      "id": "ev-pottery-class",
+      "title": "Pottery class",
+      "start": "2026-09-16T18:30",
+      "end": "2026-09-16T20:00",
+      "location": "Clay Studio"
+    },
+    {
+      "id": "ev-farmers-market",
+      "title": "Farmers market",
+      "start": "2026-09-19T11:00",
+      "end": "2026-09-19T12:00",
+      "location": "Union Square"
+    },
+    {
+      "id": "ev-soccer-practice",
+      "title": "Soccer practice",
+      "start": "2026-09-19T15:00",
+      "end": "2026-09-19T16:30",
+      "location": "Riverside Park"
+    },
+    {
+      "id": "ev-family-dinner",
+      "title": "Family dinner",
+      "start": "2026-09-20T18:00",
+      "end": "2026-09-20T20:00",
+      "location": "Mom's place"
+    },
+    {
+      "id": "ev-team-sync-mon",
+      "title": "Team sync",
+      "start": "2026-09-21T10:00",
+      "end": "2026-09-21T10:30",
+      "location": "Zoom"
+    },
+    {
+      "id": "ev-dentist",
+      "title": "Dentist appointment",
+      "start": "2026-09-22T14:00",
+      "end": "2026-09-22T15:00",
+      "location": "Riverside Dental"
+    },
+    {
+      "id": "ev-team-sync-wed",
+      "title": "Team sync",
+      "start": "2026-09-23T10:00",
+      "end": "2026-09-23T10:30",
+      "location": "Zoom"
+    },
+    {
+      "id": "ev-design-review",
+      "title": "Design review",
+      "start": "2026-09-23T13:00",
+      "end": "2026-09-23T14:00",
+      "location": "Conference Room B"
+    },
+    {
+      "id": "ev-lunch-priya",
+      "title": "Lunch with Priya",
+      "start": "2026-09-24T12:30",
+      "end": "2026-09-24T13:30",
+      "location": "Luna Coffee"
+    },
+    {
+      "id": "ev-quarterly-planning",
+      "title": "Quarterly planning",
+      "start": "2026-09-25T09:00",
+      "end": "2026-09-25T11:00"
+    },
+    {
+      "id": "ev-book-club",
+      "title": "Book club",
+      "start": "2026-09-25T19:00",
+      "end": "2026-09-25T21:00",
+      "location": "Library"
+    },
+    {
+      "id": "ev-maya-birthday",
+      "title": "Maya's birthday",
+      "start": "2026-09-26T00:00",
+      "end": "2026-09-27T00:00",
+      "all_day": true
+    },
+    {
+      "id": "ev-hiking-trip",
+      "title": "Hiking trip",
+      "start": "2026-09-27T08:00",
+      "end": "2026-09-27T13:00",
+      "location": "Bear Mountain"
+    },
+    {
+      "id": "ev-flight-chicago",
+      "title": "Flight to Chicago",
+      "start": "2026-09-28T07:15",
+      "end": "2026-09-28T09:30",
+      "location": "JFK Terminal 4"
+    },
+    {
+      "id": "ev-globex-call",
+      "title": "Client call with Globex",
+      "start": "2026-09-29T11:00",
+      "end": "2026-09-29T11:45"
+    },
+    {
+      "id": "ev-parent-teacher",
+      "title": "Parent-teacher conference",
+      "start": "2026-09-30T16:00",
+      "end": "2026-09-30T16:30",
+      "location": "Lincoln Elementary"
+    },
+    {
+      "id": "ev-car-service",
+      "title": "Car service",
+      "start": "2026-10-01T08:30",
+      "end": "2026-10-01T09:30",
+      "location": "Midtown Auto"
+    },
+    {
+      "id": "ev-concert",
+      "title": "Concert",
+      "start": "2026-10-03T20:00",
+      "end": "2026-10-03T22:30",
+      "location": "Madison Square Garden"
+    },
+    {
+      "id": "ev-anniversary",
+      "title": "Anniversary dinner",
+      "start": "2026-10-04T19:00",
+      "end": "2026-10-04T21:00"
+    },
+    {
+      "id": "ev-team-offsite",
+      "title": "Team offsite",
+      "start": "2026-10-06T00:00",
+      "end": "2026-10-08T00:00",
+      "all_day": true
+    },
+    {
+      "id": "ev-haircut",
+      "title": "Haircut",
+      "start": "2026-10-08T17:30",
+      "end": "2026-10-08T18:15"
+    },
+    {
+      "id": "ev-vet",
+      "title": "Vet appointment",
+      "start": "2026-10-10T10:00",
+      "end": "2026-10-10T10:45"
+    },
+    {
+      "id": "ev-swift-conference",
+      "title": "Swift conference",
+      "start": "2026-10-14T00:00",
+      "end": "2026-10-17T00:00",
+      "all_day": true
+    },
+    {
+      "id": "ev-annual-physical",
+      "title": "Annual physical",
+      "start": "2026-10-19T09:30",
+      "end": "2026-10-19T10:15"
+    },
+    {
+      "id": "ev-halloween-party",
+      "title": "Halloween party",
+      "start": "2026-10-31T19:00",
+      "end": "2026-10-31T23:00"
+    }
+  ],
+  "files": [
+    {
+      "scope": "scope-documents",
+      "path": "Budget Template.xlsx",
+      "modified": "2026-03-02T09:12",
+      "bytes": 18432
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Car Insurance Card.pdf",
+      "modified": "2026-01-15T16:40",
+      "bytes": 102400
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Kids/School Calendar 2026.pdf",
+      "modified": "2026-08-28T08:05",
+      "bytes": 241664
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Lease Agreement.pdf",
+      "modified": "2025-11-30T11:20",
+      "bytes": 512000
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Meeting Notes/Design Review Notes.md",
+      "modified": "2026-09-16T17:45",
+      "bytes": 4096
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Photos/Beach Day.jpg",
+      "modified": "2026-08-09T15:31",
+      "bytes": 3145728
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Q3 Budget Notes.docx",
+      "modified": "2026-09-10T10:02",
+      "bytes": 22528
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Q3 Budget.xlsx",
+      "modified": "2026-09-12T14:22",
+      "bytes": 48213
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Recipes/Banana Bread.pdf",
+      "modified": "2025-12-20T19:00",
+      "bytes": 88064
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Recipes/Grandma's Lasagna.docx",
+      "modified": "2025-10-05T12:30",
+      "bytes": 30720
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Resume 2026.pdf",
+      "modified": "2026-09-01T21:14",
+      "bytes": 131072
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Travel/Chicago Itinerary.pdf",
+      "modified": "2026-09-15T07:50",
+      "bytes": 65536
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Travel/Passport Scan.pdf",
+      "modified": "2026-02-11T13:13",
+      "bytes": 409600
+    },
+    {
+      "scope": "scope-documents",
+      "path": "Wedding Speech Draft.docx",
+      "modified": "2026-07-22T22:47",
+      "bytes": 19456
+    },
+    {
+      "scope": "scope-work",
+      "path": "Contracts/Globex MSA.pdf",
+      "modified": "2026-06-30T18:00",
+      "bytes": 734003
+    },
+    {
+      "scope": "scope-work",
+      "path": "Invoices/Invoice 1042.pdf",
+      "modified": "2026-08-31T09:00",
+      "bytes": 57344
+    },
+    {
+      "scope": "scope-work",
+      "path": "Invoices/Invoice 1043.pdf",
+      "modified": "2026-09-15T09:00",
+      "bytes": 58368
+    },
+    {
+      "scope": "scope-work",
+      "path": "Onboarding Checklist.docx",
+      "modified": "2026-04-18T10:10",
+      "bytes": 26624
+    },
+    {
+      "scope": "scope-work",
+      "path": "Presentations/Quarterly Review.key",
+      "modified": "2026-09-17T19:25",
+      "bytes": 5242880
+    },
+    {
+      "scope": "scope-work",
+      "path": "Reports/Q3 Sales Report.pdf",
+      "modified": "2026-09-18T12:00",
+      "bytes": 1048576
+    },
+    {
+      "scope": "scope-private",
+      "path": "Bank Statements/September 2026.pdf",
+      "modified": "2026-09-05T08:00",
+      "bytes": 204800
+    },
+    {
+      "scope": "scope-private",
+      "path": "Journal.txt",
+      "modified": "2026-09-18T23:10",
+      "bytes": 12288
+    },
+    {
+      "scope": "scope-private",
+      "path": "Medical/Lab Results.pdf",
+      "modified": "2026-08-20T10:30",
+      "bytes": 307200
+    }
+  ],
+  "authorized_file_scopes": [
+    "scope-documents",
+    "scope-work"
+  ],
+  "permissions": {},
+  "can_send_text": false,
+  "can_place_calls": false
+}

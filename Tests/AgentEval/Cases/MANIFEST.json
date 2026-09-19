@@ -1,0 +1,484 @@
+{
+  "generator": "Scripts/generate_agent_eval_cases.py",
+  "generator_version": "1.0.0",
+  "seed": 20260919,
+  "total_cases": 3249,
+  "total_turns": 5709,
+  "release_safety_cases": 996,
+  "category_groups": {
+    "contacts+calls": {
+      "categories": [
+        "contacts",
+        "calls"
+      ],
+      "cases": 522,
+      "minimum": 400
+    },
+    "messages": {
+      "categories": [
+        "messages"
+      ],
+      "cases": 566,
+      "minimum": 500
+    },
+    "calendar+reminders": {
+      "categories": [
+        "calendar",
+        "reminders"
+      ],
+      "cases": 687,
+      "minimum": 550
+    },
+    "multi_turn": {
+      "categories": [
+        "multi_turn"
+      ],
+      "cases": 357,
+      "minimum": 300
+    },
+    "unsupported": {
+      "categories": [
+        "unsupported"
+      ],
+      "cases": 240,
+      "minimum": 200
+    },
+    "injection": {
+      "categories": [
+        "injection"
+      ],
+      "cases": 182,
+      "minimum": 150
+    },
+    "confirmation": {
+      "categories": [
+        "confirmation"
+      ],
+      "cases": 445,
+      "minimum": 400
+    },
+    "answers": {
+      "categories": [
+        "answers"
+      ],
+      "cases": 100,
+      "minimum": 80
+    },
+    "files+apps": {
+      "categories": [
+        "files",
+        "apps"
+      ],
+      "cases": 150,
+      "minimum": 100
+    }
+  },
+  "categories": {
+    "answers": {
+      "cases": 100,
+      "turns": 100,
+      "subcategories": {
+        "arithmetic": 19,
+        "capabilities": 20,
+        "chit_chat": 22,
+        "conversions": 10,
+        "knowledge": 18,
+        "time": 11
+      }
+    },
+    "apps": {
+      "cases": 66,
+      "turns": 66,
+      "subcategories": {
+        "maps_query": 14,
+        "open_app": 40,
+        "unsupported_app": 12
+      }
+    },
+    "calendar": {
+      "cases": 480,
+      "turns": 635,
+      "subcategories": {
+        "create_all_day": 30,
+        "create_day_part": 14,
+        "create_dst": 4,
+        "create_duration": 20,
+        "create_location": 24,
+        "create_time_only": 16,
+        "create_time_range": 24,
+        "create_timed": 150,
+        "event_ambiguous": 14,
+        "event_not_found": 10,
+        "list_events": 70,
+        "list_events_dst": 5,
+        "negation": 10,
+        "permission_prompt_granted": 15,
+        "update_duration": 12,
+        "update_location": 8,
+        "update_move_day": 12,
+        "update_move_daytime": 12,
+        "update_move_time": 22,
+        "update_rename": 8
+      }
+    },
+    "calls": {
+      "cases": 380,
+      "turns": 591,
+      "subcategories": {
+        "canonical": 100,
+        "clarification_cancel": 12,
+        "contact_ambiguous": 36,
+        "contact_not_found": 18,
+        "diacritics": 5,
+        "dictated_number": 30,
+        "duplicates_ambiguous": 17,
+        "duplicates_unique": 7,
+        "hard_names": 20,
+        "misspelling": 16,
+        "negation": 25,
+        "no_phone": 6,
+        "no_telephony": 10,
+        "permission_denied": 12,
+        "phone_ambiguous": 26,
+        "phone_label": 32,
+        "phone_unique_mobile": 8
+      }
+    },
+    "confirmation": {
+      "cases": 445,
+      "turns": 1081,
+      "subcategories": {
+        "affirmative": 120,
+        "defer": 55,
+        "modification": 70,
+        "negative": 80,
+        "nothing_pending": 30,
+        "reprompt_limit": 26,
+        "unclear": 64
+      }
+    },
+    "contacts": {
+      "cases": 142,
+      "turns": 142,
+      "subcategories": {
+        "permission_denied": 10,
+        "search": 70,
+        "search_ambiguous": 12,
+        "search_duplicates": 14,
+        "search_empty_store": 6,
+        "search_hard_names": 20,
+        "search_not_found": 10
+      }
+    },
+    "files": {
+      "cases": 84,
+      "turns": 94,
+      "subcategories": {
+        "empty_scope": 4,
+        "file_ambiguous": 10,
+        "file_not_found": 10,
+        "no_file_scope": 8,
+        "open_file": 30,
+        "search_files": 22
+      }
+    },
+    "injection": {
+      "cases": 182,
+      "turns": 338,
+      "subcategories": {
+        "adversarial_contact": 14,
+        "calendar_legit": 14,
+        "calendar_read": 20,
+        "calendar_self_approve": 10,
+        "calendar_stray": 30,
+        "calendar_thanks": 8,
+        "contact_fields": 16,
+        "dictated_instruction": 30,
+        "files_read": 14,
+        "files_stray": 16,
+        "list_then_update": 10
+      }
+    },
+    "messages": {
+      "cases": 566,
+      "turns": 900,
+      "subcategories": {
+        "canonical": 250,
+        "clarification_cancel": 12,
+        "contact_ambiguous": 40,
+        "contact_not_found": 16,
+        "dictated_number": 30,
+        "duplicates_ambiguous": 17,
+        "duplicates_unique": 7,
+        "hard_names": 16,
+        "keyword_trap": 40,
+        "missing_content": 36,
+        "misspelling": 16,
+        "negation": 30,
+        "no_telephony": 10,
+        "permission_denied": 12,
+        "phone_ambiguous": 26,
+        "phone_unique_mobile": 8
+      }
+    },
+    "multi_turn": {
+      "cases": 357,
+      "turns": 1234,
+      "subcategories": {
+        "cancel_then_other": 20,
+        "clarification_cancel_then_new": 15,
+        "clarification_then_pronoun": 25,
+        "create_then_duration": 20,
+        "create_then_location": 8,
+        "create_then_move": 30,
+        "list_then_duration": 20,
+        "list_then_move": 40,
+        "list_then_rename": 10,
+        "modification_chain": 20,
+        "pronoun_contact": 95,
+        "read_then_stray_yes": 12,
+        "repeat_action": 12,
+        "topic_switch": 30
+      }
+    },
+    "reminders": {
+      "cases": 207,
+      "turns": 288,
+      "subcategories": {
+        "date_only": 45,
+        "day_part": 14,
+        "negation": 7,
+        "no_due": 25,
+        "relative": 20,
+        "relative_dst": 5,
+        "time_only": 16,
+        "timed": 75
+      }
+    },
+    "unsupported": {
+      "cases": 240,
+      "turns": 240,
+      "subcategories": {
+        "alarm_timer": 17,
+        "code": 19,
+        "credentials": 19,
+        "delete": 19,
+        "email": 20,
+        "money": 24,
+        "nonexistent_tool": 28,
+        "other": 18,
+        "purchase": 21,
+        "social": 17,
+        "system_settings": 27,
+        "url": 11
+      }
+    }
+  },
+  "tags": {
+    "after_cancel": 28,
+    "all_day": 30,
+    "answer_arithmetic": 19,
+    "answer_capabilities": 20,
+    "answer_chit_chat": 22,
+    "answer_conversions": 10,
+    "answer_knowledge": 18,
+    "answer_time": 11,
+    "asr_noise": 32,
+    "asr_style": 786,
+    "calendar": 82,
+    "call_then_text": 40,
+    "cancelled_clarification": 44,
+    "canonical": 420,
+    "capability_question": 20,
+    "clarification": 286,
+    "compose_message": 131,
+    "confirm_no": 80,
+    "confirm_yes": 120,
+    "confirmed": 368,
+    "contacts": 16,
+    "content_change": 16,
+    "core_phrase": 225,
+    "create_calendar_event": 122,
+    "create_reminder": 68,
+    "created_event": 58,
+    "date_only": 75,
+    "day_after_tomorrow": 15,
+    "day_part": 27,
+    "defer": 55,
+    "diacritics": 5,
+    "dictated_number": 60,
+    "double_confirmation": 10,
+    "dst": 14,
+    "duplicate_names": 175,
+    "duration": 67,
+    "duration_change": 6,
+    "explicit_date": 265,
+    "extended_phrase": 94,
+    "filler": 482,
+    "full_name": 606,
+    "given_name": 479,
+    "hard_name": 141,
+    "initiate_call": 126,
+    "injection_dictated": 30,
+    "injection_read": 138,
+    "intl_number": 53,
+    "keeps_time": 12,
+    "keyword_trap": 294,
+    "last_event": 138,
+    "later_today": 20,
+    "legit_after_injection": 14,
+    "listing_one_event": 70,
+    "location": 60,
+    "location_change": 5,
+    "maps": 14,
+    "missing_field": 36,
+    "misspelling": 32,
+    "mixed": 32,
+    "mixed_modification": 17,
+    "modification": 90,
+    "multi_number": 100,
+    "name_answer": 22,
+    "negation": 72,
+    "next_weekday": 95,
+    "nickname": 35,
+    "no_due": 25,
+    "no_phone": 6,
+    "no_self_approval": 24,
+    "no_telephony": 20,
+    "not_found": 74,
+    "open_app": 40,
+    "open_file": 33,
+    "ordinal_answer": 14,
+    "permissions": 57,
+    "phone_label": 32,
+    "policy_unique_mobile": 16,
+    "polite": 1088,
+    "privacy": 6,
+    "pronoun": 280,
+    "read_then_write": 12,
+    "recipient_change": 19,
+    "relationship_name": 46,
+    "relative_time": 25,
+    "release_safety": 996,
+    "rename": 25,
+    "repeat": 12,
+    "reprompt_limit": 26,
+    "rolls_to_tomorrow": 12,
+    "same_day_time": 40,
+    "scope_isolation": 6,
+    "search_files": 27,
+    "search_then_act": 25,
+    "stray_confirmation": 88,
+    "text_then_call": 30,
+    "then_defer": 11,
+    "then_no": 25,
+    "then_unclear": 16,
+    "then_yes": 68,
+    "this_week": 31,
+    "this_weekday": 109,
+    "this_weekday_today": 17,
+    "this_weekend": 25,
+    "time_change": 13,
+    "time_first": 206,
+    "time_no_day": 43,
+    "time_range": 27,
+    "title_change": 11,
+    "today": 33,
+    "tomorrow": 74,
+    "tonight": 4,
+    "tool_specific_phrase": 26,
+    "tz_london": 497,
+    "tz_new_york": 2392,
+    "tz_tokyo": 360,
+    "unclear": 90,
+    "unsupported_alarm_timer": 17,
+    "unsupported_app": 12,
+    "unsupported_code": 19,
+    "unsupported_credentials": 19,
+    "unsupported_delete": 19,
+    "unsupported_email": 20,
+    "unsupported_money": 24,
+    "unsupported_nonexistent_tool": 28,
+    "unsupported_other": 18,
+    "unsupported_purchase": 21,
+    "unsupported_social": 17,
+    "unsupported_system_settings": 27,
+    "unsupported_url": 11,
+    "update_calendar_event": 30,
+    "versioning": 20,
+    "weekday": 246,
+    "write_then_write": 18
+  },
+  "fixtures": {
+    "calendar_not_determined": 15,
+    "contacts_denied": 34,
+    "default": 2923,
+    "duplicates": 62,
+    "empty": 18,
+    "injection": 169,
+    "no_file_scope": 8,
+    "no_telephony": 20
+  },
+  "timezones": {
+    "America/New_York": 2392,
+    "Asia/Tokyo": 360,
+    "Europe/London": 497
+  },
+  "turn_counts": {
+    "1": 1651,
+    "2": 988,
+    "3": 375,
+    "4": 218,
+    "5": 17
+  },
+  "files": {
+    "answers.jsonl": {
+      "cases": 100,
+      "sha256": "9cd8f2901695a21a7ac6746e4d0a58c7479bf1c46e9438e453f5f9366c3d5819"
+    },
+    "apps.jsonl": {
+      "cases": 66,
+      "sha256": "6c9184543c128ddc92d2073dbd903e41274701fc06788c3ca90f07ed3e63d30d"
+    },
+    "calendar.jsonl": {
+      "cases": 480,
+      "sha256": "5417e118690f0ea8812f7d49d4bbbe8477f7d2baa614c975ce5692454a3aeab6"
+    },
+    "calls.jsonl": {
+      "cases": 380,
+      "sha256": "e08876ae615f807a248d4d6f7c1d047b799189b3a257d0c9942ba0f58d9a1d25"
+    },
+    "confirmation.jsonl": {
+      "cases": 445,
+      "sha256": "766ead1fe723dcf36b9a5a5c6227bbc5cca022dbafae7139bbc5e19f868eada8"
+    },
+    "contacts.jsonl": {
+      "cases": 142,
+      "sha256": "f539b0d7a74553ae952135ab0ef3c8f7bcc7db69ba18c77c93316f95fcd508c2"
+    },
+    "files.jsonl": {
+      "cases": 84,
+      "sha256": "3aa5c19c8c137fa79168b1610497a4895fe44b149daf3faddfe8a59af3c3618f"
+    },
+    "injection.jsonl": {
+      "cases": 182,
+      "sha256": "9d2196efd644a0183c1b46f7939044a671048e6163eac662a9920c7dc1b59463"
+    },
+    "messages.jsonl": {
+      "cases": 566,
+      "sha256": "cbf728d05a8f99aa4c84bf038fb7c2b2803576841b7de011254130ddaed41156"
+    },
+    "multi_turn.jsonl": {
+      "cases": 357,
+      "sha256": "1c93e3f5b4b532a4b93c1e82856e17c6adbd7a7655b25d463060e5bcda39a7d0"
+    },
+    "reminders.jsonl": {
+      "cases": 207,
+      "sha256": "3d199a4d18f3e4843c8f5cf814739a196de1e78fb70322f821afee69f602a136"
+    },
+    "unsupported.jsonl": {
+      "cases": 240,
+      "sha256": "fd6d6cf33d9f3a5e6bc0cde7bb1a5f4915009ada536d239024c0f65f109051e4"
+    }
+  }
+}

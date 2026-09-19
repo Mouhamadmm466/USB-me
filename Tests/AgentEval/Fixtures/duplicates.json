@@ -1,0 +1,204 @@
+{
+  "id": "duplicates",
+  "contacts": [
+    {
+      "id": "c-alex-chen",
+      "given": "Alex",
+      "family": "Chen",
+      "organization": "Globex",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (415) 555-0142"
+        }
+      ]
+    },
+    {
+      "id": "c-alex-johnson",
+      "given": "Alex",
+      "family": "Johnson",
+      "organization": "Initech",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (312) 555-0116"
+        }
+      ]
+    },
+    {
+      "id": "c-alex-kim",
+      "given": "Alex",
+      "family": "Kim",
+      "organization": "Acme Corp",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (212) 555-0134"
+        }
+      ]
+    },
+    {
+      "id": "c-alexandra-kim",
+      "given": "Alexandra",
+      "family": "Kim",
+      "nickname": "Alex",
+      "organization": "Hooli",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (650) 555-0129"
+        }
+      ]
+    },
+    {
+      "id": "c-chris-lee",
+      "given": "Chris",
+      "family": "Lee",
+      "organization": "Acme Corp",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (206) 555-0141"
+        }
+      ]
+    },
+    {
+      "id": "c-christine-lee",
+      "given": "Christine",
+      "family": "Lee",
+      "nickname": "Chris",
+      "organization": "Globex",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (206) 555-0157"
+        }
+      ]
+    },
+    {
+      "id": "c-john-smith-acme",
+      "given": "John",
+      "family": "Smith",
+      "organization": "Acme Corp",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (646) 555-0104"
+        }
+      ]
+    },
+    {
+      "id": "c-john-smith-globex",
+      "given": "John",
+      "family": "Smith",
+      "organization": "Globex",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (917) 555-0162"
+        }
+      ]
+    },
+    {
+      "id": "c-maria-garcia-hooli",
+      "given": "Maria",
+      "family": "Garcia",
+      "organization": "Hooli",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (305) 555-0111"
+        }
+      ]
+    },
+    {
+      "id": "c-maria-garcia-initech",
+      "given": "Maria",
+      "family": "Garcia",
+      "organization": "Initech",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (786) 555-0194"
+        }
+      ]
+    },
+    {
+      "id": "c-michael-chen",
+      "given": "Michael",
+      "family": "Chen",
+      "nickname": "Mike",
+      "organization": "Acme Corp",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (408) 555-0135"
+        }
+      ]
+    },
+    {
+      "id": "c-mike-chen",
+      "given": "Mike",
+      "family": "Chen",
+      "organization": "Initech",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (408) 555-0178"
+        }
+      ]
+    },
+    {
+      "id": "c-priya-shah",
+      "given": "Priya",
+      "family": "Shah",
+      "organization": "Hooli",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (201) 555-0189"
+        }
+      ]
+    },
+    {
+      "id": "c-priya-sharma",
+      "given": "Priya",
+      "family": "Sharma",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (917) 555-0123"
+        }
+      ]
+    },
+    {
+      "id": "c-sam-patel",
+      "given": "Sam",
+      "family": "Patel",
+      "organization": "Globex",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (718) 555-0144"
+        }
+      ]
+    },
+    {
+      "id": "c-samantha-patel",
+      "given": "Samantha",
+      "family": "Patel",
+      "nickname": "Sam",
+      "organization": "Initech",
+      "phones": [
+        {
+          "label": "mobile",
+          "number": "+1 (347) 555-0185"
+        }
+      ]
+    }
+  ],
+  "events": [],
+  "files": [],
+  "authorized_file_scopes": [],
+  "permissions": {}
+}

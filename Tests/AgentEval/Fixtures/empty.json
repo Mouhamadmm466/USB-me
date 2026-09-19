@@ -1,0 +1,10 @@
+{
+  "id": "empty",
+  "contacts": [],
+  "events": [],
+  "files": [],
+  "authorized_file_scopes": [
+    "scope-documents"
+  ],
+  "permissions": {}
+}

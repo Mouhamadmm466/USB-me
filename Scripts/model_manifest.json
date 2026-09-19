@@ -1,0 +1,78 @@
+{
+  "manifestVersion": 1,
+  "packs": [
+    {
+      "id": "whisper-base.en",
+      "role": "asr",
+      "displayName": "Speech recognition",
+      "license": "MIT",
+      "files": [
+        {
+          "filename": "ggml-base.en.bin",
+          "sourceURL": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base.en.bin",
+          "repository": "ggerganov/whisper.cpp",
+          "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+          "bytes": 147964211,
+          "sha256": "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"
+        },
+        {
+          "filename": "ggml-silero-v6.2.0.bin",
+          "sourceURL": "https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b/ggml-silero-v6.2.0.bin",
+          "repository": "ggml-org/whisper-vad",
+          "revision": "9ffd54a1e1ee413ddf265af9913beaf518d1639b",
+          "bytes": 885098,
+          "sha256": "2aa269b785eeb53a82983a20501ddf7c1d9c48e33ab63a41391ac6c9f7fb6987"
+        }
+      ],
+      "minimumAppVersion": "1.0.0",
+      "minimumIOSVersion": "18.0",
+      "minimumPhysicalMemoryGB": 7.5
+    },
+    {
+      "id": "nemotron-3-nano-4b-q4_k_m",
+      "role": "llm",
+      "displayName": "Language model",
+      "license": "NVIDIA Nemotron Open Model License",
+      "files": [
+        {
+          "filename": "NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf",
+          "sourceURL": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF/resolve/1260a7780236524372acab3fdff3da563b611a2c/NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf",
+          "repository": "nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF",
+          "revision": "1260a7780236524372acab3fdff3da563b611a2c",
+          "bytes": 2837072864,
+          "sha256": "be5d9a656a51922f24f1f09a759cebb694e1f5d9728bf0ef9f8c972c5a0b5ef2"
+        }
+      ],
+      "minimumAppVersion": "1.0.0",
+      "minimumIOSVersion": "18.0",
+      "minimumPhysicalMemoryGB": 7.5
+    },
+    {
+      "id": "kokoro-82m",
+      "role": "tts",
+      "displayName": "Voice",
+      "license": "Apache-2.0",
+      "files": [
+        {
+          "filename": "kokoro-v1_0.safetensors",
+          "sourceURL": "https://huggingface.co/mlx-community/Kokoro-82M-bf16/resolve/a71e4d38b236d968966a2002c4c895dbd12b1c3c/kokoro-v1_0.safetensors",
+          "repository": "mlx-community/Kokoro-82M-bf16",
+          "revision": "a71e4d38b236d968966a2002c4c895dbd12b1c3c",
+          "bytes": 327115152,
+          "sha256": "4e9ecdf03b8b6cf906070390237feda473dc13327cb8d56a43deaa374c02acd8"
+        },
+        {
+          "filename": "af_heart.safetensors",
+          "sourceURL": "https://huggingface.co/mlx-community/Kokoro-82M-bf16/resolve/a71e4d38b236d968966a2002c4c895dbd12b1c3c/voices/af_heart.safetensors",
+          "repository": "mlx-community/Kokoro-82M-bf16",
+          "revision": "a71e4d38b236d968966a2002c4c895dbd12b1c3c",
+          "bytes": 522320,
+          "sha256": "2c1c733b0e6576c810e268d3e440c21dea4e0f0131a3ba4cfc98d7fe6136d094"
+        }
+      ],
+      "minimumAppVersion": "1.0.0",
+      "minimumIOSVersion": "18.0",
+      "minimumPhysicalMemoryGB": 7.5
+    }
+  ]
+}
