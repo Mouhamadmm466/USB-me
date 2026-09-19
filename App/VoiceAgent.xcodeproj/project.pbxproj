@@ -8,8 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		91620F670582B4E47B90B4E5 /* VoiceAgentKit in Frameworks */ = {isa = PBXBuildFile; productRef = 811DAC5686FB1F030E63B89C /* VoiceAgentKit */; };
+		A8A28E395145034EBEB0E3C7 /* AgentEval in Frameworks */ = {isa = PBXBuildFile; productRef = 68E8F6379874063383B65358 /* AgentEval */; };
 		B2A2A3212FB0181D51F2B549 /* VoiceAgentKit in Frameworks */ = {isa = PBXBuildFile; productRef = 59FC1C311AFD93265250A01A /* VoiceAgentKit */; };
 		E885C6011D3117CBFC2EDE61 /* KokoroTTS in Frameworks */ = {isa = PBXBuildFile; productRef = 60FDDA5BB563E19F2B725025 /* KokoroTTS */; };
+		ED329947D201C31A892DF0CC /* AgentEval in Frameworks */ = {isa = PBXBuildFile; productRef = EC8BBAE1129EBA44359BA112 /* AgentEval */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +86,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				91620F670582B4E47B90B4E5 /* VoiceAgentKit in Frameworks */,
+				ED329947D201C31A892DF0CC /* AgentEval in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -93,6 +96,7 @@
 			files = (
 				B2A2A3212FB0181D51F2B549 /* VoiceAgentKit in Frameworks */,
 				E885C6011D3117CBFC2EDE61 /* KokoroTTS in Frameworks */,
+				A8A28E395145034EBEB0E3C7 /* AgentEval in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +174,7 @@
 			packageProductDependencies = (
 				59FC1C311AFD93265250A01A /* VoiceAgentKit */,
 				60FDDA5BB563E19F2B725025 /* KokoroTTS */,
+				68E8F6379874063383B65358 /* AgentEval */,
 			);
 			productName = VoiceAgent;
 			productReference = DA874247CE0042458BC4B95E /* VoiceAgent.app */;
@@ -195,6 +200,7 @@
 			name = VoiceAgentSim;
 			packageProductDependencies = (
 				811DAC5686FB1F030E63B89C /* VoiceAgentKit */,
+				EC8BBAE1129EBA44359BA112 /* AgentEval */,
 			);
 			productName = VoiceAgentSim;
 			productReference = EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */;
@@ -651,9 +657,17 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = KokoroTTS;
 		};
+		68E8F6379874063383B65358 /* AgentEval */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentEval;
+		};
 		811DAC5686FB1F030E63B89C /* VoiceAgentKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VoiceAgentKit;
+		};
+		EC8BBAE1129EBA44359BA112 /* AgentEval */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentEval;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

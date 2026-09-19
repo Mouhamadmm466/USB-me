@@ -28,14 +28,15 @@ struct ModelManagerTests {
         var asrPack: ModelPack { manifest.packs[0] }
         var llmPack: ModelPack { manifest.packs[1] }
 
-        init(llmChunkDelay: Duration = .zero, llmBody: Data? = nil) throws {
+        /// - Parameter stallLLM: the first LLM request stalls after 400 KB (see `StubBehavior.stallAfter`).
+        init(stallLLM: Bool = false, llmBody: Data? = nil) throws {
             let namespace = UUID().uuidString
             directory = try TemporaryDirectory()
             asrWeights = host("asr.bin", data: randomData(count: 300_000, seed: 41), namespace: namespace)
             asrVAD = host("vad.bin", data: randomData(count: 20_000, seed: 42), namespace: namespace)
             let llmData = randomData(count: 1_500_000, seed: 43)
-            llm = host("llm.gguf", data: llmBody ?? llmData, namespace: namespace, pinnedData: llmData,
-                       chunkSize: llmChunkDelay > .zero ? 8 * 1024 : 64 * 1024, chunkDelay: llmChunkDelay)
+            llm = host("llm.gguf", data: llmBody ?? llmData, namespace: namespace, pinnedData: llmData)
+            if stallLLM { llm.resource.setScript([.stallAfter(400_000)]) }
             manifest = ModelManifest(manifestVersion: 1, packs: [
                 makePack("asr-\(namespace)", role: .asr, files: [asrWeights, asrVAD]),
                 makePack("llm-\(namespace)", role: .llm, files: [llm]),
@@ -108,7 +109,7 @@ struct ModelManagerTests {
     }
 
     @Test func pauseKeepsTheDownloadAndResumeContinuesIt() async throws {
-        let fixture = try Fixture(llmChunkDelay: .milliseconds(3))
+        let fixture = try Fixture(stallLLM: true)
         let manager = fixture.manager()
         let pack = fixture.llmPack
         let updates = await manager.statusUpdates(bufferingPolicy: .unbounded)
@@ -126,14 +127,13 @@ struct ModelManagerTests {
         #expect(bytes > 0 && bytes < pack.totalBytes)
         #expect(paused.downloadedBytes == bytes)
 
-        fixture.llm.resource.setChunkDelay(.zero)
         try await manager.resume(packID: pack.id).value
         #expect(await manager.status(ofPack: pack.id)?.state == .installed(revision: pack.revision))
         #expect(fixture.llm.resource.requests.map(\.range) == [nil, "bytes=\(bytes)-"])
     }
 
     @Test func cancelKeepsThePartialAndReportsNotInstalled() async throws {
-        let fixture = try Fixture(llmChunkDelay: .milliseconds(3))
+        let fixture = try Fixture(stallLLM: true)
         let manager = fixture.manager()
         let pack = fixture.llmPack
         let updates = await manager.statusUpdates(bufferingPolicy: .unbounded)
@@ -147,7 +147,6 @@ struct ModelManagerTests {
         #expect(status.state == .notInstalled)
         #expect(status.downloadedBytes > 0 && status.downloadedBytes < pack.totalBytes)
 
-        fixture.llm.resource.setChunkDelay(.zero)
         try await manager.install(packID: pack.id)
         #expect(fixture.llm.resource.requests.last?.range == "bytes=\(status.downloadedBytes)-")
     }
@@ -191,7 +190,7 @@ struct ModelManagerTests {
     }
 
     @Test func reconciliationResumesDownloadsInterruptedByTermination() async throws {
-        let fixture = try Fixture(llmChunkDelay: .milliseconds(3))
+        let fixture = try Fixture(stallLLM: true)
         let pack = fixture.llmPack
         let first = fixture.manager()
         let updates = await first.statusUpdates(bufferingPolicy: .unbounded)
@@ -201,7 +200,6 @@ struct ModelManagerTests {
         await first.downloader.cancel(packID: pack.id)
         _ = await job.result
 
-        fixture.llm.resource.setChunkDelay(.zero)
         let relaunched = fixture.manager()
         let statuses = await relaunched.reconcileOnLaunch()
         #expect(statuses.first { $0.id == pack.id }?.state == .queued)
@@ -211,7 +209,7 @@ struct ModelManagerTests {
     }
 
     @Test func pausedDownloadsStayPausedAcrossLaunches() async throws {
-        let fixture = try Fixture(llmChunkDelay: .milliseconds(3))
+        let fixture = try Fixture(stallLLM: true)
         let pack = fixture.llmPack
         let first = fixture.manager()
         let updates = await first.statusUpdates(bufferingPolicy: .unbounded)

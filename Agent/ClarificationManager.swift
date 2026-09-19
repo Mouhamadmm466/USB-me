@@ -65,6 +65,10 @@ public struct ClarificationManager: Sendable {
 
     func choose(words: [String], raw: String, among candidates: [ClarificationCandidate]) -> Interpretation {
         guard !candidates.isEmpty else { return .notAnAnswer }
+        // "Should I use mobile?" → "yes" picks the only offered candidate.
+        if candidates.count == 1, ConfirmationClassifier().classify(raw, pendingTool: nil) == .affirm {
+            return .choose(candidates[0])
+        }
         if let ordinal = Self.ordinal(in: words, count: candidates.count) {
             return .choose(candidates[ordinal])
         }
@@ -74,7 +78,8 @@ public struct ClarificationManager: Sendable {
             let matches = candidates.filter { $0.kind == .phoneNumber && SpokenDigits.digits(in: $0.identifier).hasSuffix(spokenDigits) }
             if matches.count == 1 { return .choose(matches[0]) }
         }
-        let meaningful = words.filter { !Self.stopWords.contains($0) }
+        // "Monday's" → "monday"; "the one at Acme's" → "acme".
+        let meaningful = words.map { $0.hasSuffix("'s") ? String($0.dropLast(2)) : $0 }.filter { !Self.stopWords.contains($0) }
         guard !meaningful.isEmpty else { return .notAnAnswer }
         var scores: [(ClarificationCandidate, Int)] = []
         for candidate in candidates {
@@ -83,7 +88,7 @@ public struct ClarificationManager: Sendable {
             let score = meaningful.reduce(0) { total, word in
                 let canonical = Self.synonyms[word] ?? word
                 if terms.contains(word) || terms.contains(canonical) { return total + 2 }
-                if word.count >= 5, terms.contains(where: { $0.count >= 5 && EditDistance.within1($0, word) }) { return total + 1 }
+                if terms.contains(where: { max($0.count, word.count) >= 4 && EditDistance.within1($0, word) }) { return total + 1 }
                 return total
             }
             scores.append((candidate, score))
@@ -121,7 +126,9 @@ public struct ClarificationManager: Sendable {
             "no", "no thanks", "nothing", "neither", "none", "none of them", "neither of them", "nobody",
             "no one", "abort", "don't", "don't bother", "skip it", "i changed my mind",
         ]
-        return cancels.contains(phrase)
+        if cancels.contains(phrase) { return true }
+        // "never mind, cancel", "no thanks, forget it": any pure rejection cancels.
+        return ConfirmationClassifier().classify(phrase, pendingTool: nil) == .reject
     }
 
     func fillIfShort(_ words: [String], argument: String, maxWords: Int) -> Interpretation {
@@ -181,25 +188,39 @@ public enum SpokenDigits {
     /// Letters read as zero only inside a run of digits ("five five five oh one").
     static let zeroLetters: Set<String> = ["oh", "o"]
 
+    /// The longest contiguous run of spoken or written digits ("the one ending in two zero zero
+    /// two" → "2002"; "call 555 010 4477" → "5550104477"). Pronoun uses of "one" do not join runs
+    /// that are separated by other words.
     public static func digits(in text: String) -> String {
-        var result = ""
         let tokens = text.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
+        var runs: [String] = []
+        var current = ""
         var index = 0
+        func closeRun() {
+            if !current.isEmpty { runs.append(current) }
+            current = ""
+        }
         while index < tokens.count {
             let token = tokens[index]
             if token.allSatisfy(\.isNumber) {
-                result += token
+                current += token
             } else if token == "double" || token == "triple", index + 1 < tokens.count, let digit = words[tokens[index + 1]] {
-                result += String(repeating: digit, count: token == "double" ? 2 : 3)
+                current += String(repeating: digit, count: token == "double" ? 2 : 3)
                 index += 1
             } else if let digit = words[token] {
-                result += digit
-            } else if zeroLetters.contains(token), !result.isEmpty {
-                result += "0"
+                current += digit
+            } else if zeroLetters.contains(token), !current.isEmpty {
+                current += "0"
+            } else {
+                closeRun()
             }
             index += 1
         }
-        return result
+        closeRun()
+        // Longest run wins; on a tie the later one (the number usually comes last).
+        return runs.enumerated().max { lhs, rhs in
+            lhs.element.count == rhs.element.count ? lhs.offset < rhs.offset : lhs.element.count < rhs.element.count
+        }?.element ?? ""
     }
 }
 

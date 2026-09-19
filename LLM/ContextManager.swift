@@ -19,6 +19,12 @@ public struct ContextManager: Sendable {
 
     /// The per-turn context lines, ending with the user's utterance.
     public func render(session: SessionState, utterance: String, clock: AgentClock, lastAssistantQuestion: String? = nil) -> String {
+        renderHead(session: session, clock: clock, lastAssistantQuestion: lastAssistantQuestion) + " " + utteranceText(utterance)
+    }
+
+    /// Everything `render` produces before the utterance itself (ends with "User:"). Known while
+    /// the user is still speaking, so a runtime can evaluate it ahead of the endpoint.
+    public func renderHead(session: SessionState, clock: AgentClock, lastAssistantQuestion: String? = nil) -> String {
         var lines: [String] = []
         lines.append("Now: " + Self.formatNow(clock))
         if let contact = session.lastContact {
@@ -41,8 +47,12 @@ public struct ContextManager: Sendable {
         if let question = lastAssistantQuestion, turns.last?.text != question {
             lines.append("Assistant: " + truncate(Self.singleLine(question), maxTurnCharacters))
         }
-        lines.append("User: " + truncate(Self.singleLine(utterance), 600))
+        lines.append("User:")
         return lines.joined(separator: "\n")
+    }
+
+    private func utteranceText(_ utterance: String) -> String {
+        truncate(Self.singleLine(utterance), 600)
     }
 
     // MARK: - Formatting

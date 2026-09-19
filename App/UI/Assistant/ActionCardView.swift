@@ -12,6 +12,9 @@ struct ActionCardView: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var isExpired = false
+    /// Set by the first tap so a double tap can't answer twice; cleared if the card is still
+    /// shown two seconds later (a new version of the card resets the view anyway).
+    @State private var isResponding = false
     @State private var confirmTaps = 0
     @State private var cancelTaps = 0
 
@@ -70,8 +73,10 @@ struct ActionCardView: View {
     @ViewBuilder
     private var buttons: some View {
         let confirm = Button {
-            confirmTaps += 1
-            onConfirm()
+            respond {
+                confirmTaps += 1
+                onConfirm()
+            }
         } label: {
             Text(card.confirmLabel)
         }
@@ -80,8 +85,10 @@ struct ActionCardView: View {
         .accessibilityHint("Confirms: \(card.title).")
 
         let cancel = Button {
-            cancelTaps += 1
-            onCancel()
+            respond {
+                cancelTaps += 1
+                onCancel()
+            }
         } label: {
             Text("Cancel")
         }
@@ -98,6 +105,16 @@ struct ActionCardView: View {
                 cancel
                 confirm
             }
+        }
+    }
+
+    private func respond(_ action: @MainActor () -> Void) {
+        guard !isResponding else { return }
+        isResponding = true
+        action()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            isResponding = false
         }
     }
 
@@ -178,8 +195,11 @@ struct ExpiryCountdown: View {
             HStack(spacing: 4) {
                 Image(systemName: expired ? "xmark.circle" : "timer")
                     .imageScale(.small)
-                Text(expired ? "Expired" : Formatting.countdown(remaining))
-                    .monospacedDigit()
+                if expired {
+                    Text("Expired")
+                } else {
+                    Text.tabular(Formatting.countdown(remaining))
+                }
             }
             .textStyle(.footnote, weight: .semibold)
             .foregroundStyle(expired || urgent ? Palette.danger : Palette.amberText)

@@ -22,6 +22,7 @@ struct AssistantTopBar: View {
             }
             .buttonStyle(.glassCircle(diameter: 42))
             .accessibilityLabel("Settings")
+            .accessibilityShowsLargeContentViewer()
         }
         .padding(.horizontal, Spacing.screenMargin)
         .padding(.top, Spacing.xs)
@@ -58,6 +59,8 @@ enum AssistantInputMode: Sendable {
 struct AssistantBottomBar: View {
     let isSessionActive: Bool
     let canStartSession: Bool
+    /// State colour for the mic halo.
+    var tint: Color = Palette.jade
     @Binding var mode: AssistantInputMode
     @Binding var draft: String
     var isFieldFocused: FocusState<Bool>.Binding
@@ -78,21 +81,26 @@ struct AssistantBottomBar: View {
         .padding(.top, Spacing.m)
         .padding(.bottom, Spacing.s)
         .animation(Motion.adaptive(Motion.smooth, reduceMotion: reduceMotion), value: mode)
+        .onChange(of: mode) { _, newMode in
+            // Focus once the field exists (it is created by this same mode change).
+            guard newMode == .keyboard else { return }
+            Task { @MainActor in isFieldFocused.wrappedValue = true }
+        }
     }
 
     private var voiceBar: some View {
         HStack(alignment: .center) {
             Button {
                 mode = .keyboard
-                isFieldFocused.wrappedValue = true
             } label: {
                 Image(systemName: "keyboard")
             }
             .buttonStyle(.glassCircle(diameter: 50))
             .accessibilityLabel("Type a request")
+            .accessibilityShowsLargeContentViewer()
 
             Spacer(minLength: Spacing.l)
-            MicButton(isActive: isSessionActive, action: onToggleSession)
+            MicButton(isActive: isSessionActive, tint: tint, action: onToggleSession)
                 .disabled(!canStartSession && !isSessionActive)
             Spacer(minLength: Spacing.l)
 
@@ -101,6 +109,7 @@ struct AssistantBottomBar: View {
             }
             .buttonStyle(.glassCircle(diameter: 50))
             .accessibilityLabel("History")
+            .accessibilityShowsLargeContentViewer()
         }
         .padding(.horizontal, Spacing.s)
         .transition(.opacity)
@@ -143,6 +152,7 @@ struct AssistantBottomBar: View {
             }
             .buttonStyle(.glassCircle(diameter: 50))
             .accessibilityLabel("Talk instead")
+            .accessibilityShowsLargeContentViewer()
         }
         .transition(.opacity)
     }
@@ -158,6 +168,8 @@ struct AssistantBottomBar: View {
 /// The large ink button that starts and ends a conversation.
 struct MicButton: View {
     let isActive: Bool
+    /// The halo shown while a conversation is active takes the assistant's state colour.
+    var tint: Color = Palette.jade
     let action: @MainActor () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
@@ -171,8 +183,8 @@ struct MicButton: View {
         } label: {
             ZStack {
                 Circle()
-                    .strokeBorder(Palette.ink.opacity(isActive ? 0.18 : 0), lineWidth: 4)
-                    .padding(-9)
+                    .strokeBorder(tint.opacity(isActive ? 0.55 : 0), lineWidth: 3)
+                    .padding(-8)
                 Circle()
                     .fill(isEnabled ? Palette.ink : Palette.fill)
                 Image(systemName: isActive ? "stop.fill" : "mic.fill")
@@ -188,6 +200,7 @@ struct MicButton: View {
         .haptic(.impact(weight: .medium), trigger: taps)
         .accessibilityLabel(isActive ? "Stop" : "Talk")
         .accessibilityHint(isActive ? "Ends the conversation." : "Starts listening.")
+        .accessibilityShowsLargeContentViewer()
     }
 }
 

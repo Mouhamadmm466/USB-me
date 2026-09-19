@@ -30,6 +30,18 @@ public final class ScriptedLanguageModel: LanguageModel, @unchecked Sendable {
 
     public func prepare(cacheablePrefix: String) async throws {}
 
+    private var _primedHeads: [String] = []
+
+    /// Suffix heads passed to `prime`, in order.
+    public var primedHeads: [String] {
+        lock.lock(); defer { lock.unlock() }
+        return _primedHeads
+    }
+
+    public func prime(cacheablePrefix: String, suffixHead: String) async {
+        lock.withLock { _primedHeads.append(suffixHead) }
+    }
+
     public func generate(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error> {
         lock.lock(); _requests.append(request); lock.unlock()
         let output = responder(request)

@@ -215,6 +215,23 @@ private actor FakePlayer: AudioPlaying {
         #expect(controller.phase == .idle)
     }
 
+    @Test func aPendingCandidateKeepsTheControllerArmedAfterPlaybackEnds() throws {
+        var prepared = controllerWithCandidate()
+        prepared.controller.assistantDidStopSpeaking()
+        _ = feed(&prepared.controller, &prepared.clock, 20, 0.9) // well past the 250 ms tail
+        #expect(prepared.controller.isArmed, "callers gating on isArmed must keep feeding frames")
+        #expect(prepared.controller.phase == .candidate)
+        // The timeout still resolves it, with all audio captured meanwhile.
+        let events = feed(&prepared.controller, &prepared.clock, 30, 0.9)
+        guard case let .confirmedBargeIn(confirmation)? = events.first?.event else {
+            Issue.record("expected confirmation by persistence")
+            return
+        }
+        #expect(confirmation.reason == .persistentSpeech)
+        #expect(confirmation.audio.count == (20 + 47) * 512)
+        #expect(!prepared.controller.isArmed)
+    }
+
     @Test func engineFlagArmsMonitoringWithoutExplicitTTSState() {
         var controller = EchoBargeInController(logger: nil)
         var clock = FrameClock()

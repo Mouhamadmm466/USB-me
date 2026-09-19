@@ -6,9 +6,10 @@ import Foundation
 struct SettingsViewState: Equatable, Sendable {
     var models: ModelDownloadViewState
     var storage: Storage
-    /// Microphone, contacts, calendar and reminders, in that order (shared folders are listed
-    /// in `sharedFolders`).
+    /// Microphone, contacts, calendar and reminders, in that order. Folder access is not a
+    /// system permission; it is listed in the Files section from `sharedFolders`.
     var permissions: [PermissionRow]
+    /// Folders shared through the document picker (Settings → Files).
     var sharedFolders: [SharedFolder]
     var privacy: Privacy
     var voice: Voice

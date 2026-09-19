@@ -16,9 +16,12 @@ struct ModelDownloadManagerTests {
         try data.write(to: downloader.layout.partialURL(sha256: file.sha256))
     }
 
-    /// A pack whose single file is delivered slowly enough to be stopped mid-transfer.
-    private func slowPack(_ name: String, bytes: Int = 2_000_000, seed: UInt64) -> (HostedFile, ModelPack) {
-        let hosted = host("model.bin", data: randomData(count: bytes, seed: seed), chunkSize: 8 * 1024, chunkDelay: .milliseconds(3))
+    /// A pack whose first request stalls after 500 KB (the connection stays open), so a transfer
+    /// is deterministically still running when the test pauses, cancels or deletes it. Later
+    /// requests are served normally.
+    private func stalledPack(_ name: String, bytes: Int = 2_000_000, seed: UInt64) -> (HostedFile, ModelPack) {
+        let hosted = host("model.bin", data: randomData(count: bytes, seed: seed))
+        hosted.resource.setScript([.stallAfter(500_000)])
         return (hosted, makePack("\(name)-\(UUID().uuidString)", files: [hosted]))
     }
 
@@ -214,7 +217,7 @@ struct ModelDownloadManagerTests {
 
     @Test func cancellingKeepsThePartialAndTheNextInstallResumes() async throws {
         let directory = try TemporaryDirectory()
-        let (hosted, pack) = slowPack("cancel", seed: 13)
+        let (hosted, pack) = stalledPack("cancel", seed: 13)
         let downloader = makeDownloader(root: directory.url)
         let progress = downloader.progressUpdates()
 
@@ -228,7 +231,6 @@ struct ModelDownloadManagerTests {
         #expect(await downloader.activeRecord(packID: pack.id) == nil)
         #expect(await downloader.downloadedBytes(for: pack) == kept)
 
-        hosted.resource.setChunkDelay(.zero)
         try await downloader.install(pack)
         #expect(hosted.resource.requests.last?.range == "bytes=\(kept)-")
         #expect(try Data(contentsOf: installedURL(downloader, pack, "model.bin")) == hosted.data)
@@ -236,7 +238,7 @@ struct ModelDownloadManagerTests {
 
     @Test func pauseKeepsThePartialAndResumeContinuesIt() async throws {
         let directory = try TemporaryDirectory()
-        let (hosted, pack) = slowPack("pause", seed: 14)
+        let (hosted, pack) = stalledPack("pause", seed: 14)
         let downloader = makeDownloader(root: directory.url)
         let progress = downloader.progressUpdates()
 
@@ -250,7 +252,6 @@ struct ModelDownloadManagerTests {
         let kept = try #require(fileSize(downloader.layout.partialURL(sha256: hosted.pin.sha256)))
         #expect(kept > 0 && kept < 2_000_000)
 
-        hosted.resource.setChunkDelay(.zero)
         let record = try await downloader.resume(pack)
         #expect(record.matches(pack))
         #expect(hosted.resource.requests.map(\.range) == [nil, "bytes=\(kept)-"])
@@ -258,7 +259,7 @@ struct ModelDownloadManagerTests {
 
     @Test func aPackInstallsOnlyOnceAtATime() async throws {
         let directory = try TemporaryDirectory()
-        let (_, pack) = slowPack("single", seed: 15)
+        let (_, pack) = stalledPack("single", seed: 15)
         let downloader = makeDownloader(root: directory.url)
         let progress = downloader.progressUpdates()
 
@@ -480,7 +481,7 @@ struct ModelDownloadManagerTests {
 
     @Test func deleteStopsARunningDownload() async throws {
         let directory = try TemporaryDirectory()
-        let (hosted, pack) = slowPack("delete-running", seed: 30)
+        let (hosted, pack) = stalledPack("delete-running", seed: 30)
         let downloader = makeDownloader(root: directory.url)
         let progress = downloader.progressUpdates()
 

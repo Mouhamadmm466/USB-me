@@ -46,10 +46,10 @@
 	<string>Voice Agent creates the reminders you ask for. Your reminders stay on this iPhone.</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Fonts/DMSans-Regular.ttf</string>
-		<string>Fonts/DMSans-Medium.ttf</string>
-		<string>Fonts/DMSans-SemiBold.ttf</string>
-		<string>Fonts/DMSans-Bold.ttf</string>
+		<string>DMSans-Regular.ttf</string>
+		<string>DMSans-Medium.ttf</string>
+		<string>DMSans-SemiBold.ttf</string>
+		<string>DMSans-Bold.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

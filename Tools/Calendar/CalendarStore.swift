@@ -41,12 +41,15 @@ public enum EventIdentifierCodec {
 
 /// `CalendarStore` + `ReminderStore` over one `EKEventStore`.
 ///
-/// `@unchecked Sendable`: `store` and every EventKit object derived from it are only touched
-/// inside `queue` (serial), so there is no concurrent access; only value types leave the queue.
+/// `@unchecked Sendable`: `store`, `lastAuthorization` and every EventKit object derived from the
+/// store are only touched inside `queue` (serial), so there is no concurrent access; only value
+/// types leave the queue.
 public final class SystemEventKitStore: CalendarStore, ReminderStore, @unchecked Sendable {
     private let store: EKEventStore
     private let calendar: Calendar
     private let queue = DispatchQueue(label: "app.voiceagent.tools.eventkit", qos: .userInitiated)
+    /// Authorization last seen by `store` (only read and written on `queue`).
+    private var lastAuthorization: [EKAuthorizationStatus] = []
 
     /// - Parameter calendar: the user's calendar/time zone (all-day normalization, reminder dates).
     public init(calendar: Calendar = .autoupdatingCurrent) {
@@ -57,6 +60,12 @@ public final class SystemEventKitStore: CalendarStore, ReminderStore, @unchecked
     private func perform<T: Sendable>(_ work: @escaping @Sendable (EKEventStore, Calendar) throws -> T) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
+                // A store created before access was granted can keep serving stale (empty) data.
+                let authorization = [EKEventStore.authorizationStatus(for: .event), EKEventStore.authorizationStatus(for: .reminder)]
+                if authorization != self.lastAuthorization {
+                    if !self.lastAuthorization.isEmpty { self.store.reset() }
+                    self.lastAuthorization = authorization
+                }
                 do {
                     continuation.resume(returning: try work(self.store, self.calendar))
                 } catch let error as ToolAdapterError {

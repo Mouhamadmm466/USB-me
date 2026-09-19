@@ -15,7 +15,8 @@ struct AssistantIntents {
     var chooseClarification: @MainActor (_ id: String) -> Void
     /// Typed input (already trimmed, never empty).
     var submitText: @MainActor (_ text: String) -> Void
-    /// The gear button, and "Choose folder" on a shared-folder permission card.
+    /// The gear button, and "Choose folder" on a shared-folder permission card (for the latter,
+    /// present `SettingsScreen(..., initialSection: .files)` when `permissionPrompt?.kind == .fileScope`).
     var openSettings: @MainActor () -> Void
     /// "Open Settings" on a permission card whose `requiresSettings` is true.
     var openSystemSettings: @MainActor (_ kind: PermissionKind) -> Void
@@ -61,6 +62,7 @@ struct AssistantScreen: View {
     let presentation: AssistantPresentation
     let intents: AssistantIntents
 
+    private let bannerDuration: Duration
     @State private var inputMode: AssistantInputMode
     @State private var draft = ""
     @State private var isHistoryPresented: Bool
@@ -71,16 +73,20 @@ struct AssistantScreen: View {
     /// - Parameters:
     ///   - inputMode: Starting input mode (UI state; the gallery uses `.keyboard`).
     ///   - showsHistory: Starts with the history sheet open (gallery).
+    ///   - bannerDuration: How long a result banner stays before it fades.
     init(
         presentation: AssistantPresentation,
         intents: AssistantIntents,
         inputMode: AssistantInputMode = .voice,
-        showsHistory: Bool = false
+        showsHistory: Bool = false,
+        bannerDuration: Duration = .seconds(4)
     ) {
         self.presentation = presentation
         self.intents = intents
+        self.bannerDuration = bannerDuration
         _inputMode = State(initialValue: inputMode)
         _isHistoryPresented = State(initialValue: showsHistory)
+        DesignSystemAppearance.install()
     }
 
     private var state: AgentState { presentation.state }
@@ -94,41 +100,35 @@ struct AssistantScreen: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollViewReader { scroller in
-                ScrollView {
-                    VStack(spacing: 0) {
-                        stage(width: proxy.size.width)
+            ScrollView {
+                VStack(spacing: 0) {
+                    stage(width: proxy.size.width)
 
-                        ConversationTextView(
-                            state: state,
-                            partialTranscript: presentation.partialTranscript,
-                            lastUserUtterance: presentation.lastUserUtterance,
-                            assistantText: presentation.assistantText,
-                            isCompact: needsAttention
-                        )
-                        .padding(.horizontal, Spacing.xxl + 4)
-                        .padding(.top, needsAttention ? Spacing.m : Spacing.xxl)
+                    ConversationTextView(
+                        state: state,
+                        partialTranscript: presentation.partialTranscript,
+                        lastUserUtterance: presentation.lastUserUtterance,
+                        assistantText: presentation.assistantText,
+                        isCompact: needsAttention
+                    )
+                    .padding(.horizontal, Spacing.xxl + 4)
+                    .padding(.top, needsAttention ? Spacing.m : Spacing.xxl)
 
-                        cards
-                            .frame(maxWidth: Measure.content)
-                            .padding(.horizontal, Spacing.screenMargin)
-                            .padding(.top, Spacing.xxl)
-                            .id(CardsAnchor.id)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: proxy.size.height, alignment: needsAttention ? .top : .center)
-                    .padding(.bottom, Spacing.l)
+                    cards
+                        .frame(maxWidth: Measure.content)
+                        .padding(.horizontal, Spacing.screenMargin)
+                        .padding(.top, needsAttention ? Spacing.xl : 0)
                 }
-                .scrollBounceBehavior(.basedOnSize)
-                .scrollDismissesKeyboard(.interactively)
-                .onChange(of: presentation.actionCard?.id) { _, newValue in
-                    guard newValue != nil else { return }
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(380))
-                        withAnimation(layoutAnimation) { scroller.scrollTo(CardsAnchor.id, anchor: .bottom) }
-                    }
-                }
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: proxy.size.height, alignment: needsAttention ? .top : .center)
+                .padding(.bottom, Spacing.l)
             }
+            // When a card makes the content taller than the screen, keep its end (Confirm and
+            // Cancel) in view rather than the orb.
+            .defaultScrollAnchor(.bottom, for: .initialOffset)
+            .defaultScrollAnchor(.bottom, for: .sizeChanges)
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.interactively)
             .overlay(alignment: .top) {
                 if let banner = visibleBanner {
                     ResultBannerView(banner: banner)
@@ -139,13 +139,15 @@ struct AssistantScreen: View {
                 }
             }
         }
-        .edgeBar(.top) {
+        .edgeBar(.top, hardEdge: true) {
             AssistantTopBar(onOpenSettings: intents.openSettings)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .edgeBar(.bottom) {
             AssistantBottomBar(
                 isSessionActive: presentation.isSessionActive,
                 canStartSession: !state.isPreparing,
+                tint: state.orbMode.tone.color,
                 mode: $inputMode,
                 draft: $draft,
                 isFieldFocused: $isFieldFocused,
@@ -240,12 +242,10 @@ struct AssistantScreen: View {
         }
     }
 
-    private enum CardsAnchor { static let id = "assistant.cards" }
-
     private func showBanner(_ banner: ResultBanner?) async {
         withAnimation(layoutAnimation) { visibleBanner = banner }
         guard banner != nil else { return }
-        try? await Task.sleep(for: .seconds(4))
+        try? await Task.sleep(for: bannerDuration)
         guard !Task.isCancelled else { return }
         withAnimation(layoutAnimation) { visibleBanner = nil }
     }

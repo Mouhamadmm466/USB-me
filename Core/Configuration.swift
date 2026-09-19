@@ -39,6 +39,20 @@ public struct LLMConfig: Codable, Sendable, Equatable {
     public var useMemoryMap: Bool = true
     /// Emits grammar-forced text in batches instead of sampling it token by token.
     public var jumpForwardDecoding: Bool = true
+    /// Prompt-lookup speculative decoding: up to this many tokens copied from the request are
+    /// verified in the same decode call as the current token (0 = off). Also the number of
+    /// recurrent-state rollback snapshots llama.cpp keeps (`n_rs_seq`), which costs about
+    /// 80 MB of memory per token for Nemotron-H.
+    ///
+    /// Off by default: on the A17 Pro, 2–8 token decode calls cost almost linearly more than one
+    /// token and the snapshots add ~20% to every multi-token call, so with the short argument
+    /// values of real commands speculation was slower (1.73 s vs 1.51 s P50, Docs/DEVICE_MATRIX.md).
+    /// It halves decode calls on CPU hosts, where it can be enabled for evaluation runs.
+    public var speculativeDraftTokens: Int = 0
+    /// Drafts only fill a decode call up to this many tokens. On Metal, llama.cpp multiplies small
+    /// batches (≤ 8 rows) with mat-vec kernels at close to single-token cost; larger batches
+    /// switch to mat-mat kernels that cost about twice as much (measured on A17 Pro).
+    public var speculativeMaxBatchTokens: Int = 8
 
     public init() {}
 }
@@ -49,6 +63,10 @@ public struct TTSConfig: Codable, Sendable, Equatable {
     public var speed: Float = 1.0
     /// The first chunk is kept short so audio starts quickly.
     public var firstChunkMaxWords: Int = 12
+    /// The first chunk also ends at the first clause boundary (, ; :) after at least this many
+    /// words ("Text Alex Kim:" | "“I'll be late.” Should I send it?"), 0 = off. The next chunk is
+    /// synthesized while the first one plays.
+    public var firstClauseMinWords: Int = 2
     public var maxChunkWords: Int = 30
 
     public init() {}

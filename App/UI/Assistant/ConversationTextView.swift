@@ -34,7 +34,7 @@ struct ConversationTextView: View {
             } else if state == .idle, assistantText.nonEmpty == nil {
                 Text("Try \u{201C}Text Alex I\u{2019}m running late\u{201D} or \u{201C}What\u{2019}s on tomorrow?\u{201D}")
                     .textStyle(.callout)
-                    .foregroundStyle(Palette.inkTertiary)
+                    .foregroundStyle(Palette.inkSecondary)
                     .transition(.opacity)
             }
 

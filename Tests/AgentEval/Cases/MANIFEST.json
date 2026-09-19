@@ -3,7 +3,7 @@
   "generator_version": "1.0.0",
   "seed": 20260919,
   "total_cases": 3249,
-  "total_turns": 5709,
+  "total_turns": 5691,
   "release_safety_cases": 996,
   "category_groups": {
     "contacts+calls": {
@@ -123,7 +123,7 @@
     },
     "calls": {
       "cases": 380,
-      "turns": 591,
+      "turns": 583,
       "subcategories": {
         "canonical": 100,
         "clarification_cancel": 12,
@@ -201,15 +201,15 @@
     },
     "messages": {
       "cases": 566,
-      "turns": 900,
+      "turns": 890,
       "subcategories": {
         "canonical": 250,
         "clarification_cancel": 12,
         "contact_ambiguous": 40,
         "contact_not_found": 16,
         "dictated_number": 30,
-        "duplicates_ambiguous": 17,
-        "duplicates_unique": 7,
+        "duplicates_ambiguous": 16,
+        "duplicates_unique": 8,
         "hard_names": 16,
         "keyword_trap": 40,
         "missing_content": 36,
@@ -284,13 +284,13 @@
     "answer_knowledge": 18,
     "answer_time": 11,
     "asr_noise": 32,
-    "asr_style": 786,
+    "asr_style": 766,
     "calendar": 82,
     "call_then_text": 40,
     "cancelled_clarification": 44,
     "canonical": 420,
     "capability_question": 20,
-    "clarification": 286,
+    "clarification": 285,
     "compose_message": 131,
     "confirm_no": 80,
     "confirm_yes": 120,
@@ -315,15 +315,15 @@
     "explicit_date": 265,
     "extended_phrase": 94,
     "filler": 482,
-    "full_name": 606,
+    "full_name": 602,
     "given_name": 479,
-    "hard_name": 141,
+    "hard_name": 140,
     "initiate_call": 126,
     "injection_dictated": 30,
     "injection_read": 138,
-    "intl_number": 53,
+    "intl_number": 51,
     "keeps_time": 12,
-    "keyword_trap": 294,
+    "keyword_trap": 293,
     "last_event": 138,
     "later_today": 20,
     "legit_after_injection": 14,
@@ -340,7 +340,7 @@
     "name_answer": 22,
     "negation": 72,
     "next_weekday": 95,
-    "nickname": 35,
+    "nickname": 37,
     "no_due": 25,
     "no_phone": 6,
     "no_self_approval": 24,
@@ -352,12 +352,12 @@
     "permissions": 57,
     "phone_label": 32,
     "policy_unique_mobile": 16,
-    "polite": 1088,
+    "polite": 1092,
     "privacy": 6,
     "pronoun": 280,
     "read_then_write": 12,
     "recipient_change": 19,
-    "relationship_name": 46,
+    "relationship_name": 49,
     "relative_time": 25,
     "release_safety": 996,
     "rename": 25,
@@ -387,8 +387,8 @@
     "tomorrow": 74,
     "tonight": 4,
     "tool_specific_phrase": 26,
-    "tz_london": 497,
-    "tz_new_york": 2392,
+    "tz_london": 499,
+    "tz_new_york": 2390,
     "tz_tokyo": 360,
     "unclear": 90,
     "unsupported_alarm_timer": 17,
@@ -412,22 +412,22 @@
   "fixtures": {
     "calendar_not_determined": 15,
     "contacts_denied": 34,
-    "default": 2923,
+    "default": 2925,
     "duplicates": 62,
-    "empty": 18,
+    "empty": 16,
     "injection": 169,
     "no_file_scope": 8,
     "no_telephony": 20
   },
   "timezones": {
-    "America/New_York": 2392,
+    "America/New_York": 2390,
     "Asia/Tokyo": 360,
-    "Europe/London": 497
+    "Europe/London": 499
   },
   "turn_counts": {
-    "1": 1651,
-    "2": 988,
-    "3": 375,
+    "1": 1668,
+    "2": 972,
+    "3": 374,
     "4": 218,
     "5": 17
   },
@@ -446,7 +446,7 @@
     },
     "calls.jsonl": {
       "cases": 380,
-      "sha256": "e08876ae615f807a248d4d6f7c1d047b799189b3a257d0c9942ba0f58d9a1d25"
+      "sha256": "e253f4f1abddc3f88cbb9ceba991339444b095fba2a85a5f7e783daa4c73ea78"
     },
     "confirmation.jsonl": {
       "cases": 445,
@@ -466,7 +466,7 @@
     },
     "messages.jsonl": {
       "cases": 566,
-      "sha256": "cbf728d05a8f99aa4c84bf038fb7c2b2803576841b7de011254130ddaed41156"
+      "sha256": "97f1c27f458f3b3f0b871ba1ef119efdc430bfa0e1ffbd21e3a5bad51a124c64"
     },
     "multi_turn.jsonl": {
       "cases": 357,

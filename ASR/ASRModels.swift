@@ -19,6 +19,9 @@ public struct ASRConfig: Codable, Sendable, Equatable {
     /// Utterances shorter than this (seconds) whose text is a known Whisper hallucination are
     /// treated as empty.
     public var hallucinationGuardSeconds: Double = 1.2
+    /// Above this no-speech probability a known silence hallucination ("you", "thank you") is
+    /// dropped whatever the utterance length (Whisper emits them on noise and room tone).
+    public var noSpeechThreshold: Float = 0.5
 
     public init() {}
 }
@@ -31,7 +34,10 @@ public enum TranscriptCleaner {
         "bye", "bye.", "you", "okay.", "so", "the end", "i'm sorry", "please subscribe",
     ]
 
-    public static func clean(_ raw: String, audioSeconds: Double, guardSeconds: Double) -> String {
+    public static func clean(
+        _ raw: String, audioSeconds: Double, guardSeconds: Double,
+        noSpeechProbability: Float = 0, noSpeechThreshold: Float = 1
+    ) -> String {
         var text = raw
         // Drop [BLANK_AUDIO], (music), *laughs* style annotations.
         for (open, close) in [("[", "]"), ("(", ")"), ("*", "*")] {
@@ -43,7 +49,8 @@ public enum TranscriptCleaner {
         text = text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = text.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: " .!?,"))
-        if audioSeconds < guardSeconds, silenceHallucinations.contains(normalized) || silenceHallucinations.contains(normalized + ".") {
+        let isKnownHallucination = silenceHallucinations.contains(normalized) || silenceHallucinations.contains(normalized + ".")
+        if isKnownHallucination, audioSeconds < guardSeconds || noSpeechProbability > noSpeechThreshold {
             return ""
         }
         if normalized.isEmpty || normalized.allSatisfy({ !$0.isLetter && !$0.isNumber }) { return "" }

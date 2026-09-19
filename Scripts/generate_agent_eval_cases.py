@@ -1126,7 +1126,7 @@ def dictated_number(rng: Rng) -> tuple[str, str]:
 # exactly one mobile, no label) are isolated in the `phone_unique_mobile` subcategories and follow
 # this switch; every other phone-ambiguity case uses contacts with no unique mobile, where both
 # readings agree.
-UNIQUE_MOBILE_IS_AMBIGUOUS = True
+UNIQUE_MOBILE_IS_AMBIGUOUS = False
 
 
 def single_number_contacts(fx: Fixture = DEFAULT) -> list[Contact]:

@@ -40,6 +40,7 @@ import Testing
             let final = try await Self.runtime.final(samples, context: ASRContext())
             let wer = WordErrorRateTest.compute(reference: fixture.text ?? "", hypothesis: final.text)
             errors[fixture.file] = wer
+            print("ASR \(fixture.file): '\(final.text)' WER \(wer) no-speech \(await Self.runtime.lastNoSpeechProbability)")
             #expect(wer <= 0.34, "\(fixture.file): '\(final.text)' WER \(wer)")
         }
         let mean = errors.values.reduce(0, +) / Double(max(1, errors.count))
@@ -51,6 +52,7 @@ import Testing
             let samples = try WAV.read(Self.fixtures.appendingPathComponent(fixture.file))
             let final = try await Self.runtime.final(samples, context: ASRContext())
             let wer = WordErrorRateTest.compute(reference: fixture.text ?? "", hypothesis: final.text)
+            print("ASR \(fixture.file): '\(final.text)' WER \(wer) no-speech \(await Self.runtime.lastNoSpeechProbability)")
             #expect(wer <= 0.5, "\(fixture.file): '\(final.text)' WER \(wer)")
         }
     }
@@ -59,6 +61,7 @@ import Testing
         for file in ["silence.wav", "noise_pink.wav", "noise_brown.wav"] {
             let samples = try WAV.read(Self.fixtures.appendingPathComponent(file))
             let final = try await Self.runtime.final(samples, context: ASRContext())
+            print("ASR \(file): '\(final.text)' no-speech \(await Self.runtime.lastNoSpeechProbability)")
             #expect(final.text.isEmpty, "\(file) hallucinated '\(final.text)'")
         }
     }

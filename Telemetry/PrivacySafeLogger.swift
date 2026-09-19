@@ -64,7 +64,10 @@ public enum TelemetryEvent: Sendable, Equatable {
 
 /// Stages measured for the PRD §13 performance budget.
 public enum LatencyStage: String, Sendable, Codable, CaseIterable, SafeLabelConvertible {
+    /// End of the user's last speech frame → first assistant audio (includes endpoint silence).
     case endOfSpeechToFirstAudio
+    /// Endpoint decision → first assistant audio (ASR final + LLM + resolution + first TTS chunk).
+    case endpointToFirstAudio
     case endpointToFinalTranscript
     case partialTranscript
     case llmPromptEval

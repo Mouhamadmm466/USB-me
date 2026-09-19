@@ -65,8 +65,9 @@ public actor PermissionManager: PermissionProviding {
     public static func isUsable(_ status: PermissionStatus, for kind: PermissionKind) -> Bool {
         switch status {
         case .granted: true
-        // iOS 18 limited contacts access still lets us search the contacts the user shared.
-        case .limited: kind == .contacts
+        // Limited contacts access still lets us search the contacts the user shared; calendar
+        // write-only access still allows creating events (the resolver refuses reads/updates).
+        case .limited: kind == .contacts || kind == .calendar
         default: false
         }
     }

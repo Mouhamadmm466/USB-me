@@ -33,24 +33,45 @@ public struct LLMRequest: Sendable, Equatable {
     /// llama.cpp GBNF grammar that constrains the output.
     public let grammar: String?
     public let maxOutputTokens: Int
+    /// Text the runtime may copy speculative draft tokens from (the utterance first, then the
+    /// turn context). Empty = the suffix. Drafts are always verified against the model's own
+    /// choices, so this can change speed but never output.
+    public let draftSources: [String]
 
-    public init(cacheablePrefix: String, suffix: String, grammar: String?, maxOutputTokens: Int) {
+    public init(cacheablePrefix: String, suffix: String, grammar: String?, maxOutputTokens: Int, draftSources: [String] = []) {
         self.cacheablePrefix = cacheablePrefix
         self.suffix = suffix
         self.grammar = grammar
         self.maxOutputTokens = maxOutputTokens
+        self.draftSources = draftSources
     }
 }
 
 public struct LLMGenerationStats: Sendable, Codable, Equatable {
     public var cachedPrefixTokens: Int = 0
     public var promptTokens: Int = 0
+    /// Leading suffix tokens already evaluated by `prime` before the request arrived.
+    public var primedTokens: Int = 0
     public var sampledTokens: Int = 0
     public var forcedTokens: Int = 0
     public var promptEvalMilliseconds: Double = 0
     public var timeToFirstTokenMilliseconds: Double = 0
     public var totalMilliseconds: Double = 0
     public var stoppedReason: String = "unknown"
+    /// Time inside llama_decode + GPU synchronization (prompt suffix, sampled and forced tokens).
+    public var decodeMilliseconds: Double = 0
+    /// Time choosing tokens under the grammar.
+    public var samplingMilliseconds: Double = 0
+    public var decodeCalls: Int = 0
+    /// Steps where no high-probability token satisfied the grammar and the whole vocabulary had
+    /// to be constrained (slow path).
+    public var grammarFallbacks: Int = 0
+    /// Prompt-lookup draft tokens evaluated, and how many matched the model's own greedy choice.
+    public var draftTokens: Int = 0
+    public var acceptedDraftTokens: Int = 0
+    /// Per decode call: tokens in the call and its duration (profiling batch-size costs).
+    public var decodeCallTokens: [Int] = []
+    public var decodeCallMilliseconds: [Double] = []
 
     public init() {}
 }
@@ -66,6 +87,14 @@ public protocol LanguageModel: Sendable {
     /// Loads (if needed) and evaluates the cacheable prefix ahead of the first turn.
     func prepare(cacheablePrefix: String) async throws
     func generate(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error>
+    /// Evaluates the beginning of the next request's suffix (the turn context up to the
+    /// utterance) while the user is still speaking. The next `generate` whose suffix starts with
+    /// `suffixHead` only evaluates the rest; any other request ignores it. Optional optimization.
+    func prime(cacheablePrefix: String, suffixHead: String) async
+}
+
+extension LanguageModel {
+    public func prime(cacheablePrefix: String, suffixHead: String) async {}
 }
 
 // MARK: - Speech recognition

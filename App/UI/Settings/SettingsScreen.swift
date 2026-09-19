@@ -4,7 +4,7 @@ import SwiftUI
 /// Sections of Settings, for deep links (for example the shared-folder permission card
 /// opens Settings at `.permissions`).
 enum SettingsSection: String, CaseIterable, Hashable, Sendable {
-    case models, storage, permissions, privacy, voice, diagnostics, about
+    case models, storage, permissions, files, privacy, voice, diagnostics, about
 }
 
 /// Settings: models, storage, permissions, privacy, voice, diagnostics and about. Present it
@@ -30,6 +30,7 @@ struct SettingsScreen: View {
                     modelsSection
                     storageSection
                     permissionsSection
+                    filesSection
                     privacySection
                     voiceSection
                     diagnosticsSection
@@ -122,24 +123,38 @@ struct SettingsScreen: View {
                     onOpenSettings: { actions.openSystemSettings(row.kind) }
                 )
             }
+        } header: {
+            SettingsHeader("Permissions")
+        } footer: {
+            SettingsFooter("Voice Agent asks for each permission the first time a request needs it.")
+        }
+        .id(SettingsSection.permissions)
+    }
+
+    // MARK: Files
+
+    private var filesSection: some View {
+        Section {
             ForEach(state.sharedFolders) { folder in
                 SharedFolderRow(folder: folder, onRemove: { actions.removeFolder(folder.id) })
             }
             Button(action: actions.chooseFolder) {
                 HStack(spacing: Spacing.m) {
                     IconTile(systemImage: "folder.badge.plus", tone: .neutral, size: 30)
-                    Text(state.sharedFolders.isEmpty ? "Share a folder\u{2026}" : "Share another folder\u{2026}")
+                    Text(state.sharedFolders.isEmpty ? "Choose folder\u{2026}" : "Choose another folder\u{2026}")
                         .textStyle(.body, weight: .medium)
                         .foregroundStyle(Palette.ink)
                 }
             }
             .accessibilityHint("Opens Files so you can choose a folder Voice Agent may search.")
         } header: {
-            SettingsHeader("Permissions")
+            SettingsHeader("Files")
         } footer: {
-            SettingsFooter("Voice Agent asks for each permission the first time a request needs it. It can only see the folders you share here.")
+            SettingsFooter(state.sharedFolders.isEmpty
+                ? "Voice Agent can\u{2019}t see any of your files. Choose a folder to let it search and open the files inside."
+                : "Voice Agent can search and open files only in these folders.")
         }
-        .id(SettingsSection.permissions)
+        .id(SettingsSection.files)
     }
 
     // MARK: Privacy
@@ -347,9 +362,8 @@ struct ValueRow: View {
             }
             Text(title).textStyle(.body).foregroundStyle(Palette.ink)
             Spacer(minLength: Spacing.m)
-            Text(value)
+            Text.tabular(value)
                 .textStyle(.body)
-                .monospacedDigit()
                 .foregroundStyle(Palette.inkSecondary)
                 .multilineTextAlignment(.trailing)
         }
@@ -502,9 +516,8 @@ private struct DiagnosticsControls: View {
                         .textStyle(.body, weight: .medium)
                         .foregroundStyle(Palette.ink)
                     Spacer(minLength: Spacing.s)
-                    Text(Formatting.percent(progress))
+                    Text.tabular(Formatting.percent(progress))
                         .textStyle(.body)
-                        .monospacedDigit()
                         .foregroundStyle(Palette.inkSecondary)
                 }
                 ProgressBar(value: progress)
@@ -558,7 +571,6 @@ private struct MetricRow: View {
             HStack(spacing: 6) {
                 Text(metric.value)
                     .textStyle(.body, weight: .semibold)
-                    .monospacedDigit()
                     .foregroundStyle(Palette.ink)
                 if let tone = tone {
                     Image(systemName: symbol)

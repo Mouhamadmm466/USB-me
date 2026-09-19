@@ -1,13 +1,30 @@
+import CoreText
 import SwiftUI
 import UIKit
 
-/// The DM Sans faces bundled in `Resources/Fonts` (registered through `UIAppFonts`).
-/// The raw value is the PostScript name.
+/// The DM Sans faces bundled in `Resources/Fonts`. The raw value is both the PostScript name
+/// and the file name (`DMSans-SemiBold.ttf`).
 enum DMSans: String, CaseIterable, Sendable {
     case regular = "DMSans-Regular"
     case medium = "DMSans-Medium"
     case semibold = "DMSans-SemiBold"
     case bold = "DMSans-Bold"
+
+    /// Makes sure every face is registered with Core Text, once per process.
+    ///
+    /// `UIAppFonts` should do this at launch, but the synchronized `Resources` folder copies
+    /// the files to the bundle root while `UIAppFonts` lists `Fonts/…`, and previews never read
+    /// `UIAppFonts`. Registering here makes DM Sans load in every configuration.
+    static let isRegistered: Bool = {
+        for face in DMSans.allCases where UIFont(name: face.rawValue, size: 12) == nil {
+            let url = Bundle.main.url(forResource: face.rawValue, withExtension: "ttf")
+                ?? Bundle.main.url(forResource: face.rawValue, withExtension: "ttf", subdirectory: "Fonts")
+            if let url {
+                CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+            }
+        }
+        return DMSans.allCases.allSatisfy { UIFont(name: $0.rawValue, size: 12) != nil }
+    }()
 }
 
 /// The app's type scale. Every step is DM Sans, anchored to an iOS text style so it follows
@@ -109,21 +126,52 @@ extension Font {
     ///     Text("Listening").font(.dm(.title3))
     ///     Text("Send").font(.dm(.body, weight: .semibold))
     static func dm(_ style: TypeStyle, weight: DMSans? = nil) -> Font {
-        .custom((weight ?? style.defaultWeight).rawValue, size: style.size, relativeTo: style.textStyle)
+        _ = DMSans.isRegistered
+        return .custom((weight ?? style.defaultWeight).rawValue, size: style.size, relativeTo: style.textStyle)
     }
 
     /// DM Sans at an arbitrary size, still scaled relative to a text style.
     static func dm(size: CGFloat, weight: DMSans = .regular, relativeTo textStyle: Font.TextStyle = .body) -> Font {
-        .custom(weight.rawValue, size: size, relativeTo: textStyle)
+        _ = DMSans.isRegistered
+        return .custom(weight.rawValue, size: size, relativeTo: textStyle)
     }
 }
 
 extension UIFont {
     /// DM Sans for UIKit chrome (navigation bars), scaled with Dynamic Type.
     static func dm(_ style: TypeStyle, weight: DMSans? = nil) -> UIFont {
+        _ = DMSans.isRegistered
         let base = UIFont(name: (weight ?? style.defaultWeight).rawValue, size: style.size)
             ?? .systemFont(ofSize: style.size)
         return UIFontMetrics(forTextStyle: style.uiTextStyle).scaledFont(for: base)
+    }
+}
+
+extension Text {
+    /// `string` with tabular (fixed-width) figures for its digits only.
+    ///
+    /// DM Sans' `tnum` feature also widens spaces, colons and periods to figure width, so
+    /// `.monospacedDigit()` on a whole string spreads it apart ("4 : 57", "1.2  of  3 GB").
+    /// Use this for numbers that update in place (countdowns, progress, sizes).
+    static func tabular(_ string: String) -> Text {
+        var result = Text(verbatim: "")
+        var run = ""
+        var runIsDigits = false
+        for character in string {
+            let isDigit = character.isASCII && character.isNumber
+            if isDigit != runIsDigits, !run.isEmpty {
+                let piece = Text(verbatim: run)
+                result = Text("\(result)\(runIsDigits ? piece.monospacedDigit() : piece)")
+                run = ""
+            }
+            runIsDigits = isDigit
+            run.append(character)
+        }
+        if !run.isEmpty {
+            let piece = Text(verbatim: run)
+            result = Text("\(result)\(runIsDigits ? piece.monospacedDigit() : piece)")
+        }
+        return result
     }
 }
 

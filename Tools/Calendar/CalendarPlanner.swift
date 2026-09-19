@@ -74,7 +74,7 @@ public struct CalendarPlanner: Sendable {
                 return .failure(PlanClarification(reason: .dateUnclear, question: ClarificationText.endTimeNeeded, missingArgument: argument))
             }
             var end = parsed.date
-            if DatePhraseClassifier.isTimeOnly(phrase) {
+            if parser.isTimeOfDayOnly(phrase) {
                 end = combine(day: start, timeOf: parsed.date)
                 if end <= start {
                     let hour = calendar.component(.hour, from: end)
@@ -181,7 +181,7 @@ public struct CalendarPlanner: Sendable {
             if !parsed.hasTime {
                 let day = calendar.startOfDay(for: parsed.date)
                 start = event.isAllDay ? day : combine(day: day, timeOf: event.startDate)
-            } else if DatePhraseClassifier.isTimeOnly(phrase) {
+            } else if parser.isTimeOfDayOnly(phrase) {
                 start = combine(day: event.startDate, timeOf: parsed.date)
                 isAllDay = false
             } else {

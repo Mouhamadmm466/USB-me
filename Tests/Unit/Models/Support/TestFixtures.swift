@@ -55,12 +55,10 @@ func host(
     _ filename: String,
     data: Data,
     namespace: String = UUID().uuidString,
-    pinnedData: Data? = nil,
-    chunkSize: Int = 64 * 1024,
-    chunkDelay: Duration = .zero
+    pinnedData: Data? = nil
 ) -> HostedFile {
     let url = StubServer.url(namespace: namespace, name: filename)
-    let resource = StubResource(body: data, chunkSize: chunkSize, chunkDelay: chunkDelay)
+    let resource = StubResource(body: data)
     StubServer.shared.register(resource, at: url)
     let pinned = pinnedData ?? data
     let pin = ModelFile(

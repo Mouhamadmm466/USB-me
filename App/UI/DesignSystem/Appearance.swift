@@ -1,9 +1,10 @@
 import SwiftUI
 import UIKit
 
-/// UIKit chrome that SwiftUI fonts cannot reach (navigation bar titles and bar buttons).
-/// Idempotent; call once at launch before the first navigation bar is created. The screens
-/// that own a navigation stack also call it, so it is safe if the app forgets.
+/// One-time setup for the design system: registers DM Sans with Core Text and applies it to
+/// the UIKit chrome that SwiftUI fonts cannot reach (navigation bar titles, bar buttons).
+/// Idempotent. Call it once in `App.init()`; the screens in `App/UI` also call it from their
+/// initialisers, so it is safe if the app forgets.
 @MainActor
 enum DesignSystemAppearance {
     private static var isInstalled = false
@@ -11,6 +12,7 @@ enum DesignSystemAppearance {
     static func install() {
         guard !isInstalled else { return }
         isInstalled = true
+        _ = DMSans.isRegistered
 
         let navigationBar = UINavigationBar.appearance()
         navigationBar.titleTextAttributes = [.font: UIFont.dm(.headline)]

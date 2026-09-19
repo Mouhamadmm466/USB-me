@@ -15,6 +15,7 @@ public actor SpeechQueue: SpeechOutput {
     private let tracker: SpokenTextTracker
     private var generation = 0
     private var interruptedGeneration: Int?
+    private var firstAudioObserver: (@Sendable (TimeInterval) -> Void)?
 
     /// - Parameters:
     ///   - synthesizer: nil when no TTS engine is available (simulator): speech is shown, not played.
@@ -36,6 +37,12 @@ public actor SpeechQueue: SpeechOutput {
 
     public nonisolated var spokenText: SpokenTextTracker { tracker }
 
+    /// Receives `ProcessInfo.systemUptime` at the moment each reply's first chunk starts playing
+    /// (for end-of-speech → first-audio latency).
+    public func observeFirstAudio(_ observer: (@Sendable (TimeInterval) -> Void)?) {
+        firstAudioObserver = observer
+    }
+
     public func speak(_ text: String) async -> SpeechOutputResult {
         generation += 1
         let myGeneration = generation
@@ -56,6 +63,7 @@ public actor SpeechQueue: SpeechOutput {
                 return result(for: myGeneration)
             }
             if index == 0 {
+                firstAudioObserver?(ProcessInfo.processInfo.systemUptime)
                 await metrics?.record(.ttsTimeToFirstAudio, milliseconds: started.elapsedMilliseconds)
             }
             do {

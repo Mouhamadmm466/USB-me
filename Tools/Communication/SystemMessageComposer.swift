@@ -32,7 +32,10 @@ public final class SystemMessageComposer: NSObject, MessageComposing {
         activeController = controller
         return await withCheckedContinuation { continuation in
             self.continuation = continuation
-            host.present(controller, animated: true)
+            host.present(controller, animated: true) {
+                // Learn about interactive dismissals that bypass the MessageUI delegate.
+                controller.presentationController?.delegate = self
+            }
         }
     }
 
@@ -45,10 +48,22 @@ public final class SystemMessageComposer: NSObject, MessageComposing {
         @unknown default: outcome = .failed
         }
         controller.dismiss(animated: true)
+        resume(with: outcome)
+    }
+
+    private func resume(with outcome: MessageComposeOutcome) {
         activeController = nil
         let pending = continuation
         continuation = nil
         pending?.resume(returning: outcome)
+    }
+}
+
+extension SystemMessageComposer: UIAdaptivePresentationControllerDelegate {
+    /// The sheet went away without a MessageUI result: nothing was sent.
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        guard continuation != nil else { return }
+        resume(with: .cancelled)
     }
 }
 

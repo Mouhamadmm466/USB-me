@@ -1,0 +1,449 @@
+{
+  "asrTranscript" : "Text Alex that I will be 20 minutes late.",
+  "asrWordErrorRate" : 0,
+  "availableMemoryAtStartMB" : 6130.983589172363,
+  "batteryEnd" : 0.75,
+  "batteryStart" : 0.75,
+  "environment" : {
+    "appVersion" : "1.0.0",
+    "deviceModel" : "iPhone16,1",
+    "isSimulator" : false,
+    "physicalMemoryGB" : 7.4999847412109375,
+    "processorCount" : 6,
+    "systemVersion" : "Version 26.6.1 (Build 23G83)"
+  },
+  "errors" : [
+
+  ],
+  "finishedAt" : "2026-09-19T14:52:40Z",
+  "llmOutputs" : {
+    "Text Alex that I will be 20 minutes late" : "{\"type\":\"proposed_action\",\"tool\":\"compose_message\",\"arguments\":{\"contact_query\":\"Alex\",\"message\":\"I'll be 20 minutes late.\"},\"requires_confirmation\":true}",
+    "call mom" : "{\"type\":\"proposed_action\",\"tool\":\"initiate_call\",\"arguments\":{\"contact_query\":\"mom\"},\"requires_confirmation\":true}",
+    "move my team sync to 4 pm" : "{\"type\":\"proposed_action\",\"tool\":\"update_calendar_event\",\"arguments\":{\"event_query\":\"team sync\",\"new_start\":\"4 pm\"},\"requires_confirmation\":true}",
+    "remind me to call the dentist tomorrow at 10" : "{\"type\":\"proposed_action\",\"tool\":\"create_reminder\",\"arguments\":{\"title\":\"Call dentist\",\"due\":\"tomorrow at 10\"},\"requires_confirmation\":true}",
+    "what's 15 percent of 80" : "{\"type\":\"answer\",\"speech\":\"15 percent of 80 is 12.\"}",
+    "what's on my calendar tomorrow" : "{\"type\":\"proposed_action\",\"tool\":\"get_calendar_events\",\"arguments\":{\"when\":\"tomorrow\"},\"requires_confirmation\":false}"
+  },
+  "metrics" : [
+    {
+      "name" : "cold_load",
+      "p50" : 319.442459,
+      "p95" : 319.442459,
+      "samples" : [
+        319.442459
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "final_transcript",
+      "p50" : 199.082625,
+      "p95" : 203.15675,
+      "samples" : [
+        177.525917,
+        200.358834,
+        181.96775,
+        199.082625,
+        203.15675
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "partial_1_5s",
+      "p50" : 53.370542,
+      "p95" : 57.788,
+      "samples" : [
+        49.240834,
+        53.370542,
+        50.230792,
+        57.788,
+        55.635333
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 19.11549287638738,
+      "p95" : 21.4366587386787,
+      "samples" : [
+        21.4366587386787,
+        18.993734511351768,
+        20.91338987265601,
+        19.11549287638738,
+        18.732148944103507
+      ],
+      "stage" : "asr",
+      "unit" : "x"
+    },
+    {
+      "name" : "silero_frame",
+      "p50" : 0.168584,
+      "p95" : 0.287584,
+      "samples" : [
+        1.311708,
+        0.29675,
+        0.264125,
+        0.255125,
+        0.254291,
+        0.259333,
+        0.250958,
+        0.251167,
+        0.251167,
+        0.25225,
+        0.2495,
+        0.252,
+        0.252375,
+        0.24825,
+        0.249917,
+        0.289667,
+        0.315167,
+        0.223667,
+        0.230041,
+        0.215166,
+        0.253,
+        0.2235,
+        0.287584,
+        0.319042,
+        0.23075,
+        0.207042,
+        0.201708,
+        0.199625,
+        0.198834,
+        0.198458,
+        0.198083,
+        0.198459,
+        0.198542,
+        0.198458,
+        0.1985,
+        0.197542,
+        0.19775,
+        0.198208,
+        0.197708,
+        0.198042,
+        0.197209,
+        0.197875,
+        0.198292,
+        0.19875,
+        0.197833,
+        0.198125,
+        0.197375,
+        0.198125,
+        0.197416,
+        0.198041,
+        0.197375,
+        0.198083,
+        0.183166,
+        0.16825,
+        0.172792,
+        0.168291,
+        0.167541,
+        0.167791,
+        0.167791,
+        0.168916,
+        0.1675,
+        0.16925,
+        0.168709,
+        0.169125,
+        0.168584,
+        0.1685,
+        0.167667,
+        0.167542,
+        0.168083,
+        0.168416,
+        0.167708,
+        0.16725,
+        0.167291,
+        0.168541,
+        0.168166,
+        0.16875,
+        0.16825,
+        0.168542,
+        0.168333,
+        0.167875,
+        0.167458,
+        0.168333,
+        0.166834,
+        0.167625,
+        0.167125,
+        0.1685,
+        0.167958,
+        0.162084,
+        0.146042,
+        0.147459,
+        0.147,
+        0.147042,
+        0.146667,
+        0.146459,
+        0.146333,
+        0.146458,
+        0.145792,
+        0.145625,
+        0.145334,
+        0.145583,
+        0.146292,
+        0.146292,
+        0.145625,
+        0.1465,
+        0.149166,
+        0.1465,
+        0.14575,
+        0.146667,
+        0.145708,
+        0.145667,
+        0.145083,
+        0.145458,
+        0.14525,
+        0.145625,
+        0.145875,
+        0.145792,
+        0.145,
+        0.145625
+      ],
+      "stage" : "vad",
+      "unit" : "ms"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 4492.042792,
+      "p95" : 4492.042792,
+      "samples" : [
+        4492.042792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_eval_cold",
+      "p50" : 17307.990375,
+      "p95" : 17307.990375,
+      "samples" : [
+        17307.990375
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 457.994125,
+      "p95" : 481.416792,
+      "samples" : [
+        450.419875,
+        456.832,
+        469.970125,
+        468.465,
+        457.994125,
+        481.416792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 482.129791,
+      "p95" : 502.842292,
+      "samples" : [
+        463.078417,
+        479.583917,
+        491.354666,
+        490.571042,
+        482.129791,
+        502.842292
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 2105.680666,
+      "p95" : 2876.050542,
+      "samples" : [
+        2876.050542,
+        2007.453875,
+        2772.728583,
+        2411.129667,
+        2105.680666,
+        1939.7282500000001
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 153.51723053333336,
+      "p95" : 221.5174107142857,
+      "samples" : [
+        142.68415688235294,
+        221.5174107142857,
+        153.51723053333336,
+        176.60587881818185,
+        205.96081762500003,
+        104.16510414285715
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 11,
+      "p95" : 17,
+      "samples" : [
+        17,
+        7,
+        15,
+        11,
+        8,
+        14
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 21,
+      "p95" : 25,
+      "samples" : [
+        22,
+        21,
+        22,
+        25,
+        20,
+        7
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_ms_per_call",
+      "p50" : 124.44230122727275,
+      "p95" : 164.81520150000003,
+      "samples" : [
+        118.62344625000003,
+        164.81520150000003,
+        124.44230122727275,
+        131.96820844444446,
+        148.1507737142857,
+        112.17842888235296
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampling_ms_per_request",
+      "p50" : 10.566834000000002,
+      "p95" : 13.299583000000002,
+      "samples" : [
+        13.299583000000002,
+        5.320499999999999,
+        11.326208,
+        11.371001000000001,
+        5.939833,
+        10.566834000000002
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "grammar_fallbacks",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 1036.558333,
+      "p95" : 1036.558333,
+      "samples" : [
+        1036.558333
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "first_chunk_synthesis",
+      "p50" : 411.455917,
+      "p95" : 633.606875,
+      "samples" : [
+        250.656833,
+        633.606875,
+        393.248667,
+        276.949333,
+        626.697709,
+        391.018292,
+        277.00225,
+        598.539833,
+        414.046375,
+        277.684208,
+        606.459458,
+        411.455917,
+        275.824417,
+        610.949,
+        415.541292
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 5.2356147035746785,
+      "p95" : 5.7848014061519715,
+      "samples" : [
+        5.7848014061519715,
+        5.050450249612585,
+        5.403705538816232,
+        5.2356147035746785,
+        5.1061300433124766,
+        5.434528367281601,
+        5.234614520279167,
+        5.346344259096286,
+        5.132275339930219,
+        5.221758955770362,
+        5.2765274871844765,
+        5.16458729161987,
+        5.256967514953544,
+        5.237753069405139,
+        5.11381189044385
+      ],
+      "stage" : "tts",
+      "unit" : "x"
+    },
+    {
+      "name" : "endpoint_to_first_audio",
+      "p50" : 3794.670875,
+      "p95" : 5241.546458,
+      "samples" : [
+        3707.300042,
+        3756.01875,
+        3794.670875,
+        5241.546458,
+        5092.519917
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    }
+  ],
+  "notes" : [
+    "llm valid outputs: 6\/6",
+    "verified ggml-base.en.bin for loading in 4 ms",
+    "verified ggml-silero-v6.2.0.bin for loading in 1 ms",
+    "verified NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf for loading in 0 ms",
+    "verified kokoro-v1_0.safetensors for loading in 0 ms",
+    "verified af_heart.safetensors for loading in 0 ms"
+  ],
+  "peakFootprintMB" : 1365.0351028442383,
+  "startedAt" : "2026-09-19T14:51:33Z",
+  "thermalStates" : [
+    "nominal",
+    "fair"
+  ]
+}

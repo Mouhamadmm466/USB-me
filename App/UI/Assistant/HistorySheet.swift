@@ -37,6 +37,7 @@ struct HistorySheet: View {
                         .padding(.vertical, Spacing.l)
                     }
                     .defaultScrollAnchor(.bottom)
+                    .hardTopScrollEdge()
                 }
             }
             .background(Palette.canvas)
@@ -115,5 +116,17 @@ private struct TurnBubble: View {
 #Preview("History") {
     Color.clear.sheet(isPresented: .constant(true)) {
         HistorySheet(turns: GallerySamples.turns)
+    }
+}
+
+private extension View {
+    /// On iOS 26 the bar's glass buttons otherwise refract the ink bubbles scrolled beneath them.
+    @ViewBuilder
+    func hardTopScrollEdge() -> some View {
+        if #available(iOS 26.0, *) {
+            scrollEdgeEffectStyle(.hard, for: .top)
+        } else {
+            self
+        }
     }
 }

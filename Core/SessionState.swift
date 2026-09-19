@@ -119,6 +119,15 @@ public struct SessionState: Sendable, Equatable {
         }
     }
 
+    /// This state as the model should see it for the turn in progress: the user's current words
+    /// are the request itself, not part of the earlier conversation.
+    public func excludingCurrentUserTurn() -> SessionState {
+        guard recentTurns.last?.role == .user else { return self }
+        var copy = self
+        copy.recentTurns.removeLast()
+        return copy
+    }
+
     /// Clears conversational context (new conversation / clear history) but keeps permissions.
     public mutating func reset(conversationID: UUID = UUID()) {
         let permissions = permissionsSnapshot

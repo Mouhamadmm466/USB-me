@@ -393,16 +393,6 @@ import Testing
 }
 
 @Suite struct CalendarSupportTests {
-    @Test(arguments: [
-        ("4pm", true), ("at 3:30", true), ("noon", true), ("3", true), ("half past three", true),
-        ("9 in the morning", true), ("5 p.m.", true), ("15:30", true), ("at 4 o'clock", true),
-        ("tomorrow at 4", false), ("friday", false), ("in 2 hours", false), ("this afternoon", false),
-        ("9/21", false), ("the 21st", false), ("tonight", false), ("next monday at 3", false), ("sept 3", false),
-    ])
-    func timeOnlyClassification(phrase: String, expected: Bool) {
-        #expect(DatePhraseClassifier.isTimeOnly(phrase) == expected, "\(phrase)")
-    }
-
     @Test func occurrenceIdentifiersRoundTrip() {
         let occurrence = World.date(2026, 9, 21, 10, 0)
         let encoded = EventIdentifierCodec.encode(eventIdentifier: "ABC:123", occurrence: occurrence)
@@ -436,5 +426,83 @@ import Testing
         let timed = try await store.updateEvent(identifier: "e-offsite", changes: EventChanges(newStartDate: World.date(2026, 9, 28, 15, 0), newEndDate: World.date(2026, 9, 28, 16, 0)))
         #expect(!timed.isAllDay)
         #expect(await recorder.count == 2)
+    }
+}
+
+/// "Does this phrase name a day?" comes from `DateExpressionParser` itself, so the resolver and the
+/// parser cannot disagree (e.g. on "1500 hours", "midday", "3ish").
+@Suite struct TimeOfDayOnlyTests {
+    private let parser = DateExpressionParser(clock: World.clock)
+
+    @Test(arguments: [
+        "4pm", "at 3:30", "noon", "midday", "1500 hours", "3ish", "3", "half past three", "15:30",
+        "9 in the morning", "at 4 o'clock", "around 5", "in the morning",
+    ])
+    func clockTimesWithoutADayAreTimeOnly(phrase: String) throws {
+        #expect(parser.isTimeOfDayOnly(phrase), "\(phrase)")
+        let parsed = try #require(parser.parseDateTime(phrase), "\(phrase)")
+        #expect(parsed.hasTime)
+    }
+
+    @Test(arguments: [
+        "tomorrow at 4", "friday", "3pm tomorrow", "next monday at 3", "tonight", "this afternoon",
+        "the 21st", "9/21", "in 2 hours", "now", "someday soonish", "",
+    ])
+    func phrasesNamingADayOrAMomentAreNot(phrase: String) {
+        #expect(!parser.isTimeOfDayOnly(phrase), "\(phrase)")
+    }
+
+    @Test func classificationNeverDisagreesWithParsing() {
+        // A phrase is time-only exactly when the parser reads it and it lands today or tomorrow
+        // with a time, never when the parser rejects it.
+        let phrases = ["4pm", "midday", "1500 hours", "3ish", "5ish pm", "tomorrow", "friday at 9", "later", "quarter to 5"]
+        for phrase in phrases where parser.isTimeOfDayOnly(phrase) {
+            guard let parsed = parser.parseDateTime(phrase) else {
+                Issue.record("time-only phrase the parser cannot read: \(phrase)")
+                continue
+            }
+            let days = World.calendar.dateComponents([.day], from: World.calendar.startOfDay(for: World.now), to: World.calendar.startOfDay(for: parsed.date)).day
+            #expect(parsed.hasTime && (days == 0 || days == 1), "\(phrase)")
+        }
+    }
+
+    // MARK: With the real parser in the resolver
+
+    private var session: SessionState {
+        var session = SessionState()
+        session.lastCalendarEvent = World.teamSyncMonday
+        return session
+    }
+
+    private func newStart(_ phrase: String) async -> EventChanges? {
+        let suite = World.suite(dateParser: nil)
+        let outcome = await World.resolve(.updateCalendarEvent, ["event_query": .string("it"), "new_start": .string(phrase)], session: session, suite: suite)
+        if case let .updateCalendarEvent(_, changes)? = outcome.action { return changes }
+        return nil
+    }
+
+    @Test func realParserTimeOnlyNewStartKeepsTheEventDate() async throws {
+        // Team sync is Monday 10:00–10:30; "now" is Thursday.
+        let military = try #require(await newStart("1500 hours"))
+        #expect(military.newStartDate == World.date(2026, 9, 21, 15, 0))
+        #expect(military.newEndDate == World.date(2026, 9, 21, 15, 30))
+        #expect(try #require(await newStart("midday")).newStartDate == World.date(2026, 9, 21, 12, 0))
+        #expect(try #require(await newStart("3ish")).newStartDate == World.date(2026, 9, 21, 15, 0))
+        // A phrase that names a day moves the event to that day.
+        #expect(try #require(await newStart("tomorrow at 4")).newStartDate == World.date(2026, 9, 18, 16, 0))
+    }
+
+    @Test func realParserTimeOnlyEndTakesTheStartDate() async throws {
+        let outcome = await World.resolve(
+            .createCalendarEvent,
+            ["title": .string("Planning"), "start": .string("friday at 9am"), "end": .string("midday")],
+            suite: World.suite(dateParser: nil)
+        )
+        guard case let .createCalendarEvent(draft)? = outcome.action else {
+            Issue.record("expected an event, got \(outcome)")
+            return
+        }
+        #expect(draft.startDate == World.date(2026, 9, 18, 9, 0))
+        #expect(draft.endDate == World.date(2026, 9, 18, 12, 0))
     }
 }

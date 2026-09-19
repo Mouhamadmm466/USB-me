@@ -43,30 +43,9 @@ let defaultModel = cwd.appendingPathComponent("ModelCache/NVIDIA-Nemotron3-Nano-
 func makeRuntime() -> NemotronRuntime {
     var config = LLMConfig()
     if let threads = value("--threads").flatMap(Int.init) { config.threads = threads }
+    if let drafts = value("--draft-tokens").flatMap(Int.init) { config.speculativeDraftTokens = drafts }
     let cache = value("--state-cache").map { URL(fileURLWithPath: $0) }
     return NemotronRuntime(modelURL: URL(fileURLWithPath: value("--model") ?? defaultModel), config: config, stateCacheDirectory: cache)
-}
-
-/// Deterministic stratified subset: round-robin across categories in dataset order.
-func stratified(_ cases: [EvalCase], limit: Int) -> [EvalCase] {
-    var byCategory: [String: [EvalCase]] = [:]
-    var order: [String] = []
-    for evalCase in cases {
-        if byCategory[evalCase.category] == nil { order.append(evalCase.category) }
-        byCategory[evalCase.category, default: []].append(evalCase)
-    }
-    var result: [EvalCase] = []
-    var index = 0
-    while result.count < limit {
-        var added = false
-        for category in order where index < byCategory[category]!.count && result.count < limit {
-            result.append(byCategory[category]![index])
-            added = true
-        }
-        if !added { break }
-        index += 1
-    }
-    return result
 }
 
 func gitCommit() -> String? {
@@ -92,7 +71,7 @@ func runCommand() async throws {
     var filters: [String] = []
     if let category = value("--category") { cases = cases.filter { $0.category == category }; filters.append("category=\(category)") }
     if let tag = value("--tag") { cases = cases.filter { $0.tags.contains(tag) }; filters.append("tag=\(tag)") }
-    if let limit = value("--limit").flatMap(Int.init) { cases = stratified(cases, limit: limit); filters.append("limit=\(limit)") }
+    if let limit = value("--limit").flatMap(Int.init) { cases = EvalSelection.stratified(cases, limit: limit); filters.append("limit=\(limit)") }
 
     let output = URL(fileURLWithPath: value("--output") ?? cwd.appendingPathComponent("Tests/AgentEval/Results").path)
     let runDirectory: URL
@@ -172,7 +151,7 @@ func smokeCommand() async throws {
         let (text, stats) = try await runtime.complete(request)
         print("\n> \(utterance)\n\(text)")
         print("  validation: \(OutputValidator().validate(text))")
-        print("  prompt \(stats.promptTokens) tok in \(Int(stats.promptEvalMilliseconds)) ms; sampled \(stats.sampledTokens) + forced \(stats.forcedTokens); total \(Int(stats.totalMilliseconds)) ms; stop=\(stats.stoppedReason)")
+        print("  prompt \(stats.promptTokens) tok in \(Int(stats.promptEvalMilliseconds)) ms; sampled \(stats.sampledTokens) + forced \(stats.forcedTokens); decode calls \(stats.decodeCalls); drafts \(stats.acceptedDraftTokens)/\(stats.draftTokens) accepted; total \(Int(stats.totalMilliseconds)) ms; stop=\(stats.stoppedReason)")
         fflush(stdout)
     }
 }

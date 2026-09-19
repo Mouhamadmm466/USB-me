@@ -40,6 +40,7 @@ struct OnboardingFlow: View {
         self.models = models
         self.actions = actions
         _page = State(initialValue: initialPage)
+        DesignSystemAppearance.install()
     }
 
     var body: some View {
@@ -57,7 +58,7 @@ struct OnboardingFlow: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .top, spacing: 0) { header }
+        .edgeBar(.top) { header }
         .background(Palette.canvas.ignoresSafeArea())
     }
 
@@ -134,14 +135,13 @@ struct OnboardingScaffold<Content: View, Actions: View>: View {
                 .frame(maxWidth: .infinity)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .edgeBar(.bottom) {
             VStack(spacing: Spacing.s) { actions }
                 .frame(maxWidth: Measure.content)
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.m)
                 .padding(.bottom, Spacing.s)
                 .frame(maxWidth: .infinity)
-                .background(Palette.canvas)
         }
     }
 }

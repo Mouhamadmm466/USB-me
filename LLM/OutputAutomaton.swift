@@ -126,8 +126,6 @@ enum AgentOutputPattern {
             .sequence([
                 .literal(#"{"type":"proposed_action","#),
                 .alternation(tools.map(call)),
-                .literal(#","requires_confirmation":"#),
-                .alternation([.literal("true"), .literal("false")]),
                 .literal("}"),
             ]),
         ])
@@ -157,10 +155,11 @@ enum AgentOutputPattern {
     ])
 
     static func call(_ tool: ToolSpec) -> Pattern {
-        .sequence([
+        let plan = ArgumentPlan(tool: tool)
+        return .sequence([
             .literal(#""tool":"\#(tool.id.rawValue)","arguments":{"#),
-            head(tool.arguments, 0),
-            .literal("}"),
+            arguments(plan, ArgumentPlan.State(index: 0, emitted: false, satisfied: plan.initiallySatisfied)),
+            .literal(#"},"requires_confirmation":\#(tool.riskLevel.requiresConfirmation ? "true" : "false")"#),
         ])
     }
 
@@ -175,22 +174,18 @@ enum AgentOutputPattern {
         }
     }
 
-    static func head(_ arguments: [ToolArgumentSpec], _ index: Int) -> Pattern {
-        guard index < arguments.count else { return .sequence([]) }
-        let element = argument(arguments[index])
-        if arguments[index].isRequired {
-            return .sequence([element, tail(arguments, index + 1)])
+    /// Same recursion as `GrammarBuilder.argumentRules` (via `ArgumentPlan`).
+    static func arguments(_ plan: ArgumentPlan, _ state: ArgumentPlan.State) -> Pattern {
+        let options = plan.transitions(from: state).map { transition -> Pattern in
+            var parts: [Pattern] = []
+            if let emitted = transition.emitted {
+                if state.emitted { parts.append(.literal(",")) }
+                parts.append(argument(emitted))
+            }
+            if let next = transition.next { parts.append(arguments(plan, next)) }
+            return .sequence(parts)
         }
-        return .alternation([.sequence([element, tail(arguments, index + 1)]), head(arguments, index + 1)])
-    }
-
-    static func tail(_ arguments: [ToolArgumentSpec], _ index: Int) -> Pattern {
-        guard index < arguments.count else { return .sequence([]) }
-        let element = Pattern.sequence([.literal(","), argument(arguments[index])])
-        if arguments[index].isRequired {
-            return .sequence([element, tail(arguments, index + 1)])
-        }
-        return .alternation([.sequence([element, tail(arguments, index + 1)]), tail(arguments, index + 1)])
+        return options.count == 1 ? options[0] : .alternation(options)
     }
 }
 

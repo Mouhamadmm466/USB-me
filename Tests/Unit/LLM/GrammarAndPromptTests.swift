@@ -88,7 +88,8 @@ import Testing
         // After a string value: either another argument or... message is required, so "," is forced.
         #expect(cursor.forcedContinuation().hasPrefix(","))
         cursor.advance(to: #"{"type":"proposed_action","tool":"compose_message","arguments":{"contact_query":"Alex","message":"Hi""#)
-        #expect(cursor.forcedContinuation() == #"},"requires_confirmation":"#)
+        // requires_confirmation is fixed by the tool's risk level, so the whole tail is forced.
+        #expect(cursor.forcedContinuation() == #"},"requires_confirmation":true}"#)
     }
 
     @Test func automatonForcesNothingInsideFreeText() {
@@ -160,5 +161,34 @@ import Testing
         #expect(!tracker.isComplete)
         tracker.consume(#""}"#)
         #expect(tracker.isComplete)
+    }
+}
+
+@Suite struct AtLeastOneOfGrammarTests {
+    @Test func emptyArgumentsAreOutsideTheLanguageWhenAGroupIsRequired() {
+        let automaton = OutputAutomaton.agentOutput
+        #expect(!automaton.accepts(#"{"type":"proposed_action","tool":"initiate_call","arguments":{},"requires_confirmation":true}"#))
+        #expect(!automaton.accepts(#"{"type":"proposed_action","tool":"initiate_call","arguments":{"phone_label":"mobile"},"requires_confirmation":true}"#))
+        #expect(automaton.accepts(#"{"type":"proposed_action","tool":"initiate_call","arguments":{"contact_query":"mom"},"requires_confirmation":true}"#))
+        #expect(automaton.accepts(#"{"type":"proposed_action","tool":"initiate_call","arguments":{"phone_number":"555 010 4477","phone_label":"mobile"},"requires_confirmation":true}"#))
+        #expect(!automaton.accepts(#"{"type":"proposed_action","tool":"compose_message","arguments":{"message":"hi"},"requires_confirmation":true}"#))
+        #expect(!automaton.accepts(#"{"type":"proposed_action","tool":"update_calendar_event","arguments":{"event_query":"it"},"requires_confirmation":true}"#))
+        #expect(automaton.accepts(#"{"type":"proposed_action","tool":"update_calendar_event","arguments":{"event_query":"it","new_title":"Lunch"},"requires_confirmation":true}"#))
+        // Tools without a group still accept their minimal form.
+        #expect(automaton.accepts(#"{"type":"proposed_action","tool":"create_reminder","arguments":{"title":"x"},"requires_confirmation":true}"#))
+    }
+
+    @Test func forcedContinuationAfterOpeningCallArgumentsRequiresARecipientKey() {
+        let cursor = OutputAutomaton.agentOutput.makeCursor()
+        cursor.advance(to: #"{"type":"proposed_action","tool":"initiate_call","arguments":{"#)
+        // `}` is no longer possible, so the opening quote of a key is forced.
+        #expect(cursor.forcedContinuation().hasPrefix("\""))
+    }
+
+    @Test func grammarHasNoEmptyArgumentAlternativeForCalls() {
+        let grammar = GrammarBuilder.agentOutputGrammar()
+        let callRules = grammar.split(separator: "\n").filter { $0.hasPrefix("args-initiate-call-0-0-0 ::=") }
+        #expect(callRules.count == 1)
+        #expect(!callRules[0].contains("\"\""))
     }
 }

@@ -193,8 +193,10 @@ public struct EchoBargeInController: Sendable {
         detector = EndpointDetector(config: Self.detectorConfig(config, echoRisk: echoRisk), mode: .bargeIn, sampleRate: sampleRate)
     }
 
-    /// True while frames are checked for barge-in (assistant speaking or within the echo tail).
-    public var isArmed: Bool { isAssistantSpeaking || tailRemainingSamples > 0 }
+    /// True while frames must be fed to `process`: the assistant is speaking, the echo tail is
+    /// running, or a candidate awaits its verdict (its audio keeps growing and its timeout is
+    /// counted in frames, even after playback ended).
+    public var isArmed: Bool { isAssistantSpeaking || tailRemainingSamples > 0 || pending != nil }
 
     /// Effective strict threshold for the current echo risk.
     public var effectiveSpeechThreshold: Float { detector.config.bargeInSpeechThreshold }

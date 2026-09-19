@@ -79,7 +79,7 @@ struct EventResolver {
                 let matching: [EventMatcher.Scored]
                 if !instant.hasTime {
                     matching = scored.filter { calendar.isDate($0.event.startDate, inSameDayAs: instant.date) }
-                } else if DatePhraseClassifier.isTimeOnly(phrase) {
+                } else if parser.isTimeOfDayOnly(phrase) {
                     let wanted = calendar.dateComponents([.hour, .minute], from: instant.date)
                     matching = scored.filter {
                         !$0.event.isAllDay && calendar.dateComponents([.hour, .minute], from: $0.event.startDate) == wanted

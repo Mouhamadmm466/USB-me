@@ -393,9 +393,7 @@ public actor ModelDownloadManager {
     private func stopError(for error: Error, pack: ModelPack, token: UUID) -> Error {
         let isCancellation = error is CancellationError || (error as? URLError)?.code == .cancelled
         guard isCancellation else {
-            if !(error is ModelDownloadError) || (error as? ModelDownloadError)?.isTransient == false {
-                log(pack.role, .failed, bytes: downloadedBytes(for: pack))
-            }
+            log(pack.role, .failed, bytes: downloadedBytes(for: pack))
             return error
         }
         let reason = operations[pack.id].flatMap { $0.token == token ? $0.stopReason : nil }
@@ -915,7 +913,9 @@ public actor ModelDownloadManager {
     /// URL of a file of the active revision, returned only if the active revision is exactly
     /// `pack`'s pins and the file passes the integrity policy (quick check, full re-hash when due).
     public func verifiedFileURL(for pack: ModelPack, filename: String) async throws -> URL {
-        guard let file = pack.file(named: filename) else { throw ModelDownloadError.fileMissing(filename: filename) }
+        guard let file = pack.file(named: filename) else {
+            throw ModelDownloadError.unknownFile(packID: pack.id, filename: filename)
+        }
         guard let record = readActivationRecord(packID: pack.id), record.matches(pack) else {
             throw ModelDownloadError.notInstalled(packID: pack.id)
         }

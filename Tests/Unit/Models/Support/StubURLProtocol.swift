@@ -13,6 +13,10 @@ enum StubBehavior: Sendable, Equatable {
     /// bytes. URLSession may drop bytes it has not yet handed to its delegate when a protocol
     /// fails, so tests that assert exact offsets use `truncateAfter` (or `failAfter(0)`).
     case failAfter(Int)
+    /// Like `.serve`, but after this many bytes the connection stays open without sending more
+    /// until the client cancels: a transfer that is reliably still running when a test pauses,
+    /// cancels or deletes it.
+    case stallAfter(Int)
     /// This status with an empty body.
     case status(Int)
     /// 416 with `Content-Range: bytes */<size>`, whatever was asked.
@@ -32,11 +36,16 @@ final class StubResource: Sendable {
         let status: Int
         let headers: [String: String]
         let body: Data
-        /// Stop after this many body bytes; `failsAtEnd` decides between an error and a normal end.
+        enum Ending: Sendable {
+            case finish
+            case fail
+            case stall
+        }
+
+        /// Stop after this many body bytes, then end as `ending` says.
         let endAfter: Int?
-        let failsAtEnd: Bool
+        let ending: Ending
         let chunkSize: Int
-        let chunkDelay: Duration
     }
 
     private struct State {
@@ -45,20 +54,18 @@ final class StubResource: Sendable {
         var script: [StubBehavior]
         var requests: [Request] = []
         var chunkSize: Int
-        var chunkDelay: Duration
     }
 
     private let state: Mutex<State>
 
-    init(body: Data, ignoresRange: Bool = false, script: [StubBehavior] = [], chunkSize: Int = 64 * 1024, chunkDelay: Duration = .zero) {
-        state = Mutex(State(body: body, ignoresRange: ignoresRange, script: script, chunkSize: chunkSize, chunkDelay: chunkDelay))
+    init(body: Data, ignoresRange: Bool = false, script: [StubBehavior] = [], chunkSize: Int = 64 * 1024) {
+        state = Mutex(State(body: body, ignoresRange: ignoresRange, script: script, chunkSize: chunkSize))
     }
 
     var requests: [Request] { state.withLock { $0.requests } }
 
     func setBody(_ body: Data) { state.withLock { $0.body = body } }
     func setScript(_ script: [StubBehavior]) { state.withLock { $0.script = script } }
-    func setChunkDelay(_ delay: Duration) { state.withLock { $0.chunkDelay = delay } }
     func setIgnoresRange(_ ignores: Bool) { state.withLock { $0.ignoresRange = ignores } }
 
     /// Records the request and decides the response.
@@ -70,12 +77,12 @@ final class StubResource: Sendable {
             let body = state.body
             let total = body.count
 
-            func plan(_ status: Int, _ headers: [String: String], _ slice: Data, endAfter: Int? = nil, failsAtEnd: Bool = false) -> Plan {
+            func plan(_ status: Int, _ headers: [String: String], _ slice: Data, endAfter: Int? = nil, ending: Plan.Ending = .finish) -> Plan {
                 var headers = headers
                 headers["Content-Length"] = String(slice.count)
                 headers["Accept-Ranges"] = "bytes"
-                return Plan(status: status, headers: headers, body: slice, endAfter: endAfter, failsAtEnd: failsAtEnd,
-                            chunkSize: state.chunkSize, chunkDelay: state.chunkDelay)
+                return Plan(status: status, headers: headers, body: slice, endAfter: endAfter, ending: ending,
+                            chunkSize: state.chunkSize)
             }
 
             switch behavior {
@@ -83,21 +90,22 @@ final class StubResource: Sendable {
                 return plan(code, [:], Data())
             case .rangeNotSatisfiable:
                 return plan(416, ["Content-Range": "bytes */\(total)"], Data())
-            case .serve, .truncateAfter, .failAfter, .wrongRangeStart:
-                let (endAfter, failsAtEnd): (Int?, Bool) = switch behavior {
-                case let .truncateAfter(bytes): (bytes, false)
-                case let .failAfter(bytes): (bytes, true)
-                default: (nil, false)
+            case .serve, .truncateAfter, .failAfter, .stallAfter, .wrongRangeStart:
+                let (endAfter, ending): (Int?, Plan.Ending) = switch behavior {
+                case let .truncateAfter(bytes): (bytes, .finish)
+                case let .failAfter(bytes): (bytes, .fail)
+                case let .stallAfter(bytes): (bytes, .stall)
+                default: (nil, .finish)
                 }
                 guard let range, !state.ignoresRange, let start = Self.rangeStart(range) else {
-                    return plan(200, [:], body, endAfter: endAfter, failsAtEnd: failsAtEnd)
+                    return plan(200, [:], body, endAfter: endAfter, ending: ending)
                 }
                 guard start < total else {
                     return plan(416, ["Content-Range": "bytes */\(total)"], Data())
                 }
                 let served = behavior == .wrongRangeStart ? min(start + 1, total - 1) : start
                 return plan(206, ["Content-Range": "bytes \(served)-\(total - 1)/\(total)"], body.subdata(in: served..<total),
-                            endAfter: endAfter, failsAtEnd: failsAtEnd)
+                            endAfter: endAfter, ending: ending)
             }
         }
     }
@@ -137,8 +145,8 @@ final class StubServer: Sendable {
     }
 }
 
-/// Serves `StubServer` resources to URLSession, streaming bodies in chunks (optionally throttled)
-/// and failing on cue. No request ever leaves the process.
+/// Serves `StubServer` resources to URLSession, streaming bodies in chunks and failing or stalling
+/// on cue. No request ever leaves the process.
 final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     // @unchecked Sendable: `stopped` is only accessed under `lock`; the delivery closure only
     // reads immutable values and calls the thread-safe URLProtocolClient.
@@ -162,7 +170,7 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         let plan = resource.plan(for: request)
         let response = HTTPURLResponse(url: url, statusCode: plan.status, httpVersion: "HTTP/1.1", headerFields: plan.headers)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        deliver(plan, from: 0)
+        deliver(plan)
     }
 
     override func stopLoading() {
@@ -171,39 +179,23 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
     private var isStopped: Bool { lock.withLock { stopped } }
 
-    private func deliver(_ plan: StubResource.Plan, from offset: Int) {
-        let delay = plan.chunkDelay
-        let work: @Sendable () -> Void = { [self] in
-            var position = offset
+    private func deliver(_ plan: StubResource.Plan) {
+        delivery.async { [self] in
+            var position = 0
             while !self.isStopped {
                 let limit = plan.endAfter.map { min($0, plan.body.count) } ?? plan.body.count
                 if position >= limit {
-                    if plan.failsAtEnd {
-                        self.client?.urlProtocol(self, didFailWithError: URLError(.networkConnectionLost))
-                    } else {
-                        self.client?.urlProtocolDidFinishLoading(self)
+                    switch limit >= plan.body.count ? .finish : plan.ending {
+                    case .finish: self.client?.urlProtocolDidFinishLoading(self)
+                    case .fail: self.client?.urlProtocol(self, didFailWithError: URLError(.networkConnectionLost))
+                    case .stall: break // keep the connection open until URLSession stops loading
                     }
                     return
                 }
                 let end = min(position + plan.chunkSize, limit)
                 self.client?.urlProtocol(self, didLoad: plan.body.subdata(in: position..<end))
                 position = end
-                if delay > .zero {
-                    self.deliver(plan, from: position)
-                    return
-                }
             }
         }
-        if delay > .zero, offset > 0 {
-            delivery.asyncAfter(deadline: .now() + delay.timeInterval, execute: work)
-        } else {
-            delivery.async(execute: work)
-        }
-    }
-}
-
-extension Duration {
-    var timeInterval: TimeInterval {
-        Double(components.seconds) + Double(components.attoseconds) / 1e18
     }
 }

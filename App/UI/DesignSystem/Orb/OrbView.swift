@@ -66,11 +66,11 @@ enum OrbMode: String, CaseIterable, Sendable, Identifiable {
         case .idle:
             OrbStyle(amplitude: 0.018, levelGain: 0, speed: 0.35, breath: 1, pulse: 0, shimmer: 0, sweep: 0, ring: 0, glow: 0.45, spread: 0)
         case .listening:
-            OrbStyle(amplitude: 0.022, levelGain: 0.17, speed: 0.85, breath: 0.25, pulse: 0, shimmer: 0, sweep: 0, ring: 0, glow: 0.75, spread: 1)
+            OrbStyle(amplitude: 0.02, levelGain: 0.12, speed: 0.8, breath: 0.25, pulse: 0, shimmer: 0, sweep: 0, ring: 0, glow: 0.75, spread: 1)
         case .understanding:
             OrbStyle(amplitude: 0.014, levelGain: 0, speed: 0.45, breath: 0.2, pulse: 0, shimmer: 1, sweep: 0, ring: 0, glow: 0.6, spread: 0)
         case .speaking:
-            OrbStyle(amplitude: 0.016, levelGain: 0.06, speed: 0.7, breath: 0.2, pulse: 1, shimmer: 0, sweep: 0, ring: 0, glow: 0.8, spread: 0.6)
+            OrbStyle(amplitude: 0.011, levelGain: 0.025, speed: 0.5, breath: 0.2, pulse: 1, shimmer: 0, sweep: 0, ring: 0, glow: 0.8, spread: 0.5)
         case .confirming:
             OrbStyle(amplitude: 0.012, levelGain: 0, speed: 0.3, breath: 0.6, pulse: 0, shimmer: 0, sweep: 0, ring: 1, glow: 0.55, spread: 0)
         case .clarifying:
@@ -82,6 +82,11 @@ enum OrbMode: String, CaseIterable, Sendable, Identifiable {
         case .failed:
             OrbStyle(amplitude: 0.03, levelGain: 0, speed: 0.15, breath: 0.2, pulse: 0, shimmer: 0, sweep: 0, ring: 0, glow: 0.35, spread: 0)
         }
+    }
+
+    /// Slow, low-energy modes; drawn at a reduced frame rate to save power.
+    var isQuiet: Bool {
+        self == .idle || self == .blocked || self == .failed
     }
 
     /// Which audio level drives the orb in this mode.
@@ -148,7 +153,7 @@ struct OrbView: View {
                     OrbRenderer.draw(frame, in: &context, size: size, isDark: isDark)
                 }
             } else {
-                TimelineView(.animation(minimumInterval: mode == .idle || mode == .blocked ? 1.0 / 30 : nil)) { timeline in
+                TimelineView(.animation(minimumInterval: mode.isQuiet ? 1.0 / 20 : nil)) { timeline in
                     let frame = dynamics.advance(to: timeline.date.timeIntervalSinceReferenceDate, target: target)
                     Canvas { context, size in
                         OrbRenderer.draw(frame, in: &context, size: size, isDark: isDark)
@@ -302,16 +307,23 @@ enum OrbRenderer {
         let tint = Color(frame.color)
         let lineScale = max(0.55, side / 220)
 
-        // Glow behind the contours.
+        // Glow behind the contours (a radial gradient: soft like a blur, far cheaper per frame).
         if frame.glow > 0.01 {
-            context.drawLayer { layer in
-                layer.addFilter(.blur(radius: radius * 0.3))
-                let glowRadius = radius * (0.62 + 0.2 * frame.level)
-                layer.fill(
-                    Path(ellipseIn: CGRect(x: center.x - glowRadius, y: center.y - glowRadius, width: glowRadius * 2, height: glowRadius * 2)),
-                    with: .color(tint.opacity((isDark ? 0.5 : 0.26) * frame.glow))
+            let glowRadius = radius * (0.95 + 0.25 * frame.level)
+            let strength = (isDark ? 0.42 : 0.2) * frame.glow
+            context.fill(
+                Path(ellipseIn: CGRect(x: center.x - glowRadius, y: center.y - glowRadius, width: glowRadius * 2, height: glowRadius * 2)),
+                with: .radialGradient(
+                    Gradient(stops: [
+                        .init(color: tint.opacity(strength), location: 0),
+                        .init(color: tint.opacity(strength * 0.55), location: 0.45),
+                        .init(color: tint.opacity(0), location: 1),
+                    ]),
+                    center: center,
+                    startRadius: 0,
+                    endRadius: glowRadius
                 )
-            }
+            )
         }
 
         // Contours, inner to outer: denser and brighter at the centre, fading into the air.

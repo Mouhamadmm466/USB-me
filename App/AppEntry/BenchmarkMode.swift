@@ -30,12 +30,16 @@ final class BenchmarkController {
     private(set) var verificationLines: [String] = []
 
     static var documents: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0] }
-    static var importDirectory: URL { documents.appendingPathComponent("ModelImport", isDirectory: true) }
     static var reportsDirectory: URL { documents.appendingPathComponent("BenchmarkReports", isDirectory: true) }
+    static var llmStateDirectory: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("LLMState", isDirectory: true)
+    }
 
     func run() async {
         UIApplication.shared.isIdleTimerDisabled = true
         defer { UIApplication.shared.isIdleTimerDisabled = false }
+        try? FileManager.default.createDirectory(at: Self.reportsDirectory, withIntermediateDirectories: true)
+        LlamaBackend.enableDiagnostics(to: Self.reportsDirectory.appendingPathComponent("llama-log.txt"))
         do {
             let files = try await verifyImportedModels()
             let audio = try Self.loadBundledUtterance()
@@ -47,7 +51,8 @@ final class BenchmarkController {
                 synthesizerLoader: nil,
                 utteranceAudio: audio,
                 utteranceReference: "text alex that i will be twenty minutes late",
-                iterations: 5
+                iterations: 5,
+                stateCacheDirectory: Self.llmStateDirectory
             )
             #if KOKORO_TTS
             if let weights = files[ModelFileName.kokoroWeights], let voice = files[ModelFileName.kokoroVoiceAfHeart] {
@@ -82,22 +87,33 @@ final class BenchmarkController {
         }
     }
 
-    /// Size + full SHA-256 check of every imported file against `ModelManifest.v1`.
+    /// Imports sideloaded files through the real model manager (size + full SHA-256 against the
+    /// pinned manifest, then atomic activation), and returns runtime URLs obtained only through
+    /// `verifiedFileURL` — the same path the app uses.
     private func verifyImportedModels() async throws -> [String: URL] {
+        let manager = ModelManager()
+        _ = await manager.reconcileOnLaunch(resumeInterruptedDownloads: false)
+        phase = .verifying("imported model files")
+        let importWatch = Stopwatch()
+        let results = await manager.importPendingFiles()
+        for (filename, result) in results.sorted(by: { $0.key < $1.key }) {
+            switch result {
+            case .success: verificationLines.append("imported + verified \(filename)")
+            case let .failure(error): verificationLines.append("import failed \(filename): \(error)")
+            }
+        }
+        if !results.isEmpty {
+            verificationLines.append("offline import (SHA-256 + activation) took \(Int(importWatch.elapsedMilliseconds)) ms")
+        }
         var verified: [String: URL] = [:]
         for pack in ModelManifest.v1.packs {
             for file in pack.files {
-                let url = Self.importDirectory.appendingPathComponent(file.filename)
-                guard FileManager.default.fileExists(atPath: url.path) else { continue }
                 phase = .verifying(file.filename)
                 let watch = Stopwatch()
-                let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-                let size = (attributes[.size] as? NSNumber)?.int64Value ?? -1
-                guard size == file.bytes else { throw BenchmarkModeError.sizeMismatch(file.filename) }
-                let digest = try await ModelIntegrity.sha256(of: url)
-                guard digest == file.sha256 else { throw BenchmarkModeError.checksumMismatch(file.filename) }
-                verificationLines.append("sha256 verified \(file.filename) in \(Int(watch.elapsedMilliseconds)) ms")
-                verified[file.filename] = url
+                if let url = try? await manager.verifiedFileURL(pack: pack.id, file: file.filename) {
+                    verificationLines.append("verified \(file.filename) for loading in \(Int(watch.elapsedMilliseconds)) ms")
+                    verified[file.filename] = url
+                }
             }
         }
         for required in [ModelFileName.whisperBaseEn, ModelFileName.nemotronNano4B] where verified[required] == nil {

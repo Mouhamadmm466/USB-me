@@ -18,19 +18,23 @@ extension View {
     }
 
     /// Pins a bar to the top or bottom edge. On iOS 26 it is a `safeAreaBar`, so scrolled
-    /// content softly blurs beneath it; on iOS 18 the bar sits on a fade of the canvas.
-    func edgeBar<Bar: View>(_ edge: VerticalEdge, @ViewBuilder bar: () -> Bar) -> some View {
-        modifier(EdgeBarModifier(edge: edge, bar: bar()))
+    /// content blurs beneath it (`hardEdge` makes that backing opaque enough for text-heavy
+    /// bars); on iOS 18 the bar sits on a fade of the canvas.
+    func edgeBar<Bar: View>(_ edge: VerticalEdge, hardEdge: Bool = false, @ViewBuilder bar: () -> Bar) -> some View {
+        modifier(EdgeBarModifier(edge: edge, hardEdge: hardEdge, bar: bar()))
     }
 }
 
 private struct EdgeBarModifier<Bar: View>: ViewModifier {
     let edge: VerticalEdge
+    let hardEdge: Bool
     let bar: Bar
 
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
-            content.safeAreaBar(edge: edge, spacing: 0) { bar }
+            content
+                .scrollEdgeEffectStyle(hardEdge ? .hard : .automatic, for: edge == .top ? .top : .bottom)
+                .safeAreaBar(edge: edge, spacing: 0) { bar }
         } else {
             content.safeAreaInset(edge: edge, spacing: 0) {
                 bar.background {

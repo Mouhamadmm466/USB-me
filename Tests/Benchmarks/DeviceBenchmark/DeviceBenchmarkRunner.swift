@@ -3,6 +3,7 @@ import Core
 import Foundation
 import LLM
 import Telemetry
+import TTS
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -24,6 +25,11 @@ public struct BenchmarkConfiguration: Sendable {
     public var iterations: Int
     public var llmConfig: LLMConfig
     public var stateCacheDirectory: URL?
+    /// Also run the LLM stage with speculative drafting off (recorded as `llm_nospec`) so the
+    /// report carries an A/B on the same device, thermal state and prompt cache.
+    public var compareWithoutSpeculation = true
+    /// Times single decode calls of 1…48 tokens (the cost curve that decides how to batch).
+    public var profileBatchSizes = true
 
     public init(
         whisperModel: URL, vadModel: URL?, nemotronModel: URL,
@@ -153,6 +159,7 @@ public actor DeviceBenchmarkRunner {
     private let configuration: BenchmarkConfiguration
     private var report: BenchmarkReport
     private var peakFootprint: UInt64 = 0
+    private var baselineOutputs: [String: String] = [:]
 
     public init(configuration: BenchmarkConfiguration) {
         self.configuration = configuration
@@ -167,7 +174,12 @@ public actor DeviceBenchmarkRunner {
         progress(.stage("Speech recognition", fraction: 0.05))
         let whisper = await benchmarkWhisper()
         progress(.stage("Language model", fraction: 0.3))
-        let nemotron = await benchmarkNemotron()
+        if configuration.compareWithoutSpeculation, configuration.llmConfig.speculativeDraftTokens > 0 {
+            var baseline = configuration.llmConfig
+            baseline.speculativeDraftTokens = 0
+            if let runtime = await benchmarkNemotron(stage: "llm_nospec", config: baseline) { await runtime.unload() }
+        }
+        let nemotron = await benchmarkNemotron(stage: "llm", config: configuration.llmConfig)
         progress(.stage("Text to speech", fraction: 0.6))
         await benchmarkTTS()
         progress(.stage("All models together", fraction: 0.8))
@@ -232,25 +244,54 @@ public actor DeviceBenchmarkRunner {
         }
     }
 
-    private func benchmarkNemotron() async -> NemotronRuntime? {
-        let runtime = NemotronRuntime(modelURL: configuration.nemotronModel, config: configuration.llmConfig, stateCacheDirectory: nil)
+    private func benchmarkNemotron(stage: String, config: LLMConfig) async -> NemotronRuntime? {
+        let runtime = NemotronRuntime(modelURL: configuration.nemotronModel, config: config,
+                                      stateCacheDirectory: configuration.stateCacheDirectory)
         let builder = PromptBuilder()
         do {
             let load = Stopwatch()
             try await runtime.load()
-            record("llm", "cold_load", "ms", [load.elapsedMilliseconds])
+            record(stage, "cold_load", "ms", [load.elapsedMilliseconds])
             sampleSystem()
+            let cacheExisted = configuration.stateCacheDirectory.map { directory in
+                ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []).contains { $0.hasSuffix(".llamastate") }
+            } ?? false
             let prefix = Stopwatch()
             try await runtime.prepare(cacheablePrefix: builder.cacheablePrefix)
-            record("llm", "prefix_eval_cold", "ms", [prefix.elapsedMilliseconds])
+            record(stage, cacheExisted ? "prefix_state_load" : "prefix_eval_cold", "ms", [prefix.elapsedMilliseconds])
             sampleSystem()
             let clock = AgentClock.fixed(Date(timeIntervalSince1970: 1_789_826_400), timeZone: TimeZone(identifier: "America/New_York")!)
             var promptMs: [Double] = [], ttft: [Double] = [], totals: [Double] = [], perToken: [Double] = [], sampled: [Double] = [], forced: [Double] = []
+            var decodePerCall: [Double] = [], samplingTotal: [Double] = [], fallbacks: [Double] = []
+            var decodeCalls: [Double] = [], drafted: [Double] = [], acceptedDrafts: [Double] = []
+            var callsBySize: [String: [Double]] = [:]
+            var unprimedTotals: [Double] = [], unprimedPrompt: [Double] = [], primedTokens: [Double] = []
             var validCount = 0
             for utterance in configuration.llmUtterances {
-                let request = builder.request(session: SessionState(), utterance: utterance, clock: clock, maxOutputTokens: configuration.llmConfig.maxOutputTokens)
+                let request = builder.request(session: SessionState(), utterance: utterance, clock: clock, maxOutputTokens: config.maxOutputTokens)
+                // Without priming: the whole turn suffix is evaluated after the endpoint.
+                let (unprimedText, unprimed) = try await runtime.complete(request)
+                unprimedTotals.append(unprimed.totalMilliseconds)
+                unprimedPrompt.append(unprimed.promptEvalMilliseconds)
+                // As in the app: the turn context is evaluated at speech onset (not timed here),
+                // only the utterance and the reply are on the critical path.
+                await runtime.prime(cacheablePrefix: builder.cacheablePrefix,
+                                    suffixHead: builder.suffixHead(session: SessionState(), clock: clock))
                 let (text, stats) = try await runtime.complete(request)
-                report.llmOutputs[utterance] = text
+                primedTokens.append(Double(stats.primedTokens))
+                if text != unprimedText {
+                    report.notes.append("\(stage): primed output differs (near-tie) for: \(utterance)")
+                }
+                if stage == "llm" {
+                    report.llmOutputs[utterance] = text
+                    // Verification keeps only the model's own greedy choices; a difference can
+                    // only come from batched vs. single-token float rounding on a near-tie.
+                    if let baseline = baselineOutputs[utterance], baseline != text {
+                        report.notes.append("llm output differs from llm_nospec (near-tie) for: \(utterance)")
+                    }
+                } else {
+                    baselineOutputs[utterance] = text
+                }
                 if case .success = OutputValidator().validate(text) { validCount += 1 }
                 promptMs.append(stats.promptEvalMilliseconds)
                 ttft.append(stats.timeToFirstTokenMilliseconds)
@@ -259,18 +300,50 @@ public actor DeviceBenchmarkRunner {
                 forced.append(Double(stats.forcedTokens))
                 let generation = stats.totalMilliseconds - stats.promptEvalMilliseconds
                 if stats.sampledTokens > 0 { perToken.append(generation / Double(stats.sampledTokens)) }
+                if stats.decodeCalls > 0 { decodePerCall.append(stats.decodeMilliseconds / Double(stats.decodeCalls)) }
+                samplingTotal.append(stats.samplingMilliseconds)
+                fallbacks.append(Double(stats.grammarFallbacks))
+                decodeCalls.append(Double(stats.decodeCalls))
+                // Skip the first call (the prompt suffix) when profiling generation batch sizes.
+                for (tokens, ms) in zip(stats.decodeCallTokens, stats.decodeCallMilliseconds).dropFirst() {
+                    let bucket = tokens == 1 ? "1" : tokens <= 3 ? "2_3" : tokens <= 8 ? "4_8" : "9plus"
+                    callsBySize[bucket, default: []].append(ms)
+                }
+                drafted.append(Double(stats.draftTokens))
+                acceptedDrafts.append(Double(stats.acceptedDraftTokens))
                 sampleSystem()
             }
-            record("llm", "suffix_prompt_eval", "ms", promptMs)
-            record("llm", "time_to_first_token", "ms", ttft)
-            record("llm", "structured_result_total", "ms", totals)
-            record("llm", "ms_per_sampled_token", "ms", perToken)
-            record("llm", "sampled_tokens", "count", sampled)
-            record("llm", "forced_tokens", "count", forced)
-            report.notes.append("llm valid outputs: \(validCount)/\(configuration.llmUtterances.count)")
+            record(stage, "suffix_prompt_eval", "ms", promptMs)
+            record(stage, "time_to_first_token", "ms", ttft)
+            record(stage, "structured_result_total", "ms", totals)
+            record(stage, "ms_per_sampled_token", "ms", perToken)
+            record(stage, "sampled_tokens", "count", sampled)
+            record(stage, "forced_tokens", "count", forced)
+            record(stage, "decode_ms_per_call", "ms", decodePerCall)
+            record(stage, "sampling_ms_per_request", "ms", samplingTotal)
+            record(stage, "grammar_fallbacks", "count", fallbacks)
+            record(stage, "decode_calls", "count", decodeCalls)
+            record(stage, "unprimed_structured_result_total", "ms", unprimedTotals)
+            record(stage, "unprimed_suffix_prompt_eval", "ms", unprimedPrompt)
+            record(stage, "primed_tokens", "count", primedTokens)
+            if configuration.profileBatchSizes {
+                let sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24, 32, 48]
+                for (size, ms) in try await runtime.profileBatchSizes(sizes, allLogits: false, cacheablePrefix: builder.cacheablePrefix).sorted(by: { $0.key < $1.key }) {
+                    record(stage, "batch_profile_\(size)", "ms", [ms])
+                }
+                for (size, ms) in try await runtime.profileBatchSizes([2, 4, 6, 8, 9, 12], allLogits: true, cacheablePrefix: builder.cacheablePrefix).sorted(by: { $0.key < $1.key }) {
+                    record(stage, "batch_profile_all_logits_\(size)", "ms", [ms])
+                }
+            }
+            for (bucket, values) in callsBySize.sorted(by: { $0.key < $1.key }) {
+                record(stage, "decode_ms_batch_\(bucket)", "ms", values)
+            }
+            record(stage, "draft_tokens", "count", drafted)
+            record(stage, "accepted_draft_tokens", "count", acceptedDrafts)
+            report.notes.append("\(stage) valid outputs: \(validCount)/\(configuration.llmUtterances.count)")
             return runtime
         } catch {
-            report.errors.append("llm: \(error)")
+            report.errors.append("\(stage): \(error)")
             return nil
         }
     }
@@ -288,17 +361,20 @@ public actor DeviceBenchmarkRunner {
             sampleSystem()
             var firstChunk: [Double] = []
             var rtf: [Double] = []
+            let chunker = SpeechChunker()
             for _ in 0..<configuration.iterations {
-                for (index, sentence) in configuration.ttsSentences.enumerated() {
+                for sentence in configuration.ttsSentences {
+                    // What the queue actually synthesizes first: the chunker's first chunk.
+                    let first = chunker.chunks(for: sentence).first ?? sentence
                     let watch = Stopwatch()
-                    let audio = try await synthesizer.synthesize(sentence)
+                    let audio = try await synthesizer.synthesize(first)
                     let ms = watch.elapsedMilliseconds
-                    if index <= 1 { firstChunk.append(ms) }
+                    firstChunk.append(ms)
                     rtf.append(audio.durationSeconds * 1000 / max(ms, 1))
                 }
                 sampleSystem()
             }
-            record("tts", "short_chunk_synthesis", "ms", firstChunk)
+            record("tts", "first_chunk_synthesis", "ms", firstChunk)
             record("tts", "real_time_factor", "x", rtf)
         } catch {
             report.errors.append("tts: \(error)")
@@ -315,12 +391,17 @@ public actor DeviceBenchmarkRunner {
         var endToFirstAudio: [Double] = []
         do {
             for _ in 0..<configuration.iterations {
+                // The app primes the turn context at speech onset, before the endpoint.
+                await nemotron.prime(cacheablePrefix: builder.cacheablePrefix, suffixHead: builder.suffixHead(session: SessionState(), clock: clock))
                 let watch = Stopwatch()
                 let final = try await whisper.final(configuration.utteranceAudio, context: ASRContext())
                 let request = builder.request(session: SessionState(), utterance: final.text.isEmpty ? configuration.utteranceReference : final.text, clock: clock, maxOutputTokens: configuration.llmConfig.maxOutputTokens)
                 _ = try await nemotron.complete(request)
                 if let synthesizer = configuration.synthesizer {
-                    _ = try await synthesizer.synthesize("Text Alex Kim: I'll be 20 minutes late.")
+                    // What the speech queue synthesizes before the first audio: the first chunk
+                    // of the Swift-authored confirmation.
+                    let confirmation = "Text Alex Kim: \u{201C}I'll be 20 minutes late.\u{201D} Should I send it?"
+                    _ = try await synthesizer.synthesize(SpeechChunker().chunks(for: confirmation).first ?? confirmation)
                 }
                 endToFirstAudio.append(watch.elapsedMilliseconds)
                 sampleSystem()

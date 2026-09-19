@@ -30,16 +30,29 @@ public struct PromptBuilder: Sendable {
 
     /// Per-turn suffix: compact context + the utterance + the generation prompt.
     public func suffix(session: SessionState, utterance: String, clock: AgentClock, lastAssistantQuestion: String? = nil) -> String {
-        let context = contextManager.render(session: session, utterance: utterance, clock: clock, lastAssistantQuestion: lastAssistantQuestion)
-        return "<|im_start|>user\n" + context + "<|im_end|>\n<|im_start|>assistant\n<think></think>"
+        Self.suffix(context: contextManager.render(session: session, utterance: utterance, clock: clock, lastAssistantQuestion: lastAssistantQuestion))
+    }
+
+    static func suffix(context: String) -> String {
+        "<|im_start|>user\n" + context + "<|im_end|>\n<|im_start|>assistant\n<think></think>"
+    }
+
+    /// The start of the next turn's suffix, up to (not including) the utterance. Every `suffix`
+    /// built from the same session, clock minute and question begins with exactly this text.
+    public func suffixHead(session: SessionState, clock: AgentClock, lastAssistantQuestion: String? = nil) -> String {
+        "<|im_start|>user\n" + contextManager.renderHead(session: session, clock: clock, lastAssistantQuestion: lastAssistantQuestion)
     }
 
     public func request(session: SessionState, utterance: String, clock: AgentClock, lastAssistantQuestion: String? = nil, maxOutputTokens: Int) -> LLMRequest {
-        LLMRequest(
+        let context = contextManager.render(session: session, utterance: utterance, clock: clock, lastAssistantQuestion: lastAssistantQuestion)
+        return LLMRequest(
             cacheablePrefix: cacheablePrefix,
-            suffix: suffix(session: session, utterance: utterance, clock: clock, lastAssistantQuestion: lastAssistantQuestion),
+            suffix: Self.suffix(context: context),
             grammar: grammar,
-            maxOutputTokens: maxOutputTokens
+            maxOutputTokens: maxOutputTokens,
+            // Argument values are copied from the user's words first, then from the turn context
+            // (a pending action's arguments, the last contact or event).
+            draftSources: [utterance, context]
         )
     }
 

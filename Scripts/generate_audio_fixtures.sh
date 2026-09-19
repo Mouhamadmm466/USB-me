@@ -16,9 +16,12 @@
 #   echo_*       barge-in scenarios: assistant voice A alone, and A + user voice B from 1.0 s;
 #                "residual" variants attenuate A by 30 dB over room tone (what is left after AEC)
 #
-# Determinism: noise uses fixed seeds and ffmpeg runs with bitexact flags, so a re-run on the same
-# macOS release reproduces the files byte for byte. `say` voices may change between macOS
-# releases; the manifest records the measured speech windows, and the tests use tolerances.
+# Determinism: noise uses fixed seeds and ffmpeg runs with bitexact flags, so everything except
+# the TTS voice is reproducible byte for byte. `say` is deterministic within a run but a voice's
+# rendering can change between runs or macOS updates (observed: Moira's "text alex…" came out
+# 210 ms longer on a later run). The manifest always records the speech windows measured from the
+# audio actually written, and the tests use tolerances, so a regenerated set stays valid; the
+# committed files are the reference.
 
 set -euo pipefail
 export LC_ALL=C

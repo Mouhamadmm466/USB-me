@@ -120,9 +120,13 @@ public struct ConfirmationClassifier: Sendable {
     static let toolAffirmPhrases: [ToolID: Set<String>] = [
         .composeMessage: ["send", "send it", "send that", "send the message", "send the text", "text it", "text them", "text him", "text her"],
         .initiateCall: ["call", "call them", "call him", "call her", "call now", "dial", "dial it", "place the call", "make the call", "call it"],
-        .createCalendarEvent: ["add", "add it", "add that", "create", "create it", "schedule", "schedule it", "book it", "save", "save it", "put it on"],
-        .updateCalendarEvent: ["update", "update it", "save", "save it", "apply", "apply it", "make the change"],
-        .createReminder: ["add", "add it", "create", "create it", "set", "set it", "save", "save it", "remind me"],
+        .createCalendarEvent: ["add", "add it", "add that", "create", "create it", "schedule", "schedule it", "book it", "save", "save it", "put it on",
+                               "put it on my calendar", "put it on the calendar", "put it in my calendar", "put it in the calendar",
+                               "add it to my calendar", "add it to the calendar", "save it to my calendar", "add the event"],
+        .updateCalendarEvent: ["update", "update it", "save", "save it", "apply", "apply it", "make the change", "change it",
+                               "move it", "reschedule it", "update the event", "make that change", "make the changes"],
+        .createReminder: ["add", "add it", "create", "create it", "set", "set it", "save", "save it", "remind me",
+                          "set the reminder", "add the reminder", "create the reminder", "set it up"],
     ]
 
     static let rejectPhrases: Set<String> = [
@@ -141,7 +145,8 @@ public struct ConfirmationClassifier: Sendable {
         "hang on a second", "one sec", "one second", "one moment", "just a sec", "just a second",
         "just a moment", "not yet", "give me a second", "give me a sec", "give me a minute",
         "give me a moment", "let me think", "let me think about it", "hold that thought", "a moment",
-        "a second", "hold it", "pause",
+        "a second", "hold it", "pause", "hold on a sec", "hang on a sec", "hold on a minute", "hang on a minute",
+        "wait a moment", "just a minute", "one minute", "hold up", "wait up", "give me a minute please",
     ]
 
     static let negators = ["don't", "do not", "not", "never"]

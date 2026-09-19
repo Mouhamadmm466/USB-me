@@ -18,10 +18,18 @@ import Testing
         #expect(chunks.joined(separator: " ").replacingOccurrences(of: "  ", with: " ") == text)
     }
 
-    @Test func confirmationPromptSplitsBeforeQuestion() {
+    @Test func confirmationPromptStartsWithItsFirstClause() {
+        // The short first clause starts playing while the rest is synthesized.
         let chunks = chunker.chunks(for: "Text Alex Kim: \u{201C}I'll be 20 minutes late.\u{201D} Should I send it?")
-        #expect(chunks.first == "Text Alex Kim: I'll be 20 minutes late.")
-        #expect(chunks.last?.hasSuffix("Should I send it?") == true)
+        #expect(chunks == ["Text Alex Kim:", "I'll be 20 minutes late. Should I send it?"])
+    }
+
+    @Test func firstClauseNeedsTwoWordsBeforeAndAfter() {
+        #expect(chunker.chunks(for: "Okay, I won't call Sam.") == ["Okay, I won't call Sam."])
+        #expect(chunker.chunks(for: "Lunch with Priya, Friday.") == ["Lunch with Priya, Friday."])
+        #expect(chunker.chunks(for: "Lunch with Priya, Friday at noon.") == ["Lunch with Priya,", "Friday at noon."])
+        #expect(SpeechChunker(config: { var config = TTSConfig(); config.firstClauseMinWords = 0; return config }())
+            .chunks(for: "Lunch with Priya, Friday at noon.") == ["Lunch with Priya, Friday at noon."])
     }
 
     @Test func abbreviationsDecimalsAndTimesDoNotSplit() {

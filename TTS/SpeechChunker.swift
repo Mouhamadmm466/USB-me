@@ -7,17 +7,23 @@ import Foundation
 public struct SpeechChunker: Sendable {
     public let firstChunkMaxWords: Int
     public let maxChunkWords: Int
+    public let firstClauseMinWords: Int
 
     public init(config: TTSConfig = TTSConfig()) {
         firstChunkMaxWords = config.firstChunkMaxWords
         maxChunkWords = config.maxChunkWords
+        firstClauseMinWords = config.firstClauseMinWords
     }
 
     public func chunks(for text: String) -> [String] {
         let sentences = Self.sentences(in: SpeechTextNormalizer.normalize(text))
         var chunks: [String] = []
         for sentence in sentences {
-            for piece in split(sentence, firstLimit: chunks.isEmpty ? firstChunkMaxWords : maxChunkWords) {
+            var pieces = split(sentence, firstLimit: chunks.isEmpty ? firstChunkMaxWords : maxChunkWords)
+            if chunks.isEmpty, let first = pieces.first, let clause = leadingClause(of: first) {
+                pieces.replaceSubrange(0...0, with: [clause.head, clause.tail])
+            }
+            for piece in pieces {
                 // Merge short follow-up sentences into the previous chunk (not into the first one).
                 if chunks.count > 1, let last = chunks.last,
                    Self.wordCount(last) + Self.wordCount(piece) <= maxChunkWords, Self.endsSentence(last) {
@@ -54,6 +60,20 @@ public struct SpeechChunker: Sendable {
         }
         if !remaining.isEmpty { pieces.append(remaining) }
         return pieces
+    }
+
+    /// Splits the first clause off a first chunk ("Text Alex Kim:" + the rest) when it has at
+    /// least `firstClauseMinWords` words and at least two words follow.
+    func leadingClause(of text: String) -> (head: String, tail: String)? {
+        guard firstClauseMinWords > 0 else { return nil }
+        let words = text.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        guard words.count >= firstClauseMinWords + 2 else { return nil }
+        for index in (firstClauseMinWords - 1)..<(words.count - 2) {
+            if let last = words[index].last, ",;:".contains(last) {
+                return (words[0...index].joined(separator: " "), words[(index + 1)...].joined(separator: " "))
+            }
+        }
+        return nil
     }
 
     static func wordCount(_ text: String) -> Int {
@@ -155,7 +175,7 @@ public enum SpeechTextNormalizer {
 
     /// "555-010-4477" → "5 5 5, 0 1 0, 4 4 7 7" so digits are read one at a time.
     static func spellPhoneNumbers(_ text: String) -> String {
-        guard let regex = try? NSRegularExpression(pattern: #"\+?\d{1,3}?[ -]?\(?\d{3}\)?[ -]\d{3}-\d{4}|\b\d{3}-\d{4}\b"#) else { return text }
+        guard let regex = try? NSRegularExpression(pattern: #"(?:\+?\d{1,3}[ -])?\(?\b\d{3}\)?[ -]?\d{3}[ -]\d{4}\b|\b\d{3}-\d{4}\b"#) else { return text }
         var result = text
         let matches = regex.matches(in: text, range: NSRange(text.startIndex..., in: text)).reversed()
         for match in matches {

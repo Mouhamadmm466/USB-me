@@ -48,7 +48,7 @@ struct MicrophonePermissionSheet: View {
             .padding(.bottom, Spacing.l)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom) {
+        .edgeBar(.bottom) {
             VStack(spacing: Spacing.xs) {
                 Button(action: onContinue) { Text("Continue") }
                     .buttonStyle(.prominent)
@@ -58,7 +58,6 @@ struct MicrophonePermissionSheet: View {
             .padding(.horizontal, Spacing.xxl)
             .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.s)
-            .background(Palette.canvas)
         }
         .background(Palette.canvas)
         .presentationDetents([.large])

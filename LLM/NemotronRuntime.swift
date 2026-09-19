@@ -12,6 +12,10 @@ import Telemetry
 /// - Decodes greedily under a GBNF grammar (deterministic, schema-constrained output).
 /// - Optional jump-forward: text the grammar forces (JSON keys, punctuation, the tail of an enum
 ///   value) is evaluated in one batch instead of token by token.
+/// - Optional prompt-lookup speculation: inside a string value, the continuation of the user's own
+///   words is drafted and verified in the same decode call; only tokens equal to the model's
+///   greedy choice are kept (llama.cpp's recurrent-state snapshots roll back the rest), so the
+///   output is unchanged and only the number of GPU passes drops.
 public actor NemotronRuntime: LanguageModel {
     public nonisolated let modelIdentifier: String
 
@@ -26,6 +30,9 @@ public actor NemotronRuntime: LanguageModel {
 
     private var handles: LlamaHandles?
     private var vocabSize = 0
+    /// Maximum speculative draft length (0 = speculation off); bounded by the context's
+    /// recurrent-state rollback depth.
+    private var draftLimit = 0
     private var snapshot: PrefixSnapshot?
     private var candidates: [llama_token_data] = []
 
@@ -38,6 +45,15 @@ public actor NemotronRuntime: LanguageModel {
         let tokenCount: Int
         let state: [UInt8]
     }
+
+    /// The start of the next turn's suffix, evaluated on top of the prefix while the user speaks.
+    private struct PrimedSuffix {
+        let text: String
+        let tokens: [llama_token]
+        let position: Int
+    }
+
+    private var primed: PrimedSuffix?
 
     /// - Parameters:
     ///   - stateCacheDirectory: when set, the evaluated prefix state is persisted on disk keyed by a
@@ -80,6 +96,11 @@ public actor NemotronRuntime: LanguageModel {
         contextParams.n_batch = UInt32(config.batchSize)
         contextParams.n_ubatch = UInt32(config.batchSize)
         contextParams.n_seq_max = 1
+        // Nemotron-H keeps Mamba-2 state that cannot be truncated after the fact; llama.cpp keeps
+        // one snapshot per trailing token so rejected draft tokens can be rolled back.
+        let needsSnapshots = llama_model_is_recurrent(loadedModel) || llama_model_is_hybrid(loadedModel)
+        let requestedDrafts = max(0, config.speculativeDraftTokens)
+        contextParams.n_rs_seq = needsSnapshots ? UInt32(requestedDrafts) : 0
         let threads = Self.threadCounts(requested: config.threads)
         contextParams.n_threads = Int32(threads.generation)
         contextParams.n_threads_batch = Int32(threads.batch)
@@ -96,6 +117,7 @@ public actor NemotronRuntime: LanguageModel {
             batch: llama_batch_init(Int32(config.batchSize), 0, 1)
         )
         handles = loadedHandles
+        draftLimit = needsSnapshots ? Int(llama_n_rs_seq(loadedContext)) : requestedDrafts
         vocabSize = Int(llama_vocab_n_tokens(loadedHandles.vocab))
         candidates = [llama_token_data](repeating: llama_token_data(id: 0, logit: 0, p: 0), count: vocabSize)
         loadMilliseconds = watch.elapsedMilliseconds
@@ -106,12 +128,33 @@ public actor NemotronRuntime: LanguageModel {
     public func unload() {
         handles = nil
         snapshot = nil
+        primed = nil
         logger.log(.modelLifecycle(model: "nemotron", phase: "unloaded", milliseconds: nil))
     }
 
     public func prepare(cacheablePrefix: String) async throws {
         try load()
         try ensurePrefix(cacheablePrefix)
+    }
+
+    /// Evaluates the turn context ahead of the utterance (called at speech onset). Never loads
+    /// the model: priming only helps a runtime that is already warm.
+    public func prime(cacheablePrefix: String, suffixHead: String) async {
+        guard context != nil, !suffixHead.isEmpty else { return }
+        if let primed, primed.text == suffixHead { return }
+        do {
+            try ensurePrefix(cacheablePrefix)
+            guard let snapshot else { return }
+            primed = nil
+            try restore(snapshot)
+            var position = snapshot.tokenCount
+            let tokens = tokenize(suffixHead, addSpecial: false)
+            try evaluate(tokens, startingAt: &position)
+            if let context { llama_synchronize(context) }
+            primed = PrimedSuffix(text: suffixHead, tokens: tokens, position: position)
+        } catch {
+            primed = nil
+        }
     }
 
     // MARK: - Generation
@@ -150,31 +193,37 @@ public actor NemotronRuntime: LanguageModel {
         try ensurePrefix(request.cacheablePrefix)
         guard let context, let snapshot else { throw LLMRuntimeError.contextInitFailed }
 
-        // Restore the post-prefix state, then evaluate only this turn's suffix.
-        llama_memory_clear(llama_get_memory(context), true)
-        let restored = snapshot.state.withUnsafeBufferPointer { buffer in
-            llama_state_seq_set_data(context, buffer.baseAddress, buffer.count, 0)
-        }
-        guard restored > 0 else { throw LLMRuntimeError.stateRestoreFailed }
         stats.cachedPrefixTokens = snapshot.tokenCount
-
         let suffixTokens = tokenize(request.suffix, addSpecial: false)
         guard snapshot.tokenCount + suffixTokens.count + request.maxOutputTokens < config.contextLength else {
             throw LLMRuntimeError.contextOverflow
         }
-        let promptWatch = Stopwatch()
-        var position = snapshot.tokenCount
-        try evaluate(suffixTokens, startingAt: &position)
-        stats.promptTokens = suffixTokens.count
-        stats.promptEvalMilliseconds = promptWatch.elapsedMilliseconds
+        // Continue from the primed turn context when this suffix starts with exactly those tokens;
+        // otherwise restore the post-prefix state and evaluate the whole suffix.
+        var position: Int
+        var pendingSuffix: [llama_token]
+        var evaluated: [llama_token] // everything after the cached prefix, to rebuild the state if a rollback is refused
+        if let primed, request.suffix.hasPrefix(primed.text), suffixTokens.starts(with: primed.tokens) {
+            position = primed.position
+            pendingSuffix = Array(suffixTokens[primed.tokens.count...])
+            evaluated = primed.tokens
+            stats.primedTokens = primed.tokens.count
+        } else {
+            try restore(snapshot)
+            position = snapshot.tokenCount
+            pendingSuffix = suffixTokens
+            evaluated = []
+        }
+        primed = nil
 
         let grammar = try GrammarSampler(vocab: vocab, grammar: request.grammar)
         var decoder = UTF8StreamDecoder()
         var tracker = JSONCompletionTracker()
         var output = ""
-        var firstToken = true
         let cursor = config.jumpForwardDecoding ? jumpForward?.makeCursor() : nil
-
+        let drafter = draftLimit > 0
+            ? PromptLookupDrafter(sources: request.draftSources.isEmpty ? [request.suffix] : request.draftSources)
+            : nil
         func append(_ text: String) {
             guard !text.isEmpty else { return }
             output += text
@@ -182,47 +231,137 @@ public actor NemotronRuntime: LanguageModel {
             emit(.text(text))
         }
 
+        /// Jump-forward: accepts (and emits) the text the grammar forces next. Every forced token is
+        /// still checked by the grammar sampler. Returns the tokens, which still need evaluating.
+        func acceptForcedText() -> [llama_token] {
+            guard let cursor, decoder.isEmpty, cursor.advance(to: output) else { return [] }
+            let forced = cursor.forcedContinuation()
+            guard !forced.isEmpty else { return [] }
+            var accepted: [llama_token] = []
+            for token in tokenize(forced, addSpecial: false) {
+                guard grammar.allows(token) else { break }
+                grammar.accept(token)
+                accepted.append(token)
+            }
+            stats.forcedTokens += accepted.count
+            for token in accepted { append(decoder.push(piece(for: token))) }
+            return accepted
+        }
+
+        func decode(_ tokens: [llama_token], outputsFrom firstOutput: Int) throws {
+            try evaluate(tokens, startingAt: &position, outputsFrom: firstOutput, stats: &stats)
+            evaluated += tokens
+        }
+
+        /// Drops the last `count` evaluated tokens from the model state.
+        func discardLast(_ count: Int) throws {
+            evaluated.removeLast(count)
+            if llama_memory_seq_rm(llama_get_memory(context), 0, llama_pos(position - count), -1) {
+                position -= count
+                return
+            }
+            // Only reachable if a rollback exceeds the snapshot depth: rebuild exactly (slow).
+            logger.log(.error(domain: "llm", code: "draft_rollback_rebuilt"))
+            try restore(snapshot)
+            position = snapshot.tokenCount
+            try evaluate(evaluated, startingAt: &position, outputsFrom: evaluated.count - 1, stats: &stats)
+        }
+
+        // The (rest of the) prompt suffix and the opening every reply shares (`{"type":"`) in one
+        // decode call.
+        let promptWatch = Stopwatch()
+        let opening = acceptForcedText()
+        try decode(pendingSuffix + opening, outputsFrom: pendingSuffix.count + opening.count - 1)
+        stats.promptTokens = suffixTokens.count
+        stats.promptEvalMilliseconds = promptWatch.elapsedMilliseconds
+
+        var logitsIndex: Int32 = -1 // batch index whose logits predict the next token
+        var chosenNext: llama_token? // already chosen by the model while verifying a draft
+        var forcedNext = false // the grammar forces text before anything needs sampling
+        var firstToken = true
+
         while stats.sampledTokens + stats.forcedTokens < request.maxOutputTokens {
             try Task.checkCancellation()
-            let token = sampleGreedy(grammar: grammar)
-            if firstToken {
-                stats.timeToFirstTokenMilliseconds = total.elapsedMilliseconds
-                firstToken = false
+            var batch: [llama_token] = []
+            if !forcedNext {
+                let token: llama_token
+                if let chosen = chosenNext {
+                    token = chosen
+                    chosenNext = nil
+                } else {
+                    let samplingWatch = Stopwatch()
+                    token = sampleGreedy(grammar: grammar, outputIndex: logitsIndex, stats: &stats)
+                    stats.samplingMilliseconds += samplingWatch.elapsedMilliseconds
+                }
+                if firstToken {
+                    stats.timeToFirstTokenMilliseconds = total.elapsedMilliseconds
+                    firstToken = false
+                }
+                if llama_vocab_is_eog(vocab, token) {
+                    stats.stoppedReason = "eog"
+                    break
+                }
+                grammar.accept(token)
+                stats.sampledTokens += 1
+                append(decoder.push(piece(for: token)))
+                if tracker.isComplete {
+                    stats.stoppedReason = "json_complete"
+                    break
+                }
+                batch.append(token)
             }
-            if llama_vocab_is_eog(vocab, token) {
-                stats.stoppedReason = "eog"
-                break
-            }
-            grammar.accept(token)
-            stats.sampledTokens += 1
-            append(decoder.push(piece(for: token)))
+            forcedNext = false
+            // Forced text goes into the SAME decode call as the sampled token.
+            batch += acceptForcedText()
             if tracker.isComplete {
+                // The grammar forced the rest of the object: nothing left to decode.
                 stats.stoppedReason = "json_complete"
                 break
             }
-            try evaluate([token], startingAt: &position)
+            if batch.isEmpty { continue } // nothing new to evaluate: sample from the same logits
 
-            // Jump-forward: evaluate grammar-forced text as one batch. Every forced token is still
-            // checked by the grammar sampler before it is accepted.
-            if let cursor, decoder.isEmpty, cursor.advance(to: output) {
-                let forced = cursor.forcedContinuation()
-                if !forced.isEmpty {
-                    var accepted: [llama_token] = []
-                    for forcedToken in tokenize(forced, addSpecial: false) {
-                        guard grammar.allows(forcedToken) else { break }
-                        grammar.accept(forcedToken)
-                        accepted.append(forcedToken)
-                    }
-                    if !accepted.isEmpty {
-                        stats.forcedTokens += accepted.count
-                        for forcedToken in accepted { append(decoder.push(piece(for: forcedToken))) }
-                        if tracker.isComplete {
-                            stats.stoppedReason = "json_complete"
-                            break
-                        }
-                        try evaluate(accepted, startingAt: &position)
-                    }
+            // Speculation: append a guess copied from the request; one pass scores every position.
+            // Drafts only fill the call up to the small-batch size that costs about one token.
+            let budget = min(request.maxOutputTokens - stats.sampledTokens - stats.forcedTokens - 1,
+                             config.speculativeMaxBatchTokens - batch.count)
+            let draft: [llama_token]
+            if let drafter, decoder.isEmpty, budget > 0, let text = drafter.continuation(after: output) {
+                draft = draftTokens(for: text, grammar: grammar, limit: min(draftLimit, budget))
+            } else {
+                draft = []
+            }
+            try decode(batch + draft, outputsFrom: batch.count - 1)
+            logitsIndex = draft.isEmpty ? -1 : Int32(batch.count - 1)
+            guard !draft.isEmpty else { continue }
+
+            // Keep drafted tokens while each equals the model's own grammar-constrained greedy
+            // choice at its position; the first disagreement becomes the next token.
+            stats.draftTokens += draft.count
+            var accepted = 0
+            for token in draft {
+                let samplingWatch = Stopwatch()
+                let choice = sampleGreedy(grammar: grammar, outputIndex: logitsIndex, stats: &stats)
+                stats.samplingMilliseconds += samplingWatch.elapsedMilliseconds
+                guard choice == token else {
+                    chosenNext = choice
+                    break
                 }
+                grammar.accept(token)
+                stats.sampledTokens += 1
+                append(decoder.push(piece(for: token)))
+                accepted += 1
+                logitsIndex += 1
+                if tracker.isComplete { break }
+                if let cursor, decoder.isEmpty, cursor.advance(to: output), !cursor.forcedContinuation().isEmpty {
+                    forcedNext = true
+                    break
+                }
+            }
+            stats.acceptedDraftTokens += accepted
+            if accepted < draft.count { try discardLast(draft.count - accepted) }
+            if tracker.isComplete {
+                stats.stoppedReason = "json_complete"
+                break
             }
         }
         if stats.stoppedReason == "unknown" { stats.stoppedReason = "max_tokens" }
@@ -231,12 +370,64 @@ public actor NemotronRuntime: LanguageModel {
         emit(.completed(stats))
     }
 
+    /// Tokenizes a draft and keeps the prefix the grammar would allow (checked on a copy of the
+    /// grammar; the real one only advances for tokens the model confirms).
+    private func draftTokens(for text: String, grammar: GrammarSampler, limit: Int) -> [llama_token] {
+        guard limit > 0 else { return [] }
+        let tokens = tokenize(text, addSpecial: false).prefix(limit)
+        guard let probe = grammar.copy() else { return Array(tokens) }
+        var result: [llama_token] = []
+        for token in tokens {
+            guard probe.allows(token) else { break }
+            probe.accept(token)
+            result.append(token)
+        }
+        return result
+    }
+
+    private func restore(_ snapshot: PrefixSnapshot) throws {
+        guard let context else { throw LLMRuntimeError.contextInitFailed }
+        llama_memory_clear(llama_get_memory(context), true)
+        let restored = snapshot.state.withUnsafeBufferPointer { buffer in
+            llama_state_seq_set_data(context, buffer.baseAddress, buffer.count, 0)
+        }
+        guard restored > 0 else { throw LLMRuntimeError.stateRestoreFailed }
+    }
+
+    // MARK: - Profiling (benchmark only)
+
+    /// Times one decode call per batch size after the cached prefix (median of `repetitions`),
+    /// with logits for the last token only or for every token (draft verification). Restores the
+    /// prefix state before each call so every measurement starts from the same point.
+    public func profileBatchSizes(_ sizes: [Int], allLogits: Bool, repetitions: Int = 3, cacheablePrefix: String) throws -> [Int: Double] {
+        try load()
+        try ensurePrefix(cacheablePrefix)
+        guard let snapshot else { throw LLMRuntimeError.contextInitFailed }
+        primed = nil
+        let filler = tokenize(" the quick brown fox jumps over the lazy dog and runs back home again", addSpecial: false)
+        var result: [Int: Double] = [:]
+        for size in sizes where size > 0 && size <= config.batchSize {
+            var samples: [Double] = []
+            for _ in 0..<repetitions {
+                try restore(snapshot)
+                var position = snapshot.tokenCount
+                let tokens = (0..<size).map { filler[$0 % filler.count] }
+                var stats = LLMGenerationStats()
+                try evaluate(tokens, startingAt: &position, outputsFrom: allLogits ? 0 : size - 1, stats: &stats)
+                samples.append(stats.decodeMilliseconds)
+            }
+            result[size] = samples.sorted()[samples.count / 2]
+        }
+        return result
+    }
+
     // MARK: - Prefix cache
 
     private func ensurePrefix(_ prefix: String) throws {
         guard let context else { throw LLMRuntimeError.contextInitFailed }
         var hasher = FNV1a64(); hasher.combine(prefix); hasher.combine(String(config.contextLength)); let hash = Int(truncatingIfNeeded: hasher.value)
         if let snapshot, snapshot.prefixHash == hash { return }
+        primed = nil
 
         let tokens = tokenize(prefix, addSpecial: true)
         guard tokens.count + 256 < config.contextLength else { throw LLMRuntimeError.contextOverflow }
@@ -315,8 +506,25 @@ public actor NemotronRuntime: LanguageModel {
         return buffer.prefix(Int(max(0, length))).map { UInt8(bitPattern: $0) }
     }
 
-    /// Evaluates tokens in `batchSize` chunks; only the last token of the final chunk produces logits.
-    private func evaluate(_ tokens: [llama_token], startingAt position: inout Int) throws {
+    /// Evaluates tokens and records decode time (including GPU completion) in `stats`.
+    private func evaluate(
+        _ tokens: [llama_token], startingAt position: inout Int, outputsFrom firstOutput: Int, stats: inout LLMGenerationStats
+    ) throws {
+        let watch = Stopwatch()
+        try evaluate(tokens, startingAt: &position, outputsFrom: firstOutput)
+        if let context { llama_synchronize(context) }
+        let elapsed = watch.elapsedMilliseconds
+        stats.decodeMilliseconds += elapsed
+        stats.decodeCalls += 1
+        stats.decodeCallTokens.append(tokens.count)
+        stats.decodeCallMilliseconds.append(elapsed)
+    }
+
+    /// Evaluates tokens in `batchSize` chunks. Tokens at index `firstOutput` and later produce
+    /// logits (default: only the last token); callers that need several outputs keep the whole
+    /// call within one chunk, so batch indices stay valid for `llama_get_logits_ith`.
+    private func evaluate(_ tokens: [llama_token], startingAt position: inout Int, outputsFrom firstOutput: Int? = nil) throws {
+        let firstOutput = firstOutput ?? tokens.count - 1
         guard let handles else { throw LLMRuntimeError.contextInitFailed }
         let context = handles.context
         var batch = handles.batch
@@ -330,7 +538,7 @@ public actor NemotronRuntime: LanguageModel {
                 batch.pos[offset] = llama_pos(position + offset)
                 batch.n_seq_id[offset] = 1
                 batch.seq_id[offset]![0] = 0
-                batch.logits[offset] = (index + offset == tokens.count - 1) ? 1 : 0
+                batch.logits[offset] = index + offset >= firstOutput ? 1 : 0
             }
             let status = llama_decode(context, batch)
             guard status == 0 else {
@@ -342,10 +550,16 @@ public actor NemotronRuntime: LanguageModel {
         }
     }
 
-    /// Greedy decoding under the grammar. Checks the argmax token first (cheap); only when the
-    /// grammar rejects it does it constrain the whole vocabulary.
-    private func sampleGreedy(grammar: GrammarSampler) -> llama_token {
-        guard let logits = llama_get_logits_ith(context, -1) else { return llama_vocab_eos(vocab) }
+    /// Greedy decoding under the grammar.
+    ///
+    /// 1. The argmax token is checked alone (almost always allowed).
+    /// 2. Otherwise the candidates within `logitWindow` of the best logit are checked in descending
+    ///    order, one token at a time — cheap single-token grammar checks instead of pushing all
+    ///    131K vocabulary entries through the grammar.
+    /// 3. Only if none of those is allowed is the whole vocabulary constrained (slow path).
+    /// The chosen token is identical to constraining the full vocabulary and taking the argmax.
+    private func sampleGreedy(grammar: GrammarSampler, outputIndex: Int32, stats: inout LLMGenerationStats) -> llama_token {
+        guard let logits = llama_get_logits_ith(context, outputIndex) else { return llama_vocab_eos(vocab) }
         var best = 0
         var bestLogit = -Float.infinity
         for index in 0..<vocabSize where logits[index] > bestLogit {
@@ -354,6 +568,18 @@ public actor NemotronRuntime: LanguageModel {
         }
         if grammar.allows(llama_token(best), logit: bestLogit) { return llama_token(best) }
 
+        let threshold = bestLogit - Self.logitWindow
+        var shortlist: [(logit: Float, token: Int32)] = []
+        shortlist.reserveCapacity(512)
+        for index in 0..<vocabSize where logits[index] >= threshold && index != best {
+            shortlist.append((logits[index], Int32(index)))
+        }
+        shortlist.sort { $0.logit > $1.logit }
+        for candidate in shortlist.prefix(Self.shortlistLimit) where grammar.allows(candidate.token, logit: candidate.logit) {
+            return candidate.token
+        }
+
+        stats.grammarFallbacks += 1
         for index in 0..<vocabSize {
             candidates[index] = llama_token_data(id: llama_token(index), logit: logits[index], p: 0)
         }
@@ -369,6 +595,11 @@ public actor NemotronRuntime: LanguageModel {
             return chosen
         }
     }
+
+    /// Candidates this far below the best logit (probability ratio e^-14) are only considered on
+    /// the slow path.
+    static let logitWindow: Float = 14
+    static let shortlistLimit = 2_048
 
     // MARK: - Platform defaults
 
@@ -430,14 +661,28 @@ final class LlamaHandles: @unchecked Sendable {
 
 /// One-time llama.cpp backend initialization with log output silenced (llama.cpp logs prompt
 /// fragments at debug level; nothing from the runtime reaches the unified log).
-enum LlamaBackend {
+public enum LlamaBackend {
     static let buildTag = "llama.cpp-b11046"
 
     private static let initialized: Bool = {
-        llama_log_set({ _, _, _ in }, nil)
+        llama_log_set({ level, text, _ in
+            // Diagnostics only (benchmark mode); prompts are never logged at WARN/ERROR/INFO level
+            // by llama.cpp, but the file is written only when explicitly enabled.
+            guard let text, let handle = LlamaBackend.diagnosticsHandle else { return }
+            handle.write(Data(String(cString: text).utf8))
+        }, nil)
         llama_backend_init()
         return true
     }()
+
+    /// Set only by the developer benchmark to capture llama.cpp's backend/graph diagnostics.
+    nonisolated(unsafe) static var diagnosticsHandle: FileHandle?
+
+    /// Writes llama.cpp's own log (Metal init, graph splits, perf) to `url`. Developer use only.
+    public static func enableDiagnostics(to url: URL) {
+        FileManager.default.createFile(atPath: url.path, contents: nil)
+        diagnosticsHandle = try? FileHandle(forWritingTo: url)
+    }
 
     static func initialize() {
         _ = initialized
@@ -459,8 +704,18 @@ final class GrammarSampler {
         }
     }
 
+    private init(owning sampler: UnsafeMutablePointer<llama_sampler>) {
+        self.sampler = sampler
+    }
+
     deinit {
         if let sampler { llama_sampler_free(sampler) }
+    }
+
+    /// An independent copy in the same parse state (nil when there is no grammar).
+    func copy() -> GrammarSampler? {
+        guard let sampler, let copied = llama_sampler_clone(sampler) else { return nil }
+        return GrammarSampler(owning: copied)
     }
 
     func allows(_ token: llama_token, logit: Float = 0) -> Bool {

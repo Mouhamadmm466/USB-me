@@ -151,6 +151,12 @@ public final class AgentCoordinator {
         }
     }
 
+    /// "Not now" on a permission card.
+    public func dismissPermissionPrompt() {
+        presentation.permissionPrompt = nil
+        if state == .permissionRequired { transition(to: .idle, reason: .cancelled) }
+    }
+
     /// Clears conversational context (clear-history control).
     public func resetConversation() {
         session.reset()
@@ -405,10 +411,20 @@ public final class AgentCoordinator {
 
     // MARK: - Model
 
+    /// Speech onset: lets the language model evaluate this turn's context (clock, pending action,
+    /// recent conversation) while the user is still talking, so only the utterance remains after
+    /// the endpoint. Purely a latency optimization — the request is built exactly as before.
+    public func primeLanguageModel() {
+        let head = promptBuilder.suffixHead(session: session, clock: dependencies.clock, lastAssistantQuestion: lastAssistantQuestion)
+        let prefix = promptBuilder.cacheablePrefix
+        let model = dependencies.languageModel
+        Task { await model.prime(cacheablePrefix: prefix, suffixHead: head) }
+    }
+
     private func runModel(_ text: String, modifying pending: PendingAction?, report: inout TurnReport) async {
         transition(to: .thinking, reason: pending == nil ? .transcriptReady : .userModified)
         let request = promptBuilder.request(
-            session: session,
+            session: session.excludingCurrentUserTurn(),
             utterance: text,
             clock: dependencies.clock,
             lastAssistantQuestion: lastAssistantQuestion,

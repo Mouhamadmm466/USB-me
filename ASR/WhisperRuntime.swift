@@ -18,6 +18,8 @@ public actor WhisperRuntime: SpeechRecognizer {
     private let queue = DispatchSerialQueue(label: "voiceagent.asr.inference", qos: .userInitiated)
     private var handle: WhisperHandle?
     public private(set) var loadMilliseconds: Double = 0
+    /// Whisper's no-speech probability for the most recent pass (lowest across its segments).
+    public private(set) var lastNoSpeechProbability: Float = 0
 
     public nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
 
@@ -56,7 +58,8 @@ public actor WhisperRuntime: SpeechRecognizer {
         let seconds = Double(samples.count) / AudioFrame.sampleRate
         let text = try transcribe(samples, final: false, prompt: nil)
         return PartialTranscript(
-            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds),
+            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds,
+                                          noSpeechProbability: lastNoSpeechProbability, noSpeechThreshold: config.noSpeechThreshold),
             revision: revision,
             audioDurationSeconds: seconds
         )
@@ -67,7 +70,8 @@ public actor WhisperRuntime: SpeechRecognizer {
         let prompt = TranscriptCleaner.biasPrompt(context.biasPhrases, limit: config.maxBiasNames)
         let text = try transcribe(samples, final: true, prompt: prompt)
         return FinalTranscript(
-            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds),
+            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds,
+                                          noSpeechProbability: lastNoSpeechProbability, noSpeechThreshold: config.noSpeechThreshold),
             audioDurationSeconds: seconds
         )
     }
@@ -117,11 +121,14 @@ public actor WhisperRuntime: SpeechRecognizer {
             throw ASRError.inferenceFailed(Int(status))
         }
         var text = ""
+        var noSpeech: Float = 1
         for segment in 0..<whisper_full_n_segments(context) {
             if let piece = whisper_full_get_segment_text(context, segment) {
                 text += String(cString: piece)
             }
+            noSpeech = min(noSpeech, whisper_full_get_segment_no_speech_prob(context, segment))
         }
+        lastNoSpeechProbability = whisper_full_n_segments(context) > 0 ? noSpeech : 1
         logger.log(.stageLatency(stage: final ? .endpointToFinalTranscript : .partialTranscript, milliseconds: Int(watch.elapsedMilliseconds)))
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }

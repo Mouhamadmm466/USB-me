@@ -11,10 +11,11 @@ enum Palette {
     static let canvas = Color(uiColor: .systemBackground)
     /// Background behind grouped lists (Settings).
     static let groupedCanvas = Color(uiColor: .systemGroupedBackground)
-    /// Cards placed on `canvas`.
-    static let surface = dynamic(light: 0xF3F4F4, dark: 0x1C1C1E)
+    /// Cards placed on `canvas`. In dark mode sheets raise `canvas` to #1C1C1E, so the
+    /// surface steps up with them.
+    static let surface = dynamic(light: 0xF3F4F4, dark: 0x1C1C1E, darkElevated: 0x2C2C2E)
     /// Content wells inside a card (for example the body of a message).
-    static let well = dynamic(light: 0xFFFFFF, dark: 0x2A2A2D)
+    static let well = dynamic(light: 0xFFFFFF, dark: 0x2A2A2D, darkElevated: 0x3A3A3C)
     /// Neutral control fill (secondary buttons, chips, tracks).
     static let fill = dynamic(light: 0x767680, dark: 0x767680, lightAlpha: 0.10, darkAlpha: 0.22)
     /// Hairline separators and card outlines.
@@ -53,13 +54,15 @@ enum Palette {
 
     static func dynamic(
         light: UInt32, dark: UInt32,
+        darkElevated: UInt32? = nil,
         highContrastLight: UInt32? = nil, highContrastDark: UInt32? = nil,
         lightAlpha: CGFloat = 1, darkAlpha: CGFloat = 1
     ) -> Color {
         Color(uiColor: UIColor { traits in
             let high = traits.accessibilityContrast == .high
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hex: high ? (highContrastDark ?? dark) : dark, alpha: darkAlpha)
+                let base = traits.userInterfaceLevel == .elevated ? (darkElevated ?? dark) : dark
+                return UIColor(hex: high ? (highContrastDark ?? base) : base, alpha: darkAlpha)
             }
             return UIColor(hex: high ? (highContrastLight ?? light) : light, alpha: lightAlpha)
         })

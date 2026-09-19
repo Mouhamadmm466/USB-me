@@ -149,7 +149,8 @@ enum World {
         durations: [
             "2 hours": 120,
             "an hour": 60,
-        ]
+        ],
+        timeOfDayOnly: ["3pm", "4pm", "2pm", "11am", "5", "10am"]
     )
 
     // MARK: Builders
@@ -163,7 +164,8 @@ enum World {
         canSendText: Bool = true,
         canPlaceCalls: Bool = true,
         composeOutcomes: [MessageComposeOutcome] = [],
-        clock: AgentClock = World.clock
+        clock: AgentClock = World.clock,
+        dateParser: DateParserFactory? = World.parser.factory
     ) -> FakeToolSuite {
         FakeToolSuite(
             contacts: contacts,
@@ -175,7 +177,7 @@ enum World {
             canPlaceCalls: canPlaceCalls,
             composeOutcomes: composeOutcomes,
             clock: clock,
-            dateParser: parser.factory,
+            dateParser: dateParser,
             logger: PrivacySafeLogger(ringCapacity: 50)
         )
     }

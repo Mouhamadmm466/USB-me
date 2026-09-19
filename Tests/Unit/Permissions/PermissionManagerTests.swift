@@ -36,7 +36,8 @@ import Testing
     @Test func usability() {
         #expect(PermissionManager.isUsable(.granted, for: .calendar))
         #expect(PermissionManager.isUsable(.limited, for: .contacts))
-        #expect(!PermissionManager.isUsable(.limited, for: .calendar)) // write-only calendar can't read/update
+        #expect(PermissionManager.isUsable(.limited, for: .calendar)) // write-only: creating events still works
+        #expect(!PermissionManager.isUsable(.limited, for: .reminders))
         #expect(!PermissionManager.isUsable(.denied, for: .contacts))
         #expect(!PermissionManager.isUsable(.restricted, for: .microphone))
     }

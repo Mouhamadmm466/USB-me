@@ -23,7 +23,8 @@ struct ModelDownloadsView: View {
             Card(padding: 0, radius: Radius.card) {
                 VStack(spacing: 0) {
                     ForEach(Array(state.packs.enumerated()), id: \.element.id) { index, pack in
-                        ModelPackRow(pack: pack, actions: actions)
+                        // The onboarding page has one "Download" action for every pack.
+                        ModelPackRow(pack: pack, actions: actions, showsDownloadButton: false)
                             .padding(.horizontal, Spacing.l)
                             .padding(.vertical, Spacing.l - 2)
                         if index < state.packs.count - 1 {
@@ -42,6 +43,9 @@ struct ModelPackRow: View {
 
     let pack: Pack
     let actions: ModelDownloadActions
+    /// Offer "Download" on a pack that is not installed (off where the screen has its own
+    /// download-all action).
+    var showsDownloadButton = true
 
     @State private var confirmsDelete = false
     @State private var confirmsRedownload = false
@@ -126,9 +130,19 @@ struct ModelPackRow: View {
                 statusText(Formatting.bytes(pack.totalBytes))
             }
         case let .failed(message):
-            problemText(message)
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                problemText(message)
+                Button { actions.retry(pack.id) } label: { Text("Try again") }
+                    .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
+                    .accessibilityLabel("Try downloading \(pack.name) again")
+            }
         case .corrupt:
-            problemText("Files are damaged or missing. Re-download to repair.")
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                problemText("Files are damaged or missing. Re-download to repair.")
+                Button { confirmsRedownload = true } label: { Text("Re-download") }
+                    .buttonStyle(.capsule(.destructive, size: .small, fullWidth: false))
+                    .accessibilityLabel("Re-download \(pack.name)")
+            }
         }
     }
 
@@ -139,9 +153,8 @@ struct ModelPackRow: View {
     }
 
     private func statusText(_ text: String) -> some View {
-        Text(text)
+        Text.tabular(text)
             .textStyle(.footnote)
-            .monospacedDigit()
             .foregroundStyle(Palette.inkSecondary)
     }
 
@@ -176,21 +189,15 @@ struct ModelPackRow: View {
     private var trailingAction: some View {
         switch pack.state {
         case .notInstalled:
-            Button { actions.download(pack.id) } label: { Text("Download") }
-                .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
-                .accessibilityLabel("Download \(pack.name)")
+            if showsDownloadButton {
+                Button { actions.download(pack.id) } label: { Text("Download") }
+                    .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
+                    .accessibilityLabel("Download \(pack.name)")
+            }
         case .downloading:
             roundAction("pause.fill", label: "Pause downloads") { actions.pauseAll() }
         case .paused:
             roundAction("play.fill", label: "Resume downloads") { actions.resumeAll() }
-        case .failed:
-            Button { actions.retry(pack.id) } label: { Text("Retry") }
-                .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
-                .accessibilityLabel("Retry \(pack.name)")
-        case .corrupt:
-            Button { confirmsRedownload = true } label: { Text("Re-download") }
-                .buttonStyle(.capsule(.destructive, size: .small, fullWidth: false))
-                .accessibilityLabel("Re-download \(pack.name)")
         case .installed:
             Menu {
                 Button { actions.verify(pack.id) } label: {
@@ -211,7 +218,7 @@ struct ModelPackRow: View {
                     .contentShape(Circle())
             }
             .accessibilityLabel("Actions for \(pack.name)")
-        case .queued, .verifying:
+        case .queued, .verifying, .failed, .corrupt:
             EmptyView()
         }
     }

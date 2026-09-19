@@ -1,0 +1,405 @@
+{
+  "asrTranscript" : "Text Alex that I will be 20 minutes late.",
+  "asrWordErrorRate" : 0,
+  "availableMemoryAtStartMB" : 6127.03044128418,
+  "batteryEnd" : 0.65,
+  "batteryStart" : 0.65,
+  "environment" : {
+    "appVersion" : "1.0.0",
+    "deviceModel" : "iPhone16,1",
+    "isSimulator" : false,
+    "physicalMemoryGB" : 7.4999847412109375,
+    "processorCount" : 6,
+    "systemVersion" : "Version 26.6.1 (Build 23G83)"
+  },
+  "errors" : [
+
+  ],
+  "finishedAt" : "2026-09-19T13:52:39Z",
+  "llmOutputs" : {
+    "Text Alex that I will be 20 minutes late" : "{\"type\":\"proposed_action\",\"tool\":\"compose_message\",\"arguments\":{\"contact_query\":\"Alex\",\"message\":\"I'll be 20 minutes late.\"},\"requires_confirmation\":true}",
+    "call mom" : "{\"type\":\"proposed_action\",\"tool\":\"initiate_call\",\"arguments\":{},\"requires_confirmation\":true}",
+    "move my team sync to 4 pm" : "{\"type\":\"proposed_action\",\"tool\":\"update_calendar_event\",\"arguments\":{\"event_query\":\"team sync\",\"new_start\":\"4 pm\"},\"requires_confirmation\":true}",
+    "remind me to call the dentist tomorrow at 10" : "{\"type\":\"proposed_action\",\"tool\":\"create_reminder\",\"arguments\":{\"title\":\"Call dentist\",\"due\":\"tomorrow at 10\"},\"requires_confirmation\":true}",
+    "what's 15 percent of 80" : "{\"type\":\"answer\",\"speech\":\"15 percent of 80 is 12.\"}",
+    "what's on my calendar tomorrow" : "{\"type\":\"proposed_action\",\"tool\":\"get_calendar_events\",\"arguments\":{\"when\":\"tomorrow\"},\"requires_confirmation\":false}"
+  },
+  "metrics" : [
+    {
+      "name" : "cold_load",
+      "p50" : 17484.305916,
+      "p95" : 17484.305916,
+      "samples" : [
+        17484.305916
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "final_transcript",
+      "p50" : 197.168917,
+      "p95" : 580.7005,
+      "samples" : [
+        580.7005,
+        161.722375,
+        196.568292,
+        199.264167,
+        197.168917
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "partial_1_5s",
+      "p50" : 56.064,
+      "p95" : 132.804417,
+      "samples" : [
+        132.804417,
+        45.498959,
+        56.230208,
+        56.064,
+        54.96125
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 19.301026540608326,
+      "p95" : 23.531453208005384,
+      "samples" : [
+        6.553399730153496,
+        23.531453208005384,
+        19.36000186642513,
+        19.098077478225175,
+        19.301026540608326
+      ],
+      "stage" : "asr",
+      "unit" : "x"
+    },
+    {
+      "name" : "silero_frame",
+      "p50" : 0.198208,
+      "p95" : 0.256875,
+      "samples" : [
+        1.180542,
+        0.26075,
+        0.250334,
+        0.250291,
+        0.246,
+        0.248583,
+        0.248333,
+        0.247917,
+        0.247833,
+        0.247709,
+        0.256833,
+        0.255709,
+        0.254791,
+        0.256625,
+        0.244917,
+        0.249167,
+        0.246583,
+        0.27225,
+        0.262333,
+        0.24875,
+        0.245708,
+        0.247834,
+        0.248166,
+        0.256875,
+        0.206834,
+        0.20425,
+        0.2115,
+        0.20375,
+        0.202875,
+        0.210708,
+        0.205167,
+        0.212833,
+        0.203541,
+        0.310542,
+        0.246208,
+        0.207083,
+        0.201416,
+        0.199709,
+        0.199,
+        0.198834,
+        0.206125,
+        0.209625,
+        0.201541,
+        0.19925,
+        0.198542,
+        0.198667,
+        0.198917,
+        0.199375,
+        0.198375,
+        0.19775,
+        0.198625,
+        0.198875,
+        0.197166,
+        0.19725,
+        0.208792,
+        0.212083,
+        0.198791,
+        0.197708,
+        0.2205,
+        0.198959,
+        0.198333,
+        0.198208,
+        0.18175,
+        0.168833,
+        0.168667,
+        0.168584,
+        0.16825,
+        0.16925,
+        0.168875,
+        0.168125,
+        0.168666,
+        0.168583,
+        0.168542,
+        0.168291,
+        0.172958,
+        0.167959,
+        0.17,
+        0.168084,
+        0.172125,
+        0.167625,
+        0.179,
+        0.167542,
+        0.178542,
+        0.167167,
+        0.239208,
+        0.201875,
+        0.1715,
+        0.174791,
+        0.179792,
+        0.176792,
+        0.176834,
+        0.169375,
+        0.169542,
+        0.169375,
+        0.169166,
+        0.164083,
+        0.146416,
+        0.147083,
+        0.146584,
+        0.146625,
+        0.146041,
+        0.157792,
+        0.145584,
+        0.156334,
+        0.144625,
+        0.156375,
+        0.145167,
+        0.157042,
+        0.148375,
+        0.15175,
+        0.145291,
+        0.1565,
+        0.145334,
+        0.156458,
+        0.145083,
+        0.156833,
+        0.145292,
+        0.156083
+      ],
+      "stage" : "vad",
+      "unit" : "ms"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 23471.23625,
+      "p95" : 23471.23625,
+      "samples" : [
+        23471.23625
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_eval_cold",
+      "p50" : 17671.949417,
+      "p95" : 17671.949417,
+      "samples" : [
+        17671.949417
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 4.276541,
+      "p95" : 16.997166,
+      "samples" : [
+        16.997166,
+        4.803542,
+        4.175291,
+        4.220917,
+        4.290667,
+        4.276541
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 570.276959,
+      "p95" : 589.693042,
+      "samples" : [
+        498.145209,
+        557.867833,
+        577.623125,
+        578.689875,
+        570.276959,
+        589.693042
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 2099.256958,
+      "p95" : 3194.247209,
+      "samples" : [
+        3194.247209,
+        2099.256958,
+        2793.213458,
+        2482.53425,
+        1832.6311249999999,
+        1950.697042
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 186.89706135294117,
+      "p95" : 365.66809159999997,
+      "samples" : [
+        186.89706135294117,
+        299.2076308571428,
+        185.93587780000001,
+        225.3012120909091,
+        365.66809159999997,
+        139.0300357857143
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 11,
+      "p95" : 17,
+      "samples" : [
+        17,
+        7,
+        15,
+        11,
+        5,
+        14
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 21,
+      "p95" : 25,
+      "samples" : [
+        22,
+        21,
+        22,
+        25,
+        19,
+        7
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 5563.331,
+      "p95" : 5563.331,
+      "samples" : [
+        5563.331
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "short_chunk_synthesis",
+      "p50" : 783.86925,
+      "p95" : 1708.773542,
+      "samples" : [
+        259.698459,
+        1267.6365,
+        783.86925,
+        1708.773542,
+        343.62225,
+        942.111792,
+        454.143375,
+        1062.0945,
+        342.353833,
+        1009.791958
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 4.219750030738696,
+      "p95" : 5.583398552241698,
+      "samples" : [
+        5.583398552241698,
+        3.2146439456421456,
+        4.932792684008352,
+        1.8497982922534595,
+        2.3847513434872694,
+        4.6206026862321075,
+        4.219750030738696,
+        4.325389019225862,
+        4.1179456855832655,
+        3.1928242925485812,
+        3.836758405207823,
+        4.6728051817998315,
+        4.2353841559004834,
+        4.03548470327588,
+        4.475624533758808
+      ],
+      "stage" : "tts",
+      "unit" : "x"
+    },
+    {
+      "name" : "endpoint_to_first_audio",
+      "p50" : 5420.553666,
+      "p95" : 6629.512125,
+      "samples" : [
+        6629.512125,
+        5420.553666,
+        5200.357708,
+        5426.702667,
+        5055.5465
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    }
+  ],
+  "notes" : [
+    "llm valid outputs: 5\/6",
+    "imported + verified NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf",
+    "imported + verified af_heart.safetensors",
+    "imported + verified ggml-base.en.bin",
+    "imported + verified ggml-silero-v6.2.0.bin",
+    "imported + verified kokoro-v1_0.safetensors",
+    "offline import (SHA-256 + activation) took 3032 ms",
+    "verified ggml-base.en.bin for loading in 4 ms",
+    "verified ggml-silero-v6.2.0.bin for loading in 0 ms",
+    "verified NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf for loading in 0 ms",
+    "verified kokoro-v1_0.safetensors for loading in 0 ms",
+    "verified af_heart.safetensors for loading in 0 ms"
+  ],
+  "peakFootprintMB" : 1843.8944778442383,
+  "startedAt" : "2026-09-19T13:50:33Z",
+  "thermalStates" : [
+    "nominal",
+    "fair"
+  ]
+}

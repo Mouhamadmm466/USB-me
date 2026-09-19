@@ -131,6 +131,37 @@ func makeCoordinator(
 // MARK: - Tests
 
 @MainActor
+@Suite struct PrimingTests {
+    private func primeAndWait(_ coordinator: AgentCoordinator, _ model: ScriptedLanguageModel) async {
+        let before = model.primedHeads.count
+        coordinator.primeLanguageModel()
+        for _ in 0..<200 where model.primedHeads.count == before { try? await Task.sleep(for: .milliseconds(5)) }
+    }
+
+    @Test func primedContextIsExactlyTheStartOfTheNextRequest() async throws {
+        let correction = #"{"type":"proposed_action","tool":"compose_message","arguments":{"contact_query":"Alex","message":"I'll be 30 minutes late."},"requires_confirmation":true}"#
+        let model = ScriptedLanguageModel([
+            "Text Alex that I will be 20 minutes late": composeJSON,
+            "actually make it 30 minutes": correction,
+        ])
+        let (coordinator, _, _, _) = makeCoordinator(model: model)
+
+        await primeAndWait(coordinator, model)
+        _ = await coordinator.handle(.speech(FinalTranscript(text: "Text Alex that I will be 20 minutes late", audioDurationSeconds: 2)))
+        let firstHead = try #require(model.primedHeads.last)
+        #expect(model.requests.last?.suffix.hasPrefix(firstHead) == true, "head: \(firstHead)\nsuffix: \(model.requests.last?.suffix ?? "")")
+
+        // Second turn: a pending action, the confirmation question and the last contact are in context.
+        await primeAndWait(coordinator, model)
+        _ = await coordinator.handle(.speech(FinalTranscript(text: "actually make it 30 minutes", audioDurationSeconds: 2)))
+        let secondHead = try #require(model.primedHeads.last)
+        #expect(secondHead.contains("Pending action"))
+        #expect(model.requests.last?.suffix.hasPrefix(secondHead) == true)
+        #expect(model.requests.count == 2)
+    }
+}
+
+@MainActor
 @Suite struct CoordinatorTests {
     @Test func canonicalMessageFlowConfirmsThenExecutesExactlyOnce() async throws {
         let model = ScriptedLanguageModel(["Text Alex that I will be 20 minutes late": composeJSON])

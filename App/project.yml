@@ -33,6 +33,8 @@ targets:
         product: VoiceAgentKit
       - package: VoiceAgentKit
         product: KokoroTTS
+      - package: VoiceAgentKit
+        product: AgentEval
     entitlements:
       path: AppEntry/VoiceAgent.entitlements
       properties:
@@ -54,7 +56,7 @@ targets:
         NSContactsUsageDescription: Voice Agent looks up the people you ask it to call or message. Your contacts stay on this iPhone.
         NSCalendarsFullAccessUsageDescription: Voice Agent reads and updates the events you ask about. Your calendar stays on this iPhone.
         NSRemindersFullAccessUsageDescription: Voice Agent creates the reminders you ask for. Your reminders stay on this iPhone.
-        UIAppFonts: [Fonts/DMSans-Regular.ttf, Fonts/DMSans-Medium.ttf, Fonts/DMSans-SemiBold.ttf, Fonts/DMSans-Bold.ttf]
+        UIAppFonts: [DMSans-Regular.ttf, DMSans-Medium.ttf, DMSans-SemiBold.ttf, DMSans-Bold.ttf]
         LSApplicationQueriesSchemes: [tel, sms, maps, music, message, mailto, calshow, itms-apps, shortcuts]
         UIFileSharingEnabled: false
     settings:
@@ -86,6 +88,8 @@ targets:
     dependencies:
       - package: VoiceAgentKit
         product: VoiceAgentKit
+      - package: VoiceAgentKit
+        product: AgentEval
     settings:
       base:
         INFOPLIST_FILE: AppEntry/Info.plist

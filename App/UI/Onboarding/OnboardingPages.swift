@@ -161,23 +161,21 @@ private struct OverallProgress: View {
                     .textStyle(.headline)
                     .foregroundStyle(Palette.ink)
                 Spacer()
-                Text(Formatting.percent(state.overallFraction))
+                Text.tabular(Formatting.percent(state.overallFraction))
                     .textStyle(.headline)
-                    .monospacedDigit()
                     .foregroundStyle(Palette.ink)
             }
             ProgressBar(value: state.overallFraction, tint: state.isPaused ? Palette.mist : Palette.jade, height: 8)
             HStack {
-                Text(Formatting.bytes(state.downloadedBytes, of: state.totalBytes))
+                Text.tabular(Formatting.bytes(state.downloadedBytes, of: state.totalBytes))
                 Spacer()
                 if !state.isPaused,
                    let rate = state.bytesPerSecond,
                    let left = Formatting.timeRemaining(bytes: state.remainingBytes, bytesPerSecond: rate) {
-                    Text(left)
+                    Text.tabular(left)
                 }
             }
             .textStyle(.footnote)
-            .monospacedDigit()
             .foregroundStyle(Palette.inkSecondary)
         }
         .accessibilityElement(children: .ignore)
