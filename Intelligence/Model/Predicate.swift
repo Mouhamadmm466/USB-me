@@ -64,7 +64,7 @@ public enum ValueKind: Sendable, Equatable {
     case flag
 }
 
-public struct PredicateSpec: Sendable {
+public struct PredicateSpec: Sendable, Equatable {
     public let predicate: Predicate
     public let kind: AssertionKind
     public let subjectKinds: Set<EntityKind>

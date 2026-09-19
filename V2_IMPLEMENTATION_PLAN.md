@@ -199,8 +199,8 @@ text) and shows agent progress as a checklist of actions — never chain-of-thou
 | Phase | Content | Status |
 |---|---|---|
 | 0 | Audit, plan, baseline | this document |
-| 1 | Intelligence store: entities, assertions, provenance, projects/goals/people/decisions/commitments, migrations, tests | |
-| 2 | Memory extraction: grammar, validator, policy, conflict resolution, corrections | |
+| 1 | Intelligence store: entities, assertions, provenance, projects/goals/people/decisions/commitments, migrations, tests | done — `Intelligence/Model`, `Intelligence/Store`, 22 tests |
+| 2 | Memory extraction: grammar, validator, policy, conflict resolution, corrections | done — `Intelligence/Memory`, 26 tests (model-side wiring in phase 3) |
 | 3 | Retrieval + ContextBuilder + budget; personal-context-aware conversation | |
 | 4 | Intelligence UI: Home, Projects, My Intelligence, Activity | |
 | 5 | Knowledge: import, parse, index, search, project association (+ benchmark) | |

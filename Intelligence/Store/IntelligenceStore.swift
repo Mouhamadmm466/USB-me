@@ -385,6 +385,47 @@ public actor IntelligenceStore {
         ))
     }
 
+    /// Writes a statement the user has not agreed to yet: validated, but inert until `confirm`.
+    /// Nothing is materialized and nothing is superseded — a question cannot change the world.
+    @discardableResult
+    public func propose(_ assertion: Assertion) throws -> Assertion {
+        guard let subject = try entity(assertion.subjectID) else {
+            throw IntelligenceStoreError.unknownEntity(assertion.subjectID)
+        }
+        let object = try assertion.objectID.flatMap { try entity($0) }
+        if let objectID = assertion.objectID, object == nil { throw IntelligenceStoreError.unknownEntity(objectID) }
+        if let violation = PredicateCatalog.violation(
+            predicate: assertion.predicate, subjectKind: subject.kind, objectKind: object?.kind, value: assertion.value
+        ) {
+            throw IntelligenceStoreError.invalidStatement(violation)
+        }
+        var proposed = assertion
+        proposed.state = .proposed
+        try insert(proposed)
+        return proposed
+    }
+
+    /// Deletes an entity nothing refers to. Used when a statement that invented an entity is
+    /// rejected, so a declined suggestion does not leave debris in the user's world.
+    ///
+    /// Rejected statements do not count as references: they are the record of a refusal, and an
+    /// entity that exists only inside one is a thing the user said was not there.
+    @discardableResult
+    public func forgetIfUnused(_ id: UUID) throws -> Bool {
+        guard id != IntelligenceIdentity.userEntityID else { return false }
+        let referenced = try db.query(
+            """
+            SELECT
+                (SELECT COUNT(*) FROM assertions
+                 WHERE (subject_id = ?1 OR object_id = ?1) AND state != 'rejected') +
+                (SELECT COUNT(*) FROM entities WHERE project_id = ?1);
+            """,
+            [.text(id.uuidString)]
+        ).first?.int(0) ?? 0
+        guard referenced == 0 else { return false }
+        return try db.run("DELETE FROM entities WHERE id = ?1;", [.text(id.uuidString)]) > 0
+    }
+
     public func assertion(_ id: UUID) throws -> Assertion? {
         try db.query("SELECT \(IntelligenceSchema.assertionColumns) FROM assertions WHERE id = ?1;", [.text(id.uuidString)])
             .first.map(Self.assertion(from:))
@@ -477,6 +518,8 @@ public actor IntelligenceStore {
             try restoreSuperseded(by: assertion.id, at: date)
             try rematerialize(subjectID: assertion.subjectID, predicate: assertion.predicate)
         }
+        // A suggestion the user declined should not leave the people and projects it invented behind.
+        for id in [assertion.subjectID, assertion.objectID].compactMap({ $0 }) { try forgetIfUnused(id) }
     }
 
     /// "That's not true anymore." The statement stops being current but stays in history with its
