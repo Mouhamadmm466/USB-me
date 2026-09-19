@@ -35,11 +35,11 @@ _Last updated: 2026-09-19 (session 1, evening)._
 - [x] **Phase 3 — native tools**: 10 tools with resolver/executor/adapters (Contacts, EventKit, MessageUI, call flow, security-scoped files, app launching), fakes, permission manager; unit + integration tests. Real-API behaviour on device needs permission taps (human step).
 - [x] **Phase 4 — streaming ASR**: whisper.cpp partial/final passes, Silero VAD endpointing, transcript stability, hallucination guard + speech gate, command-vocabulary prompt; fixture tests (clean, noisy, silence, echo) pass on the real models.
 - [x] **Phase 5 — local TTS**: Kokoro on MLX with clause-first chunking, pipelined synthesis, cancellation (device).
-- [~] **Phase 6 — spoken loop**: `VoiceSessionController` wired in the app; on-device self-test (`-VoiceSelfTest`, scripted spoken input through the real pipeline) written — result pending (phone disconnected).
+- [~] **Phase 6 — spoken loop**: `VoiceSessionController` wired in the app, with the early "Text <name>:" lead-in. The on-device self-test (`-VoiceSelfTest`, scripted spoken input through the real pipeline) is written but **was not run to completion**: the phone stayed locked, and the one run that started was killed by a launch-watchdog bug in the self-test itself (fixed since). Testing was stopped at the owner's request.
 - [~] **Phase 7 — barge-in/echo**: voice processing (AEC), strict barge-in onset, transcript echo verdict (≥ 2 novel words), final-transcript self-transcription guard; fixture tests pass except the documented no-AEC overlap case. Device self-test pending.
 - [x] **Phase 8 — model manager**: resumable downloads, storage checks, SHA-256, atomic activation, manifests, corruption recovery, delete/redownload, offline import (used on device).
-- [~] **Phase 9 — evaluation/hardening**: safety guards added from findings (see below); prompt v2; full on-device evaluation run pending.
-- [ ] **Phase 10 — production candidate**: archive configuration without developer modes, clean-clone build proof, final docs audit.
+- [~] **Phase 9 — evaluation/hardening**: safety guards added from findings (see below); prompt up to 2026-09-19.4. The full 3,249-case run was **not run** (testing stopped at the owner's request); measured so far: 30-case stratified subsets on the Mac, 76.7% → 86.7% case pass, 0 false consequential executions.
+- [x] **Phase 10 — production candidate**: Release configuration without developer modes (verified in the binary), privacy manifest, clean-clone build proof, full `swift test` pass, UI tests, docs. Archive/upload are owner steps (distribution certificate, App Store Connect record).
 
 ## Measured results (iPhone 15 Pro)
 
@@ -125,6 +125,13 @@ Evaluation (Mac CPU smoke, 30 stratified cases, prompt v1): 76.7% case pass, rel
 - Live model download through the app's downloader (opt-in): passes.
 - Release (App Store) configuration builds for iOS with no developer launch modes in the binary.
 - Networking: only `Models/` (the model downloader) uses URLSession; nothing else can reach the network.
+
+## Not done (testing stopped at the owner's request)
+
+- Voice self-test on the phone, the updated benchmark (per-command end-to-end, lead-in effect) and
+  the full 3,249-case on-device evaluation. All three run unattended with `Scripts/device_suite.sh`
+  once the phone is unlocked and left on the desk (~2 h 10 min).
+- `xcodebuild archive` for TestFlight (the Release build itself succeeds).
 
 ## Next actions
 
