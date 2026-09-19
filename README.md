@@ -25,6 +25,11 @@ reads back exactly what it will do, and acts only after you confirm that exact v
 
 ## Quick start
 
+> **Run `Scripts/bootstrap_dependencies.sh` once after cloning, before opening the Xcode project.**
+> The pinned llama.cpp / whisper.cpp XCFrameworks and the Kokoro packages are downloaded and
+> SHA-256-verified by that script, not stored in git (~7 minutes). Without them Xcode reports
+> "Missing package product 'VoiceAgentKit'"; `Package.swift` stops with the same instruction.
+
 ```bash
 Scripts/bootstrap_dependencies.sh   # pinned runtimes (verified)
 Scripts/download_models.sh          # pinned models into ModelCache/ (verified)

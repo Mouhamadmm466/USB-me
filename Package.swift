@@ -5,7 +5,20 @@
 // Pure logic is testable on macOS with `swift test`; native runtimes use the
 // pinned xcframeworks in Vendor/Frameworks (see Scripts/bootstrap_dependencies.sh).
 
+import Foundation
 import PackageDescription
+
+// The pinned runtimes (llama.cpp / whisper.cpp XCFrameworks, Kokoro packages) are fetched and
+// verified by Scripts/bootstrap_dependencies.sh, not committed. Without them SwiftPM only reports
+// "binary target 'llama' could not be mapped to an artifact", so say what to do instead.
+let missingVendor = ["Vendor/Frameworks/llama.xcframework", "Vendor/Frameworks/whisper.xcframework", "Vendor/Packages/kokoro-ios"]
+    .filter { !FileManager.default.fileExists(atPath: Context.packageDirectory + "/" + $0) }
+if !missingVendor.isEmpty {
+    fatalError("""
+        Missing \(missingVendor.joined(separator: ", ")).
+        Run Scripts/bootstrap_dependencies.sh from the repository root, then reopen the project (Docs/BUILD.md).
+        """)
+}
 
 let package = Package(
     name: "VoiceAgentKit",
