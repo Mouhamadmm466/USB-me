@@ -50,13 +50,23 @@ public enum GrammarBuilder {
     /// Rule `<prefix>-<i>-<e>-<s>`: arguments from index i, where e = something already emitted
     /// (next argument needs a comma) and s = the group is already satisfied.
     static func argumentRules(for tool: ToolSpec, prefix: String) -> [String] {
-        let name = ruleName(tool.id)
-        let plan = ArgumentPlan(tool: tool)
+        argumentRules(
+            arguments: tool.arguments, atLeastOneOf: tool.atLeastOneOf,
+            prefix: prefix, elementPrefix: "arg-\(ruleName(tool.id))"
+        )
+    }
+
+    /// The same ordered-argument machinery for any contract, not just V1 tools: `elementPrefix`
+    /// names the per-argument rules the caller has emitted.
+    public static func argumentRules(
+        arguments: [ToolArgumentSpec], atLeastOneOf: [[String]], prefix: String, elementPrefix: String
+    ) -> [String] {
+        let plan = ArgumentPlan(arguments: arguments, atLeastOneOf: atLeastOneOf)
         var rules: [String] = ["\(prefix)-h0 ::= \(prefix)-0-0-\(plan.initiallySatisfied ? 1 : 0)"]
         for state in plan.reachableStates() {
             let alternatives = plan.transitions(from: state).map { transition -> String in
                 guard let argument = transition.emitted else { return transition.next.map { "\(prefix)-\($0.key)" } ?? "\"\"" }
-                let element = "arg-\(name)-\(ruleName(argument.name))"
+                let element = "\(elementPrefix)-\(ruleName(argument.name))"
                 let comma = state.emitted ? "\",\" " : ""
                 let rest = transition.next.map { " \(prefix)-\($0.key)" } ?? ""
                 return comma + element + rest
@@ -83,7 +93,7 @@ public enum GrammarBuilder {
 
     static func ruleName(_ id: ToolID) -> String { ruleName(id.rawValue) }
 
-    static func ruleName(_ raw: String) -> String {
+    public static func ruleName(_ raw: String) -> String {
         raw.replacingOccurrences(of: "_", with: "-")
     }
 }
@@ -108,9 +118,13 @@ struct ArgumentPlan {
     let arguments: [ToolArgumentSpec]
     let group: Set<String>
 
+    init(arguments: [ToolArgumentSpec], atLeastOneOf: [[String]] = []) {
+        self.arguments = arguments
+        group = Set(atLeastOneOf.first ?? [])
+    }
+
     init(tool: ToolSpec) {
-        arguments = tool.arguments
-        group = Set(tool.atLeastOneOf.first ?? [])
+        self.init(arguments: tool.arguments, atLeastOneOf: tool.atLeastOneOf)
     }
 
     var initiallySatisfied: Bool { group.isEmpty }

@@ -117,8 +117,13 @@ public enum MemoryProbe {
     }
 }
 
-public enum ThermalState: String, Codable, Sendable, SafeLabelConvertible {
+public enum ThermalState: String, Codable, Sendable, SafeLabelConvertible, Comparable, CaseIterable {
     case nominal, fair, serious, critical
+
+    /// Ordered by how hot: a runtime can ask "is it at least serious?" without a switch.
+    public static func < (lhs: ThermalState, rhs: ThermalState) -> Bool {
+        (allCases.firstIndex(of: lhs) ?? 0) < (allCases.firstIndex(of: rhs) ?? 0)
+    }
 }
 
 public enum ThermalProbe {

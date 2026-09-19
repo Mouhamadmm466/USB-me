@@ -8,7 +8,7 @@ import Foundation
 /// must still open the database and fall back to prefix matching.
 enum IntelligenceSchema {
     /// Index 0 is schema version 1.
-    static let migrations: [String] = [v1, v2, v3]
+    static let migrations: [String] = [v1, v2, v3, v4, v5]
 
     static var currentVersion: Int32 { Int32(migrations.count) }
 
@@ -154,6 +154,91 @@ enum IntelligenceSchema {
     """
 
     static let chunkColumns = "id, document_id, ordinal, heading, page, text"
+
+    // MARK: - v4: plans and their steps
+
+    private static let v4 = """
+    CREATE TABLE plans (
+        id TEXT PRIMARY KEY REFERENCES entities(id) ON DELETE CASCADE,
+        request TEXT NOT NULL,
+        title TEXT NOT NULL,
+        subject_id TEXT,
+        state TEXT NOT NULL,
+        blocker TEXT,
+        scope TEXT NOT NULL,
+        step_budget INTEGER NOT NULL,
+        summary TEXT,
+        created_at REAL NOT NULL,
+        updated_at REAL NOT NULL,
+        started_at REAL,
+        finished_at REAL
+    );
+
+    CREATE INDEX plans_state ON plans(state, updated_at);
+    CREATE INDEX plans_subject ON plans(subject_id) WHERE subject_id IS NOT NULL;
+
+    CREATE TABLE plan_steps (
+        id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+        ordinal INTEGER NOT NULL,
+        capability TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        arguments TEXT NOT NULL,
+        depends_on TEXT NOT NULL,
+        requires_network INTEGER NOT NULL,
+        risk INTEGER NOT NULL,
+        state TEXT NOT NULL,
+        blocker TEXT,
+        observation TEXT,
+        started_at REAL,
+        finished_at REAL,
+        attempts INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX plan_steps_plan ON plan_steps(plan_id, ordinal);
+    """
+
+    static let planColumns = """
+    id, request, title, subject_id, state, blocker, scope, step_budget, summary, \
+    created_at, updated_at, started_at, finished_at
+    """
+
+    static let planStepColumns = """
+    id, plan_id, ordinal, capability, summary, arguments, depends_on, requires_network, risk, \
+    state, blocker, observation, started_at, finished_at, attempts
+    """
+
+    // MARK: - v5: artifacts
+
+    private static let v5 = """
+    CREATE TABLE artifacts (
+        id TEXT PRIMARY KEY REFERENCES entities(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        markdown TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        plan_id TEXT,
+        subject_id TEXT,
+        sources TEXT NOT NULL,
+        created_at REAL NOT NULL,
+        updated_at REAL NOT NULL
+    );
+
+    CREATE INDEX artifacts_updated ON artifacts(updated_at);
+    CREATE INDEX artifacts_subject ON artifacts(subject_id) WHERE subject_id IS NOT NULL;
+
+    CREATE TABLE artifact_versions (
+        artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+        version INTEGER NOT NULL,
+        markdown TEXT NOT NULL,
+        created_at REAL NOT NULL,
+        PRIMARY KEY (artifact_id, version)
+    ) WITHOUT ROWID;
+    """
+
+    static let artifactColumns = """
+    id, title, kind, markdown, version, plan_id, subject_id, sources, created_at, updated_at
+    """
 
     // MARK: - Full text
 

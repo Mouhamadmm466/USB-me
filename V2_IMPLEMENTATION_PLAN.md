@@ -204,9 +204,9 @@ text) and shows agent progress as a checklist of actions — never chain-of-thou
 | 3 | Retrieval + ContextBuilder + budget; personal-context-aware conversation | done — `Intelligence/Context`, `PersonalIntelligence`, coordinator wiring, 17 tests |
 | 4 | Intelligence UI: Home, Projects, My Intelligence, Activity | done — `App/UI/Intelligence`, activity log, verified in the simulator |
 | 5 | Knowledge: import, parse, index, search, project association (+ benchmark) | done — `Intelligence/Knowledge`, FTS5 BM25, 16 tests (device benchmark with phase 14) |
-| 6 | Goal planner: goals, plans, steps, dependencies, replanning | |
-| 7 | Agent runtime: loop, checkpoints, failure recovery, limits, cancellation | |
-| 8 | Artifacts: documents, reports, briefs, versions, viewer/export | |
+| 6 | Goal planner: goals, plans, steps, dependencies, replanning | done — capability registry, playbooks, plan contract + store, 20 tests |
+| 7 | Agent runtime: loop, checkpoints, failure recovery, limits, cancellation | done — `Agent/Runtime`, 11 tests (device-tool executor with phase 9) |
+| 8 | Artifacts: documents, reports, briefs, versions, viewer/export | store + writer done; viewer/export next |
 | 9 | Network policy: modes, connectivity, per-capability requirements | |
 | 10 | First online capability: web research (keyless sources + optional search key) | |
 | 11 | Connected services: Gmail, Drive, GitHub — one at a time, mocks where credentials are human steps | |
