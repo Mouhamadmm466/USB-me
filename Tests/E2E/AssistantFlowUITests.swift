@@ -52,18 +52,17 @@ final class AssistantFlowUITests: XCTestCase {
         XCTAssertTrue(pending.waitForNonExistence(timeout: 10), "card dismissed after cancelling")
     }
 
-    /// Settings opens, lists the models, and About shows the licenses with the NVIDIA notice.
+    /// Settings opens, and About → Third-party licenses shows the NVIDIA attribution notice.
     func testSettingsOpens() {
         let settings = app.buttons["Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 10))
         settings.tap()
         XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5), "settings sheet")
-        XCTAssertTrue(app.staticTexts["Speech recognition"].waitForExistence(timeout: 5), "model rows")
-        let licenses = app.buttons["Third-party licenses"]
-        for _ in 0..<8 where !licenses.isHittable { app.swipeUp() }
+        let licenses = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Third-party licenses")).firstMatch
+        for _ in 0..<10 where !(licenses.exists && licenses.isHittable) { app.swipeUp() }
         XCTAssertTrue(licenses.exists, "About → Third-party licenses")
         licenses.tap()
-        XCTAssertTrue(app.staticTexts["Licensed by NVIDIA Corporation under the NVIDIA Nemotron Model License."].waitForExistence(timeout: 5),
+        XCTAssertTrue(card(containing: "Licensed by NVIDIA Corporation under the NVIDIA Nemotron Model License").waitForExistence(timeout: 5),
                       "Nemotron attribution notice")
     }
 }

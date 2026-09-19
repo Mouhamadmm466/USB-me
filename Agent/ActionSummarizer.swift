@@ -13,10 +13,16 @@ public struct ActionSummarizer: Sendable {
 
     // MARK: - Confirmation prompts
 
+    /// The words every message confirmation to `target` starts with (spoken early, while the
+    /// model is still writing the body). `confirmationPrompt` always begins with exactly this.
+    public func messageLead(for target: ContactTarget) -> String {
+        "Text \(recipient(target)):"
+    }
+
     public func confirmationPrompt(for action: ResolvedAction) -> String {
         switch action {
         case let .composeMessage(target, body):
-            return "Text \(recipient(target)): \u{201C}\(body)\u{201D} Should I send it?"
+            return messageLead(for: target) + " \u{201C}\(body)\u{201D} Should I send it?"
         case let .initiateCall(target):
             if target.contactIdentifier == nil {
                 return "Should I call \(spokenNumber(target.phoneNumber))?"

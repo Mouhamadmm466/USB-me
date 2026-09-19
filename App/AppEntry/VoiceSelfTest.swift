@@ -3,6 +3,7 @@ import Agent
 import ASR
 import Audio
 import Core
+import DeviceBenchmark
 import Foundation
 import KokoroTTS
 import LLM
@@ -38,7 +39,9 @@ final class VoiceSelfTestController {
     struct Report: Codable, Sendable {
         var startedAt = Date()
         var finishedAt: Date?
-        var device = ProcessInfo.processInfo.hostName
+        // Not ProcessInfo.hostName: it resolves DNS synchronously and stalled launch past the
+        // scene-create watchdog (0x8BADF00D) on device.
+        var device = BenchmarkEnvironment.current().deviceModel
         var steps: [Step] = []
         var latencies: [String: StageSummary] = [:]
         var bargeIns: BargeInCounters?

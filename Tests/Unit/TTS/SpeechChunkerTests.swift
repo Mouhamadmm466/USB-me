@@ -142,3 +142,94 @@ struct FakeSynthesizer: SpeechSynthesizer {
         #expect(!tracker.isSpeaking)
     }
 }
+
+/// Records what was synthesized (in order).
+actor RecordingSynthesizer: SpeechSynthesizer {
+    private(set) var texts: [String] = []
+    let delay: Duration
+
+    init(delay: Duration = .zero) { self.delay = delay }
+
+    func synthesize(_ text: String) async throws -> SynthesizedAudio {
+        texts.append(text)
+        if delay > .zero { try await Task.sleep(for: delay) }
+        return SynthesizedAudio(samples: [Float](repeating: 0, count: text.count), sampleRate: 24_000)
+    }
+}
+
+@Suite struct SpeechLeadTests {
+    let confirmation = "Text Alex Kim: \u{201C}I'll be 20 minutes late.\u{201D} Should I send it?"
+
+    @Test func matchingReplyContinuesAfterTheLeadWithoutRepeatingIt() async {
+        let synthesizer = RecordingSynthesizer()
+        let player = FakePlayer()
+        let queue = SpeechQueue(synthesizer: synthesizer, player: player)
+        var firstAudio = 0
+        let counter = Counter()
+        await queue.observeFirstAudio { _ in Task { await counter.increment() } }
+        await queue.speakLead("Text Alex Kim:")
+        let result = await queue.speak(confirmation)
+        #expect(result == .finished)
+        // The rest's first chunk is synthesized while the lead-in plays (order not fixed).
+        let texts = await synthesizer.texts
+        #expect(texts.sorted() == ["I'll be 20 minutes late.", "Should I send it?", "Text Alex Kim:"], "\(texts)")
+        #expect(texts.filter { $0 == "Text Alex Kim:" }.count == 1, "the lead-in is not repeated")
+        #expect(await player.played == ["Text Alex Kim:".count, "I'll be 20 minutes late.".count, "Should I send it?".count],
+                "played in order: lead-in, then the rest")
+        try? await Task.sleep(for: .milliseconds(20))
+        firstAudio = await counter.value
+        #expect(firstAudio == 1, "first audio is reported once, for the lead-in")
+        #expect(await queue.speak("Should I call Mom?") == .finished, "later replies are unaffected")
+    }
+
+    @Test func differentReplyCutsTheLead() async {
+        let synthesizer = RecordingSynthesizer()
+        let player = FakePlayer()
+        await player.setHold(true)
+        let queue = SpeechQueue(synthesizer: synthesizer, player: player)
+        await queue.speakLead("Text Alex Kim:")
+        try? await Task.sleep(for: .milliseconds(30))
+        await player.setHold(false)
+        let result = await queue.speak("Sorry, I didn't catch that. Could you say it again?")
+        #expect(result == .finished)
+        #expect(await synthesizer.texts.first == "Text Alex Kim:")
+        #expect(await synthesizer.texts.contains("Sorry, I didn't catch that."))
+    }
+
+    @Test func bargeInOverTheLeadInterruptsTheReply() async {
+        let player = FakePlayer()
+        await player.setHold(true)
+        let queue = SpeechQueue(synthesizer: RecordingSynthesizer(), player: player)
+        await queue.speakLead("Text Alex Kim:")
+        try? await Task.sleep(for: .milliseconds(30))
+        await queue.interrupt()
+        #expect(await queue.speak(confirmation) == .interrupted)
+    }
+
+    @Test func emptyLeadIsIgnored() async {
+        let synthesizer = RecordingSynthesizer()
+        let queue = SpeechQueue(synthesizer: synthesizer, player: FakePlayer())
+        await queue.speakLead("")
+        try? await Task.sleep(for: .milliseconds(20))
+        #expect(await synthesizer.texts.isEmpty)
+    }
+
+    @Test func trackerCoversTheLeadAndTheReply() async {
+        let tracker = SpokenTextTracker(echoTail: 10)
+        let player = FakePlayer()
+        await player.setHold(true)
+        let queue = SpeechQueue(synthesizer: RecordingSynthesizer(), player: player, tracker: tracker)
+        await queue.speakLead("Text Alex Kim:")
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(tracker.isSpeaking)
+        #expect(tracker.audibleText() == "Text Alex Kim:")
+        await queue.stop()
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(!tracker.isSpeaking)
+    }
+}
+
+actor Counter {
+    private(set) var value = 0
+    func increment() { value += 1 }
+}

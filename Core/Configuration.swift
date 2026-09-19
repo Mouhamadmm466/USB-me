@@ -86,6 +86,9 @@ public struct AgentConfiguration: Codable, Sendable, Equatable {
     public var confirmation = ConfirmationConfig()
     /// Re-open the microphone after the assistant finishes speaking an answer.
     public var continueListeningAfterResponse: Bool = true
+    /// Speak the lead-in of a message confirmation ("Text Alex Kim:") as soon as the recipient is
+    /// generated and resolves to exactly one contact, while the model writes the message body.
+    public var earlyConfirmationLead: Bool = true
 
     public init() {}
 

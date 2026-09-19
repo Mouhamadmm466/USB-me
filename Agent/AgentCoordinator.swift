@@ -432,9 +432,17 @@ public final class AgentCoordinator {
         )
         var output = ""
         let watch = Stopwatch()
+        var leadStarted = false
         do {
             for try await event in dependencies.languageModel.generate(request) {
-                if case let .text(delta) = event { output += delta }
+                guard case let .text(delta) = event else { continue }
+                output += delta
+                // The recipient is known before the message body: start "Text Alex Kim:" now.
+                if !leadStarted, pending == nil, configuration.earlyConfirmationLead,
+                   let recipient = ConfirmationLead.messageRecipient(in: output) {
+                    leadStarted = true
+                    Task { await self.speakMessageLead(recipient: recipient, transcript: text) }
+                }
             }
         } catch {
             dependencies.logger.log(.error(domain: "llm", code: "generation_failed"))
@@ -495,6 +503,21 @@ public final class AgentCoordinator {
             pinnedSelections = [:]
             await resolveAndAct(call, transcript: text, modifying: pending, report: &report)
         }
+    }
+
+    /// Speaks the lead-in of the confirmation this message will get, if the recipient resolves
+    /// natively to exactly one contact without asking for anything. Read-only: no permission
+    /// prompt, no pending action; the complete output still goes through validation, resolution
+    /// and confirmation, and `speak` continues after the lead-in only if it starts the same way.
+    private func speakMessageLead(recipient: String, transcript: String) async {
+        guard PermissionManager.isUsable(await dependencies.permissions.status(for: .contacts), for: .contacts),
+              await dependencies.capabilities.unavailability(for: .composeMessage) == nil else { return }
+        let probe = ProposedToolCall(tool: .composeMessage, arguments: [
+            "contact_query": .string(recipient), "message": .string(ConfirmationLead.placeholderMessage),
+        ])
+        guard case let .resolved(.composeMessage(target, _)) = await dependencies.resolver.resolve(probe, context: resolutionContext(transcript)),
+              state == .thinking else { return }
+        await dependencies.speech.speakLead(summarizer.messageLead(for: target))
     }
 
     private func askModelQuestion(_ question: String, report: inout TurnReport) async {

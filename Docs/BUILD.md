@@ -74,14 +74,35 @@ xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent \
   -destination 'generic/platform=iOS' -allowProvisioningUpdates build
 ```
 
-## 6. Physical-device benchmark (Phase 1 gate)
+Build configurations of the `VoiceAgent` scheme:
+
+| Configuration | Optimization | Developer launch modes | Used for |
+|---|---|---|---|
+| Debug | none | yes | Xcode runs |
+| Profile | release (`-O`) | yes | device benchmarks, on-device evaluation, voice self-test |
+| Release | release (`-O`) | **no** (compiled out) | archive / TestFlight / App Store |
+
+Developer launch modes (Debug/Profile only; pass after `--` with `devicectl`):
+`-RunBenchmark`, `-RunEval [-EvalRun NAME] [-EvalLimit N] [-EvalCategory C]`, `-VoiceSelfTest`,
+`-DesignGallery [-GalleryPage ID]`, `-DemoMode`.
+
+## 6. Physical-device runs
 
 ```bash
-Scripts/benchmark_device.sh     # builds, installs, sideloads models, runs the benchmark, pulls the report
+Scripts/benchmark_device.sh     # builds (Profile), installs, sideloads models, runs the benchmark, pulls the report
+Scripts/eval_device.sh          # all 3,249 evaluation cases on the phone (~2 h), scored on the Mac
+Scripts/device_suite.sh         # unattended: voice self-test → benchmark → full evaluation;
+                                # waits for the phone to be unlocked and resumes after it locks
 ```
 
-Requires the iPhone connected and unlocked. The report is written to
-`Tests/Benchmarks/Results/<device>-<date>.json` and summarized in `Docs/DEVICE_MATRIX.md`.
+Requires the iPhone connected, trusted and unlocked with Developer Mode on (the app keeps the screen
+awake while a run is in progress). Benchmark reports go to `Tests/Benchmarks/Results/` and are
+summarized in `Docs/DEVICE_MATRIX.md`; evaluation runs go to `Tests/AgentEval/Results/<run>/`.
+
+The voice self-test (`-VoiceSelfTest`) drives the complete spoken loop on the phone — VAD,
+streaming Whisper, primed Nemotron, confirmation, Kokoro through the speaker, barge-in — with
+scripted user lines spoken by Kokoro in place of the microphone and the evaluation's fake contacts
+and calendar; its report is `Documents/SelfTest/latest.json` in the app container.
 
 ## 7. Archive / TestFlight
 

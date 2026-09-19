@@ -83,6 +83,13 @@ final class RecordingSpeech: SpeechOutput, @unchecked Sendable {
     }
 
     func stop() async {}
+
+    private var _leads: [String] = []
+    var leads: [String] { lock.withLock { _leads } }
+
+    func speakLead(_ lead: String) async {
+        lock.withLock { _leads.append(lead) }
+    }
 }
 
 // MARK: - Fixtures
@@ -129,6 +136,42 @@ func makeCoordinator(
 }
 
 // MARK: - Tests
+
+@MainActor
+@Suite struct ConfirmationLeadCoordinatorTests {
+    @Test func messageLeadIsSpokenBeforeTheConfirmationAndMatchesItsStart() async {
+        let model = ScriptedLanguageModel(["Text Alex that I will be 20 minutes late": composeJSON])
+        let (coordinator, executor, _, speech) = makeCoordinator(model: model)
+        let report = await coordinator.handle(.typed("Text Alex that I will be 20 minutes late"))
+        #expect(report.outcome == .confirmationRequested)
+        #expect(speech.leads == ["Text Alex Kim:"])
+        #expect(speech.spoken.last?.hasPrefix("Text Alex Kim:") == true)
+        #expect(executor.sideEffects.isEmpty)
+    }
+
+    @Test func noLeadWhenContactsAreNotAllowedYet() async {
+        let model = ScriptedLanguageModel(["Text Alex that I will be 20 minutes late": composeJSON])
+        let (coordinator, _, _, speech) = makeCoordinator(model: model, permissions: FakePermissionBackend(statuses: [:], responses: [.contacts: .granted]))
+        _ = await coordinator.handle(.typed("Text Alex that I will be 20 minutes late"))
+        #expect(speech.leads.isEmpty, "the lead-in never triggers a permission prompt")
+    }
+
+    @Test func noLeadForAmbiguousRecipients() async {
+        let candidates = [
+            ClarificationCandidate(kind: .contact, identifier: "c-alex-kim", displayText: "Alex Kim", matchTerms: ["Kim"]),
+            ClarificationCandidate(kind: .contact, identifier: "c-alex-chen", displayText: "Alex Chen", matchTerms: ["Chen"]),
+        ]
+        let resolver = StubResolver { call, context in
+            .needsClarification(PendingClarification(
+                reason: .contactAmbiguous, question: "I found Alex Kim and Alex Chen. Which one?", candidates: candidates,
+                partialCall: call, originalTranscript: context.transcript, createdAt: context.clock.now()))
+        }
+        let model = ScriptedLanguageModel(["Text Alex that I will be 20 minutes late": composeJSON])
+        let (coordinator, _, _, speech) = makeCoordinator(model: model, resolver: resolver)
+        _ = await coordinator.handle(.typed("Text Alex that I will be 20 minutes late"))
+        #expect(speech.leads.isEmpty)
+    }
+}
 
 @MainActor
 @Suite struct PrimingTests {
@@ -314,7 +357,9 @@ func makeCoordinator(
         #expect(report.outcome == .noAction)
         #expect(!report.validationErrors.isEmpty)
         #expect(executor.sideEffects.isEmpty)
-        #expect(resolver.calls.isEmpty)
+        // Only the read-only lead-in probe (recipient lookup while the body is generated) may run.
+        #expect(resolver.calls.allSatisfy { $0.0.string("message") == ConfirmationLead.placeholderMessage })
+        #expect(report.pendingAction == nil)
         #expect(coordinator.state == .idle)
     }
 

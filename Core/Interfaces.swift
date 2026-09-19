@@ -142,6 +142,13 @@ public protocol SpeechOutput: Sendable {
     func speak(_ text: String) async -> SpeechOutputResult
     /// Stops any speech immediately.
     func stop() async
+    /// Starts speaking the beginning of a reply whose later part is not known yet; a `speak`
+    /// whose text starts with `lead` continues after it. Optional (default: nothing early).
+    func speakLead(_ lead: String) async
+}
+
+extension SpeechOutput {
+    public func speakLead(_ lead: String) async {}
 }
 
 public enum SpeechOutputResult: Sendable, Equatable {
