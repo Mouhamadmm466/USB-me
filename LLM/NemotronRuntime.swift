@@ -33,7 +33,13 @@ public actor NemotronRuntime: LanguageModel {
     /// Maximum speculative draft length (0 = speculation off); bounded by the context's
     /// recurrent-state rollback depth.
     private var draftLimit = 0
+    /// The prefix currently restored into the context.
     private var snapshot: PrefixSnapshot?
+    /// Recently evaluated prefixes, newest last. V2 decodes under more than one contract (a turn,
+    /// memory extraction, an agent step); keeping a couple of prefix states in memory means
+    /// switching between them is a memcpy rather than a re-evaluation, so background work can never
+    /// cost the next user turn its warm prefix.
+    private var prefixCache: [PrefixSnapshot] = []
     private var candidates: [llama_token_data] = []
 
     private var context: OpaquePointer? { handles?.context }
@@ -128,6 +134,7 @@ public actor NemotronRuntime: LanguageModel {
     public func unload() {
         handles = nil
         snapshot = nil
+        prefixCache.removeAll()
         primed = nil
         logger.log(.modelLifecycle(model: "nemotron", phase: "unloaded", milliseconds: nil))
     }
@@ -429,6 +436,15 @@ public actor NemotronRuntime: LanguageModel {
         if let snapshot, snapshot.prefixHash == hash { return }
         primed = nil
 
+        // Already evaluated under another contract: restore it instead of paying for it again.
+        if let cached = prefixCache.first(where: { $0.prefixHash == hash }) {
+            try restore(cached)
+            snapshot = cached
+            promote(cached)
+            logger.log(.modelLifecycle(model: "nemotron", phase: "prefix_switched", milliseconds: nil))
+            return
+        }
+
         let tokens = tokenize(prefix, addSpecial: true)
         guard tokens.count + 256 < config.contextLength else { throw LLMRuntimeError.contextOverflow }
         let cacheFile = stateCacheDirectory.map { $0.appendingPathComponent(Self.cacheFileName(prefix: prefix, identifier: modelIdentifier, contextLength: config.contextLength)) }
@@ -454,8 +470,20 @@ public actor NemotronRuntime: LanguageModel {
             llama_state_seq_get_data(context, buffer.baseAddress, size, 0)
         }
         guard written == size else { throw LLMRuntimeError.stateSnapshotFailed }
-        snapshot = PrefixSnapshot(prefixHash: hash, tokenCount: tokens.count, state: state)
+        let evaluated = PrefixSnapshot(prefixHash: hash, tokenCount: tokens.count, state: state)
+        snapshot = evaluated
+        promote(evaluated)
     }
+
+    /// Keeps `snapshot` at the end of a small MRU list. Two slots is the working set: the turn
+    /// contract and whatever background contract is running beside it.
+    private func promote(_ entry: PrefixSnapshot) {
+        prefixCache.removeAll { $0.prefixHash == entry.prefixHash }
+        prefixCache.append(entry)
+        if prefixCache.count > Self.prefixCacheSlots { prefixCache.removeFirst(prefixCache.count - Self.prefixCacheSlots) }
+    }
+
+    private static let prefixCacheSlots = 2
 
     private func loadStateFile(_ url: URL, expectedTokens: [llama_token]) -> Bool {
         guard let context else { return false }

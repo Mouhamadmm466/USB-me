@@ -8,7 +8,9 @@ import Telemetry
 /// behind one actor means the coordinator never has to know about stores, linkers, validators or
 /// policies — and that the learning switch can only be honoured in one place.
 public actor PersonalIntelligence {
-    public let store: IntelligenceStore
+    /// The store is an actor of its own, so the app can read it directly for screens that need more
+    /// than a snapshot (an entity's full history, say) without going through this facade.
+    public nonisolated let store: IntelligenceStore
     public private(set) var settings: MemoryPolicySettings
 
     private let builder: ContextBuilder
@@ -98,7 +100,7 @@ public actor PersonalIntelligence {
             if !report.isEmpty {
                 knownNamesLoadedAt = .distantPast
                 // Everything learned shows up in Activity with its undo, so nothing changes silently.
-                try? await store.record(report.all.map { $0.activityEntry(at: turn.now) })
+                _ = try? await store.record(report.all.map { $0.activityEntry(at: turn.now) })
             }
             return report
         } catch {

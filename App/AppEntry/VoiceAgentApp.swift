@@ -1,4 +1,5 @@
 import Agent
+import Intelligence
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -45,11 +46,25 @@ struct RootView: View {
             case .onboarding:
                 OnboardingFlow(models: model.downloads, actions: OnboardingActions(models: model.modelActions, finish: { model.finishOnboarding() }))
             case .assistant:
-                AssistantScreen(
-                    presentation: model.coordinator?.presentation ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
-                    intents: model.assistantIntents
+                IntelligenceTabs(
+                    selection: $model.selectedTab,
+                    state: model.intelligenceState,
+                    intents: model.intelligenceIntents,
+                    assistant: AssistantScreenProvider {
+                        AssistantScreen(
+                            presentation: model.coordinator?.presentation
+                                ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
+                            intents: model.assistantIntents
+                        )
+                    },
+                    path: $model.entityPath,
+                    detail: { model.entityDetail($0) },
+                    detailIntents: model.entityDetailIntents
                 )
             }
+        }
+        .sheet(item: $model.exportedFile) { file in
+            ShareSheet(items: [file])
         }
         .sheet(isPresented: $model.isSettingsPresented) {
             SettingsScreen(state: model.settingsState, actions: model.settingsActions, initialSection: model.settingsInitialSection)

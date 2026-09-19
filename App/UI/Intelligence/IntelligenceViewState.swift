@@ -1,0 +1,181 @@
+import Foundation
+import Intelligence
+
+/// Everything the V2 screens draw, already formatted.
+///
+/// The screens never touch the store, a calendar or a formatter: by the time state reaches them,
+/// every date is a phrase, every count is a number and every sentence is the deterministic one the
+/// intelligence itself would say. That keeps the views previewable and the wording in one place.
+struct IntelligenceViewState: Equatable {
+    /// A piece of the user's world in a list: a task, a goal, an event, a person.
+    struct Item: Identifiable, Equatable {
+        let id: UUID
+        var title: String
+        /// "due Friday", "part of Beta launch", "design lead".
+        var meta: String?
+        var kind: EntityKind
+        var tone: Tone
+        var systemImage: String
+        var isOverdue = false
+    }
+
+    /// Something the system wants to keep but has not been told it may.
+    struct Question: Identifiable, Equatable {
+        let id: UUID
+        var sentence: String
+        var explanation: String
+        /// What it would replace, when the question is a contradiction rather than a guess.
+        var replaces: String?
+    }
+
+    struct ProjectRow: Identifiable, Equatable {
+        let id: UUID
+        var title: String
+        var status: String
+        var tone: Tone
+        var openWork: Int
+        var commitments: Int
+        var people: [String]
+        var nextDue: String?
+        var nextDueTitle: String?
+        /// The next thing due has already passed.
+        var isLate = false
+    }
+
+    struct ActivityRow: Identifiable, Equatable {
+        let id: UUID
+        var kind: ActivityKind
+        var headline: String
+        var detail: String?
+        /// "just now", "2 hours ago", "Tuesday".
+        var timeText: String
+        var canUndo: Bool
+        var isUndone: Bool
+        var entityID: UUID?
+    }
+
+    /// The My Intelligence tab: what is held, and the controls over it.
+    struct Memory: Equatable {
+        struct KindCount: Identifiable, Equatable {
+            var id: EntityKind { kind }
+            var kind: EntityKind
+            var count: Int
+        }
+
+        var kinds: [KindCount] = []
+        var facts = 0
+        var questions = 0
+        var inferred = 0
+        var sizeText = "0 KB"
+        var learningEnabled = true
+        var confirmInferences = true
+        /// Results of the current search, empty when the field is empty.
+        var results: [Item] = []
+        var searchText = ""
+    }
+
+    var overdue: [Item] = []
+    var today: [Item] = []
+    var soon: [Item] = []
+    var questions: [Question] = []
+    var projects: [ProjectRow] = []
+    var activity: [ActivityRow] = []
+    var memory = Memory()
+    /// False until the first snapshot arrives, so Home can hold its shape instead of flashing empty.
+    var isLoaded = false
+
+    var hasAnything: Bool {
+        !overdue.isEmpty || !today.isEmpty || !soon.isEmpty || !questions.isEmpty
+            || !projects.isEmpty || !activity.isEmpty
+    }
+
+    static let empty = IntelligenceViewState()
+}
+
+/// What the person can ask of the V2 screens. As with the assistant screen, the views decide
+/// nothing — they report intents.
+struct IntelligenceIntents {
+    var confirm: @MainActor (_ questionID: UUID) -> Void = { _ in }
+    var reject: @MainActor (_ questionID: UUID) -> Void = { _ in }
+    var undo: @MainActor (_ activityID: UUID) -> Void = { _ in }
+    var openEntity: @MainActor (_ entityID: UUID) -> Void = { _ in }
+    var search: @MainActor (_ text: String) -> Void = { _ in }
+    var setLearningEnabled: @MainActor (_ enabled: Bool) -> Void = { _ in }
+    var setConfirmInferences: @MainActor (_ enabled: Bool) -> Void = { _ in }
+    var exportEverything: @MainActor () -> Void = {}
+    var deleteEverything: @MainActor () -> Void = {}
+    var refresh: @MainActor () async -> Void = {}
+    /// Jumps to the Ask tab with the voice session already running.
+    var ask: @MainActor () -> Void = {}
+
+    /// Does nothing (previews and the design gallery).
+    static let inert = IntelligenceIntents()
+}
+
+// MARK: - Display vocabulary
+
+extension EntityKind {
+    /// One SF Symbol per kind, used everywhere the kind is shown.
+    var systemImage: String {
+        switch self {
+        case .person: "person"
+        case .project: "folder"
+        case .goal: "target"
+        case .task: "checkmark.circle"
+        case .commitment: "hand.raised"
+        case .decision: "arrow.triangle.branch"
+        case .event: "calendar"
+        case .document: "doc.text"
+        case .artifact: "doc.richtext"
+        case .source: "link"
+        case .connection: "antenna.radiowaves.left.and.right"
+        case .plan: "list.bullet.rectangle"
+        case .planStep: "arrow.right.circle"
+        case .conversation: "bubble.left.and.bubble.right"
+        }
+    }
+
+    var plural: String {
+        switch self {
+        case .person: "People"
+        case .project: "Projects"
+        case .goal: "Goals"
+        case .task: "Tasks"
+        case .commitment: "Commitments"
+        case .decision: "Decisions"
+        case .event: "Events"
+        case .document: "Documents"
+        case .artifact: "Artifacts"
+        case .source: "Sources"
+        case .connection: "Connections"
+        case .plan: "Plans"
+        case .planStep: "Steps"
+        case .conversation: "Conversations"
+        }
+    }
+}
+
+extension ActivityKind {
+    var systemImage: String {
+        switch self {
+        case .learned: "sparkles"
+        case .asked: "questionmark.circle"
+        case .confirmed: "checkmark.circle"
+        case .corrected: "arrow.uturn.backward"
+        case .ended: "clock.arrow.circlepath"
+        case .imported: "tray.and.arrow.down"
+        case .acted: "bolt"
+        }
+    }
+
+    var tone: Tone {
+        switch self {
+        case .learned: .jade
+        case .asked: .sky
+        case .confirmed: .jade
+        case .corrected, .ended: .neutral
+        case .imported: .sky
+        case .acted: .amber
+        }
+    }
+}

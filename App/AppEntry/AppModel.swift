@@ -4,6 +4,7 @@ import Audio
 import Core
 import DeviceBenchmark
 import Foundation
+import Intelligence
 import LLM
 import Models
 import Observation
@@ -50,6 +51,38 @@ final class AppModel {
     /// Shown while models load or when warm-up failed.
     private(set) var warmUpMessage: String?
     let isDemoMode: Bool
+
+    // MARK: V2 — the personal intelligence
+
+    /// Everything the Home, Projects, Memory and Activity tabs draw.
+    var intelligenceState = IntelligenceViewState()
+    var selectedTab: AppTab = .home
+    /// The detail stack shared by every tab.
+    var entityPath: [UUID] = []
+    /// Loaded detail screens, keyed by entity. Cleared whenever the store changes underneath them.
+    var entityDetails: [UUID: EntityDetailViewState] = [:]
+    /// Set when an export is ready; the share sheet is presented from it.
+    var exportedFile: URL?
+    @ObservationIgnored private(set) var intelligence: PersonalIntelligence?
+    @ObservationIgnored let presenter = IntelligencePresenter()
+
+    /// The two switches the intelligence reads, taken from the settings row the user edits.
+    var memoryPolicy: MemoryPolicySettings {
+        MemoryPolicySettings(
+            learningEnabled: settings.learningEnabled,
+            confirmInferences: settings.confirmInferences
+        )
+    }
+
+    func applyMemoryPolicy(_ policy: MemoryPolicySettings) {
+        settings.learningEnabled = policy.learningEnabled
+        settings.confirmInferences = policy.confirmInferences
+        persistSettings()
+    }
+
+    func setIntelligence(_ intelligence: PersonalIntelligence?) {
+        self.intelligence = intelligence
+    }
 
     @ObservationIgnored private let modelManager: ModelManager
     @ObservationIgnored private let fileScopes: BookmarkFileScopeStore
@@ -191,6 +224,8 @@ final class AppModel {
         let calls = environment.calls
         var configuration = AgentConfiguration.default
         configuration.continueListeningAfterResponse = settings.continueListening
+        let intelligence = makeIntelligence(languageModel: languageModel)
+        setIntelligence(intelligence)
         let coordinator = AgentCoordinator(
             dependencies: AgentDependencies(
                 languageModel: languageModel,
@@ -200,13 +235,21 @@ final class AppModel {
                 speech: speech,
                 capabilities: DeviceCapabilities(canSendText: { await messages.canSendText() },
                                                  canPlaceCalls: { await calls.canPlaceCalls() }),
+                intelligence: intelligence,
                 clock: AgentClock(),
                 metrics: .shared
             ),
             configuration: configuration
         )
         coordinator.onTurnRecorded = { [weak self] turn in self?.persist(turn) }
+        // A turn that learned something changes what the other tabs show.
+        coordinator.onMemoryLearned = { [weak self] report in
+            guard let self, !report.isEmpty else { return }
+            self.entityDetails.removeAll()
+            Task { @MainActor in await self.refreshIntelligence() }
+        }
         self.coordinator = coordinator
+        Task { @MainActor in await refreshIntelligence() }
         if let whisper = runtimes.whisper, let vad = runtimes.vad {
             let contacts = environment.contacts
             let permissions = permissions
@@ -251,6 +294,7 @@ final class AppModel {
         )
         buildAgent(languageModel: DemoLanguageModel(), environment: suite.environment)
         route = .assistant
+        Task { @MainActor in await seedDemoIntelligence() }
     }
 
     // MARK: - Assistant intents
@@ -443,7 +487,7 @@ final class AppModel {
         }
     }
 
-    private func persistSettings() {
+    func persistSettings() {
         guard let settingsStore else { return }
         let snapshot = settings
         Task { try? await settingsStore.save(snapshot) }

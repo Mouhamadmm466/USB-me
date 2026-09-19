@@ -11,19 +11,28 @@ public final class AppSettingsRecord {
     /// Re-open the microphone after the assistant answers.
     public var continueListening: Bool
     public var hapticsEnabled: Bool
+    /// Learn from conversations at all (V2). Off = answers come from what is already known and
+    /// nothing new is written.
+    public var learningEnabled: Bool = true
+    /// Ask before keeping anything the model worked out rather than was told.
+    public var confirmInferences: Bool = true
 
     public init(
         hasCompletedOnboarding: Bool = false,
         retainHistory: Bool = true,
         historyRetentionDays: Int = 30,
         continueListening: Bool = true,
-        hapticsEnabled: Bool = true
+        hapticsEnabled: Bool = true,
+        learningEnabled: Bool = true,
+        confirmInferences: Bool = true
     ) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.retainHistory = retainHistory
         self.historyRetentionDays = historyRetentionDays
         self.continueListening = continueListening
         self.hapticsEnabled = hapticsEnabled
+        self.learningEnabled = learningEnabled
+        self.confirmInferences = confirmInferences
     }
 }
 
@@ -34,6 +43,8 @@ public struct AppSettings: Sendable, Equatable, Codable {
     public var historyRetentionDays = 30
     public var continueListening = true
     public var hapticsEnabled = true
+    public var learningEnabled = true
+    public var confirmInferences = true
 
     public init() {}
 }
@@ -48,6 +59,8 @@ public actor SettingsStore {
         settings.historyRetentionDays = record.historyRetentionDays
         settings.continueListening = record.continueListening
         settings.hapticsEnabled = record.hapticsEnabled
+        settings.learningEnabled = record.learningEnabled
+        settings.confirmInferences = record.confirmInferences
         return settings
     }
 
@@ -58,6 +71,8 @@ public actor SettingsStore {
         record.historyRetentionDays = max(1, min(365, settings.historyRetentionDays))
         record.continueListening = settings.continueListening
         record.hapticsEnabled = settings.hapticsEnabled
+        record.learningEnabled = settings.learningEnabled
+        record.confirmInferences = settings.confirmInferences
         try modelContext.save()
     }
 
