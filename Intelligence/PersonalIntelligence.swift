@@ -16,6 +16,7 @@ public actor PersonalIntelligence {
     private let extractor: any MemoryExtracting
     private let logger: PrivacySafeLogger?
 
+    private let calendar: Calendar
     private var knownNames: Set<String> = []
     private var knownNamesLoadedAt: Date = .distantPast
     private static let knownNamesLifetime: TimeInterval = 120
@@ -33,6 +34,7 @@ public actor PersonalIntelligence {
         self.settings = settings
         self.extractor = extractor
         self.logger = logger
+        self.calendar = calendar
         let linker = EntityLinker(store: store, dates: dates)
         builder = ContextBuilder(
             store: store, linker: linker, budgetTokens: budgetTokens, calendar: calendar, logger: logger
@@ -93,7 +95,11 @@ public actor PersonalIntelligence {
                 origin: .conversation(turnID: turn.turnID, excerpt: MemoryOrigin.excerpt(turn.userText)),
                 now: turn.now
             )
-            if !report.isEmpty { knownNamesLoadedAt = .distantPast }
+            if !report.isEmpty {
+                knownNamesLoadedAt = .distantPast
+                // Everything learned shows up in Activity with its undo, so nothing changes silently.
+                try? await store.record(report.all.map { $0.activityEntry(at: turn.now) })
+            }
             return report
         } catch {
             logger?.log(.error(domain: "intelligence", code: "memory_extract"))
@@ -101,10 +107,115 @@ public actor PersonalIntelligence {
         }
     }
 
-    /// Statements waiting on the user, for the Intelligence tab and the "one question at a time"
-    /// prompt after a turn.
-    public func pending(limit: Int = 20) async throws -> [Assertion] {
-        try await store.pendingAssertions(limit: limit)
+    /// Statements waiting on the user, rendered as questions for the Intelligence tab and for the
+    /// "one question at a time" prompt after a turn.
+    public func questions(limit: Int = 20, now: Date = Date()) async throws -> [PendingQuestion] {
+        var questions: [PendingQuestion] = []
+        for assertion in try await store.pendingAssertions(limit: limit) {
+            guard let subject = try await store.entity(assertion.subjectID) else { continue }
+            let object: IntelligenceEntity? = if let objectID = assertion.objectID { try await store.entity(objectID) } else { nil }
+            let existing = try await store.activeAssertions(subjectID: assertion.subjectID, predicate: assertion.predicate)
+                .first
+            questions.append(PendingQuestion(
+                assertion: assertion,
+                sentence: StatementText.question(assertion, subject: subject, object: object, now: now, calendar: calendar),
+                explanation: assertion.explanation(now: now, calendar: calendar),
+                conflictsWith: existing.map {
+                    StatementText.sentence($0, subject: subject, object: object, now: now, calendar: calendar)
+                }
+            ))
+        }
+        return questions
+    }
+
+    /// The user says yes to a question. Confirming an end applies the end; confirming a statement
+    /// makes it count, with correction authority.
+    public func confirm(_ assertionID: UUID, now: Date = Date()) async throws {
+        guard let assertion = try await store.assertion(assertionID) else { return }
+        let sentence = try await self.sentence(for: assertion, now: now)
+        if assertion.state == .proposed {
+            _ = try await store.confirm(assertionID, at: now)
+        }
+        try await store.record(ActivityEntry(
+            kind: .confirmed, headline: sentence, detail: "You confirmed it.",
+            entityID: assertion.subjectID, assertionID: assertionID, undo: .reject(assertionID, forgetting: []), createdAt: now
+        ))
+    }
+
+    /// The user says no. The refusal is kept so the same guess is not made twice.
+    public func reject(_ assertionID: UUID, now: Date = Date()) async throws {
+        guard let assertion = try await store.assertion(assertionID) else { return }
+        let sentence = try await self.sentence(for: assertion, now: now)
+        try await store.reject(assertionID, at: now)
+        try await store.record(ActivityEntry(
+            kind: .corrected, headline: sentence, detail: "You said that isn't right.",
+            entityID: assertion.subjectID, assertionID: assertionID, createdAt: now
+        ))
+    }
+
+    /// Takes back something from the activity feed.
+    @discardableResult
+    public func undo(_ activityID: UUID, now: Date = Date()) async throws -> ActivityEntry? {
+        let entry = try await store.undo(activityID, at: now)
+        if entry != nil { knownNamesLoadedAt = .distantPast }
+        return entry
+    }
+
+    private func sentence(for assertion: Assertion, now: Date) async throws -> String {
+        guard let subject = try await store.entity(assertion.subjectID) else { return "" }
+        let object: IntelligenceEntity? = if let objectID = assertion.objectID { try await store.entity(objectID) } else { nil }
+        return StatementText.sentence(assertion, subject: subject, object: object, now: now, calendar: calendar)
+    }
+
+    // MARK: - Snapshots for the UI
+
+    /// Everything Home shows, in one read.
+    public func snapshot(now: Date = Date(), horizonDays: Int = 7) async throws -> IntelligenceSnapshot {
+        var snapshot = IntelligenceSnapshot()
+        let startOfDay = calendar.startOfDay(for: now)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? now
+        let horizon = calendar.date(byAdding: .day, value: horizonDays, to: startOfDay) ?? now
+
+        snapshot.overdue = try await store.entities(between: .distantPast, and: startOfDay, limit: 20)
+            .filter(\.status.isOutstanding)
+        snapshot.today = try await store.entities(between: startOfDay, and: endOfDay, limit: 20)
+            .filter(\.status.isOutstanding)
+        snapshot.soon = try await store.entities(between: endOfDay, and: horizon, limit: 20)
+            .filter(\.status.isOutstanding)
+        snapshot.projects = try await projects(now: now)
+        snapshot.questions = try await questions(limit: 5, now: now)
+        snapshot.activity = try await store.activity(limit: 12)
+        snapshot.counts = try await store.counts()
+        return snapshot
+    }
+
+    /// The Projects tab: every live project with the few numbers that say how it is going.
+    public func projects(now: Date = Date()) async throws -> [ProjectSummary] {
+        var summaries: [ProjectSummary] = []
+        for project in try await store.entities(kind: .project, limit: 50) {
+            let work = try await store.entities(
+                statuses: EntityStatus.allCases.filter(\.isOutstanding), projectID: project.id, limit: 100
+            )
+            let next = work.filter { $0.dueAt != nil }.min { ($0.dueAt ?? .distantFuture) < ($1.dueAt ?? .distantFuture) }
+            let incoming = try await store.assertions(about: project.id, limit: 60)
+            let neighbours = try await store.entities(Array(Set(incoming.map(\.subjectID)).prefix(40)))
+            summaries.append(ProjectSummary(
+                project: project,
+                openWork: work.count { $0.kind == .task || $0.kind == .goal },
+                nextDue: next?.dueAt,
+                nextDueTitle: next?.title,
+                people: neighbours.filter { $0.kind == .person && $0.id != IntelligenceIdentity.userEntityID },
+                openCommitments: neighbours.count { $0.kind == .commitment && $0.status.isOutstanding }
+            ))
+        }
+        return summaries.sorted { lhs, rhs in
+            switch (lhs.nextDue, rhs.nextDue) {
+            case let (left?, right?): left < right
+            case (nil, _?): false
+            case (_?, nil): true
+            default: lhs.project.updatedAt > rhs.project.updatedAt
+            }
+        }
     }
 
     // MARK: - Private

@@ -310,18 +310,20 @@ struct FixedDateResolver: DatePhraseResolving {
         let pending = try #require(report.pending.first)
         #expect(pending.createdEntityIDs.count == 2)
 
-        try await store.reject(pending.outcome.assertionID, at: now)
+        // Saying no goes through the activity entry, which knows exactly what this statement
+        // invented — and therefore what is safe to remove.
+        let entry = try await store.record(pending.activityEntry(at: now))
+        try await store.undo(entry.id, at: now)
         #expect(try await store.resolve(title: "Imaginary Friend") == nil)
         #expect(try await store.resolve(title: "Imaginary Project") == nil)
-        // The undo path re-runs the same cleanup and finds nothing left to do.
-        for id in pending.createdEntityIDs {
-            #expect(try await store.forgetIfUnused(id) == false)
-        }
-        // An entity the user actually uses is never swept up by this.
+
+        // An entity the user already had is never swept up, even when the statement about it is
+        // the only one it has.
         let sarah = try await store.create(kind: .person, title: "Sarah")
-        try await store.record(subject: sarah.id, .role, value: .text("design"),
-                               provenance: Provenance(sourceType: .conversation))
-        #expect(try await store.forgetIfUnused(sarah.id) == false)
+        let recorded = try await store.record(subject: sarah.id, .role, value: .text("design"),
+                                              provenance: Provenance(sourceType: .conversation))
+        try await store.reject(recorded.assertion.id, at: now)
+        #expect(try await store.resolve(title: "Sarah") != nil)
     }
 
     @Test func aSecondMentionStrengthensRatherThanDuplicates() async throws {

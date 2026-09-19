@@ -62,7 +62,8 @@ public struct IntelligenceCounts: Sendable, Equatable {
 /// entity columns — so the rest of the app can read plain rows while history and "why do you know
 /// that?" stay intact underneath.
 public actor IntelligenceStore {
-    private let db: SQLiteDatabase
+    /// Not private: the activity log is a separate file for readability, not a separate owner.
+    let db: SQLiteDatabase
     private let logger: PrivacySafeLogger?
     public nonisolated let path: String
     public private(set) var searchMode: SearchMode = .prefix
@@ -553,8 +554,6 @@ public actor IntelligenceStore {
             try restoreSuperseded(by: assertion.id, at: date)
             try rematerialize(subjectID: assertion.subjectID, predicate: assertion.predicate)
         }
-        // A suggestion the user declined should not leave the people and projects it invented behind.
-        for id in [assertion.subjectID, assertion.objectID].compactMap({ $0 }) { try forgetIfUnused(id) }
     }
 
     /// "That's not true anymore." The statement stops being current but stays in history with its
@@ -858,7 +857,7 @@ public actor IntelligenceStore {
 
     /// Recomputes a materialized field after the statement that owned it was ended or rejected:
     /// the next winning statement takes over, or the field resets.
-    private func rematerialize(subjectID: UUID, predicate: Predicate) throws {
+    func rematerialize(subjectID: UUID, predicate: Predicate) throws {
         guard let spec = PredicateCatalog.spec(for: predicate), let field = spec.materializes,
               var entity = try entity(subjectID) else { return }
         let winner = try activeAssertions(subjectID: subjectID, predicate: predicate).first

@@ -8,7 +8,7 @@ import Foundation
 /// must still open the database and fall back to prefix matching.
 enum IntelligenceSchema {
     /// Index 0 is schema version 1.
-    static let migrations: [String] = [v1]
+    static let migrations: [String] = [v1, v2]
 
     static var currentVersion: Int32 { Int32(migrations.count) }
 
@@ -89,6 +89,31 @@ enum IntelligenceSchema {
     CREATE INDEX assertions_predicate ON assertions(predicate, state);
     CREATE INDEX assertions_pending ON assertions(state, created_at);
     CREATE INDEX assertions_expiry ON assertions(expires_at) WHERE expires_at IS NOT NULL;
+    """
+
+    // MARK: - v2: the activity log
+
+    private static let v2 = """
+    CREATE TABLE activity (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        headline TEXT NOT NULL,
+        detail TEXT,
+        entity_id TEXT,
+        assertion_id TEXT,
+        undo TEXT,
+        created_at REAL NOT NULL,
+        undone_at REAL
+    );
+
+    CREATE INDEX activity_created ON activity(created_at);
+    CREATE INDEX activity_entity ON activity(entity_id) WHERE entity_id IS NOT NULL;
+    CREATE INDEX activity_assertion ON activity(assertion_id) WHERE assertion_id IS NOT NULL;
+    """
+
+    /// Columns of `activity`, in the order every read selects them.
+    static let activityColumns = """
+    id, kind, headline, detail, entity_id, assertion_id, undo, created_at, undone_at
     """
 
     // MARK: - Full text
