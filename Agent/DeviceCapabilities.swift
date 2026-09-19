@@ -4,7 +4,7 @@ import Foundation
 /// Which V1 tools this device can actually perform right now (PRD §15 "iOS sandbox limits
 /// control → capability registry and public APIs only"). Checked before a PendingAction is created
 /// so the assistant never asks the user to confirm something the phone cannot do.
-public struct CapabilityRegistry: Sendable {
+public struct DeviceCapabilities: Sendable {
     public let canSendText: @Sendable () async -> Bool
     public let canPlaceCalls: @Sendable () async -> Bool
 
@@ -16,7 +16,7 @@ public struct CapabilityRegistry: Sendable {
         self.canPlaceCalls = canPlaceCalls
     }
 
-    public static let allAvailable = CapabilityRegistry(canSendText: { true }, canPlaceCalls: { true })
+    public static let allAvailable = DeviceCapabilities(canSendText: { true }, canPlaceCalls: { true })
 
     /// nil when the tool is available; otherwise the failure to report.
     public func unavailability(for tool: ToolID) async -> ToolFailure? {

@@ -14,7 +14,7 @@ public struct AgentDependencies: Sendable {
     public var executor: any ToolExecuting
     public var permissions: any PermissionProviding
     public var speech: any SpeechOutput
-    public var capabilities: CapabilityRegistry
+    public var capabilities: DeviceCapabilities
     public var clock: AgentClock
     public var logger: PrivacySafeLogger
     public var metrics: PerformanceMetrics?
@@ -25,7 +25,7 @@ public struct AgentDependencies: Sendable {
         executor: any ToolExecuting,
         permissions: any PermissionProviding,
         speech: any SpeechOutput = SilentSpeechOutput(),
-        capabilities: CapabilityRegistry = .allAvailable,
+        capabilities: DeviceCapabilities = .allAvailable,
         clock: AgentClock = AgentClock(),
         logger: PrivacySafeLogger = .shared,
         metrics: PerformanceMetrics? = nil

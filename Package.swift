@@ -29,6 +29,7 @@ let package = Package(
             targets: [
                 "Telemetry", "Core", "Permissions", "Storage", "Models", "Tools",
                 "LLM", "ASR", "TTS", "Audio", "Agent", "VoiceLoop", "DeviceBenchmark",
+                "Intelligence",
             ]
         ),
         // Kokoro/MLX is a separate product: MLX cannot link for (or run in) the iOS Simulator, so
@@ -53,6 +54,8 @@ let package = Package(
         .target(name: "Permissions", dependencies: ["Core", "Telemetry"], path: "Permissions"),
         .target(name: "Storage", dependencies: ["Core", "Telemetry"], path: "Storage"),
         .target(name: "Models", dependencies: ["Core", "Telemetry"], path: "Models"),
+        // The personal intelligence: entities, assertions, provenance — the V2 memory substrate.
+        .target(name: "Intelligence", dependencies: ["Core", "Telemetry"], path: "Intelligence"),
         .target(name: "Tools", dependencies: ["Core", "Permissions", "Telemetry"], path: "Tools"),
         .target(name: "LLM", dependencies: ["Core", "Telemetry", "llama"], path: "LLM"),
         .target(name: "ASR", dependencies: ["Core", "Telemetry", "whisper"], path: "ASR"),
@@ -102,6 +105,7 @@ let package = Package(
         .testTarget(name: "StorageTests", dependencies: ["Storage", "Core"], path: "Tests/Unit/Storage"),
         .testTarget(name: "ModelsTests", dependencies: ["Models", "Core", "Telemetry"], path: "Tests/Unit/Models"),
         .testTarget(name: "ToolsTests", dependencies: ["Tools", "Core", "Permissions"], path: "Tests/Unit/Tools"),
+        .testTarget(name: "IntelligenceTests", dependencies: ["Intelligence", "Core", "Telemetry"], path: "Tests/Unit/Intelligence"),
         .testTarget(name: "DateParsingTests", dependencies: ["Tools", "Core"], path: "Tests/Unit/Dates"),
         .testTarget(name: "LLMTests", dependencies: ["LLM", "Core"], path: "Tests/Unit/LLM"),
         .testTarget(

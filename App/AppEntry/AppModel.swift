@@ -198,7 +198,7 @@ final class AppModel {
                 executor: ToolExecutor(environment: environment),
                 permissions: permissions,
                 speech: speech,
-                capabilities: CapabilityRegistry(canSendText: { await messages.canSendText() },
+                capabilities: DeviceCapabilities(canSendText: { await messages.canSendText() },
                                                  canPlaceCalls: { await calls.canPlaceCalls() }),
                 clock: AgentClock(),
                 metrics: .shared

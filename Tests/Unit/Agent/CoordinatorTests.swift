@@ -103,7 +103,7 @@ func makeCoordinator(
     model: ScriptedLanguageModel,
     resolver: StubResolver? = nil,
     permissions: FakePermissionBackend = .allGranted(),
-    capabilities: CapabilityRegistry = .allAvailable,
+    capabilities: DeviceCapabilities = .allAvailable,
     now: Date = ISO8601DateFormatter().date(from: "2026-09-19T14:00:00Z")!,
     speech: RecordingSpeech = RecordingSpeech()
 ) -> (AgentCoordinator, RecordingExecutor, StubResolver, RecordingSpeech) {
@@ -428,7 +428,7 @@ func makeCoordinator(
     }
 
     @Test func unavailableCapabilityNeverCreatesPendingAction() async {
-        let capabilities = CapabilityRegistry(canSendText: { false }, canPlaceCalls: { true })
+        let capabilities = DeviceCapabilities(canSendText: { false }, canPlaceCalls: { true })
         let (coordinator, executor, resolver, _) = makeCoordinator(model: ScriptedLanguageModel(["text alex hi": composeJSON]), capabilities: capabilities)
         let report = await coordinator.handle(.typed("text alex hi"))
         #expect(report.outcome == .unsupported)
