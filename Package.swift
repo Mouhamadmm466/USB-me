@@ -15,7 +15,7 @@ let package = Package(
             name: "VoiceAgentKit",
             targets: [
                 "Telemetry", "Core", "Permissions", "Storage", "Models", "Tools",
-                "LLM", "ASR", "TTS", "Audio", "Agent", "DeviceBenchmark",
+                "LLM", "ASR", "TTS", "Audio", "Agent", "VoiceLoop", "DeviceBenchmark",
             ]
         ),
         // Kokoro/MLX is a separate product: MLX cannot link for (or run in) the iOS Simulator, so
@@ -56,7 +56,14 @@ let package = Package(
         .target(
             name: "Agent",
             dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions"],
-            path: "Agent"
+            path: "Agent",
+            exclude: ["VoiceLoop"]
+        ),
+        // Real-time voice loop glue (capture → VAD → endpointing → ASR → coordinator → TTS, barge-in).
+        .target(
+            name: "VoiceLoop",
+            dependencies: ["Agent", "Audio", "ASR", "TTS", "Core", "Telemetry"],
+            path: "Agent/VoiceLoop"
         ),
         .target(
             name: "DeviceBenchmark",
@@ -98,7 +105,7 @@ let package = Package(
         ),
         .testTarget(
             name: "AudioTests",
-            dependencies: ["Core", "Audio", "ASR", "Agent"],
+            dependencies: ["Core", "Audio", "ASR", "Agent", "VoiceLoop", "TTS", "AgentEval", "Permissions"],
             path: "Tests/Audio",
             exclude: ["Fixtures"]
         ),

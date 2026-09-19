@@ -28,25 +28,37 @@ _Last updated: 2026-09-19 (session 1)._
 
 ## Phase checklist
 
-- [ ] **Phase 0 — bootstrap**: repo, SwiftPM package + Xcode project, pinning, scripts, CI, docs skeleton
-- [ ] **Phase 1 — physical feasibility**: exact Whisper + Nemotron + Kokoro on iPhone, benchmark report _(needs device)_
-- [ ] **Phase 2 — text-only agent**: Nemotron + state machine + fake tools + structured output + confirmation; 2,500-case harness
-- [ ] **Phase 3 — native tools**: Contacts, EventKit, MessageUI, calls, scoped files, apps + adapters + tests
-- [ ] **Phase 4 — streaming ASR**: mic, VAD, endpointing, partial UI, final transcript, route changes
-- [ ] **Phase 5 — local TTS**: Kokoro, fixed voice, chunking, cancellation, playback
-- [ ] **Phase 6 — voice loop**: end-to-end spoken confirmation → voice confirmation → tool → spoken result
-- [ ] **Phase 7 — barge-in/echo**
-- [ ] **Phase 8 — model manager**: download/resume/checksum/version/storage/lifecycle/thermal/memory
-- [ ] **Phase 9 — hardening**: adversarial, noisy audio, device matrix, battery/thermal, accessibility
-- [ ] **Phase 10 — production candidate**: TestFlight-ready build, docs, release checklist
+- [x] **Phase 0 — bootstrap**: SwiftPM package + Xcode project (device + simulator targets), pinned runtimes,
+      bootstrap/CI scripts, docs skeleton, git. Kokoro/Misaki packaging patch for codesign.
+- [ ] **Phase 1 — physical feasibility**: `DeviceBenchmarkRunner` written (load, latency, RTF, WER, memory,
+      thermal, battery); **blocked on the iPhone being connected**.
+- [~] **Phase 2 — text-only agent**: Nemotron runtime (prefix-state cache, grammar, jump-forward) verified on
+      the real model on this Mac; validator, prompt, state machine, confirmation/clarification, coordinator done
+      with unit tests; 2,500-case dataset + harness in progress (sub-agent).
+- [~] **Phase 3 — native tools**: resolver/executor/adapters/fakes in progress (sub-agent); integration tests written.
+- [~] **Phase 4 — streaming ASR**: Whisper runtime + Silero VAD + transcript stability done; audio capture,
+      endpointing, route handling in progress (sub-agent); fixture tests written.
+- [~] **Phase 5 — local TTS**: Kokoro runtime, chunker, pipelined queue with cancellation done (device-only engine).
+- [~] **Phase 6 — voice loop**: `VoiceSessionController` written; tests pending audio module completion.
+- [~] **Phase 7 — barge-in/echo**: controller logic (sub-agent) + integration in the voice loop.
+- [~] **Phase 8 — model manager**: download/resume/checksum/activation in progress (sub-agent).
+- [ ] **Phase 9 — hardening**
+- [ ] **Phase 10 — production candidate**
 
 ## Current failures / blockers
 
-_None recorded yet._
+- iPhone 15 Pro not connected (`devicectl`: unavailable) → Phase 1 benchmark and on-device voice/TTS verification pending.
+- Free Personal Team → no TestFlight; increased-memory-limit entitlement acceptance to be verified at first device install.
+- MLX (Kokoro) cannot link for the x86_64 Simulator (`MTLTensorDomain`/`MTLIOErrorDomain` missing) and does not run
+  in any simulator → the `VoiceAgentSim` target omits TTS by design.
 
 ## Measured results
 
-_None yet._
+| What | Where | Result |
+|---|---|---|
+| Nemotron Q4_K_M loads and emits schema-valid JSON under grammar | Intel Mac, CPU, 4 threads | ✅ 7/7 smoke utterances valid |
+| Prefix (system + few-shot, ~1.5K tokens) cold eval | Intel Mac CPU (contended) | 180 s once; then state loaded from disk cache |
+| Jump-forward decoding | Intel Mac CPU | sampled tokens 39→17 (message), 29→8 (calendar read) |
 
 ## Human-only steps (exact instructions)
 

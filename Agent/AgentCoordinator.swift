@@ -130,6 +130,27 @@ public final class AgentCoordinator {
         transition(to: restingState, reason: reason)
     }
 
+    /// A tap or typed input arrived while the microphone phase owned the state (listening,
+    /// endpointing, interrupted): move to the resting state through legal transitions first.
+    private func leaveAudioPhase() {
+        switch state {
+        case .endpointing:
+            transition(to: .listening, reason: .typedInput)
+            transition(to: restingState, reason: .typedInput)
+        case .listening:
+            transition(to: restingState, reason: .typedInput)
+        case .interrupted:
+            if restingState == .idle {
+                transition(to: .idle, reason: .typedInput)
+            } else {
+                transition(to: .listening, reason: .typedInput)
+                transition(to: restingState, reason: .typedInput)
+            }
+        default:
+            break
+        }
+    }
+
     /// Clears conversational context (clear-history control).
     public func resetConversation() {
         session.reset()
@@ -160,8 +181,15 @@ public final class AgentCoordinator {
             finish(&report)
             return report
         }
+        guard !isHandlingTurn else {
+            // One turn at a time; the UI disables input while a turn runs.
+            dependencies.logger.log(.safety(check: "concurrent_turn", outcome: "dropped"))
+            report.outcome = .noAction
+            return report
+        }
         isHandlingTurn = true
         defer { isHandlingTurn = false }
+        if !utterance.isSpeech { leaveAudioPhase() }
         presentation.lastUserUtterance = text
         presentation.resultBanner = nil
         record(ConversationTurn(role: .user, text: text, timestamp: dependencies.clock.now()))
@@ -189,6 +217,7 @@ public final class AgentCoordinator {
             return report
         }
         await dependencies.speech.stop()
+        leaveAudioPhase()
         await execute(pending, token: token, report: &report)
         finish(&report)
         return report
@@ -203,6 +232,7 @@ public final class AgentCoordinator {
             return report
         }
         await dependencies.speech.stop()
+        leaveAudioPhase()
         pending.reject()
         session.pendingAction = nil
         session.confirmationState = .rejected
@@ -224,6 +254,7 @@ public final class AgentCoordinator {
             return report
         }
         await dependencies.speech.stop()
+        leaveAudioPhase()
         transition(to: .thinking, reason: .typedInput)
         await applyChoice(candidate, clarification: clarification, report: &report)
         finish(&report)
