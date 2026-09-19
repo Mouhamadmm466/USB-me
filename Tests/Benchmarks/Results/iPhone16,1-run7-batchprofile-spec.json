@@ -1,0 +1,1277 @@
+{
+  "asrTranscript" : "Text Alex that I will be 20 minutes late.",
+  "asrWordErrorRate" : 0,
+  "availableMemoryAtStartMB" : 6130.702293395996,
+  "batteryEnd" : 1,
+  "batteryStart" : 1,
+  "environment" : {
+    "appVersion" : "1.0.0",
+    "deviceModel" : "iPhone16,1",
+    "isSimulator" : false,
+    "physicalMemoryGB" : 7.4999847412109375,
+    "processorCount" : 6,
+    "systemVersion" : "Version 26.6.1 (Build 23G83)"
+  },
+  "errors" : [
+
+  ],
+  "finishedAt" : "2026-09-19T16:05:32Z",
+  "llmOutputs" : {
+    "Text Alex that I will be 20 minutes late" : "{\"type\":\"proposed_action\",\"tool\":\"compose_message\",\"arguments\":{\"contact_query\":\"Alex\",\"message\":\"I'll be 20 minutes late.\"},\"requires_confirmation\":true}",
+    "call mom" : "{\"type\":\"proposed_action\",\"tool\":\"initiate_call\",\"arguments\":{\"contact_query\":\"mom\"},\"requires_confirmation\":true}",
+    "move my team sync to 4 pm" : "{\"type\":\"proposed_action\",\"tool\":\"update_calendar_event\",\"arguments\":{\"event_query\":\"team sync\",\"new_start\":\"4 pm\"},\"requires_confirmation\":true}",
+    "remind me to call the dentist tomorrow at 10" : "{\"type\":\"proposed_action\",\"tool\":\"create_reminder\",\"arguments\":{\"title\":\"Call dentist\",\"due\":\"tomorrow at 10\"},\"requires_confirmation\":true}",
+    "what's 15 percent of 80" : "{\"type\":\"answer\",\"speech\":\"15 percent of 80 is 12.\"}",
+    "what's on my calendar tomorrow" : "{\"type\":\"proposed_action\",\"tool\":\"get_calendar_events\",\"arguments\":{\"when\":\"tomorrow\"},\"requires_confirmation\":false}"
+  },
+  "metrics" : [
+    {
+      "name" : "cold_load",
+      "p50" : 264.201417,
+      "p95" : 264.201417,
+      "samples" : [
+        264.201417
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "final_transcript",
+      "p50" : 197.6315,
+      "p95" : 206.227375,
+      "samples" : [
+        182.804584,
+        197.6315,
+        200.456666,
+        206.227375,
+        196.042375
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "partial_1_5s",
+      "p50" : 50.13725,
+      "p95" : 55.622333,
+      "samples" : [
+        47.679458,
+        50.13725,
+        47.2535,
+        55.622333,
+        54.208875
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 19.25584990247,
+      "p95" : 20.81765356606156,
+      "samples" : [
+        20.81765356606156,
+        19.25584990247,
+        18.984464702211497,
+        18.453236385324693,
+        19.411938362815693
+      ],
+      "stage" : "asr",
+      "unit" : "x"
+    },
+    {
+      "name" : "silero_frame",
+      "p50" : 0.1695,
+      "p95" : 0.283958,
+      "samples" : [
+        1.617875,
+        0.283958,
+        0.257167,
+        0.28625,
+        0.279333,
+        0.266167,
+        1.831292,
+        0.2235,
+        0.206791,
+        0.215125,
+        0.205708,
+        0.20725,
+        0.212083,
+        0.208042,
+        0.20825,
+        0.27825,
+        0.230042,
+        0.207917,
+        0.202625,
+        0.257375,
+        0.202958,
+        0.200167,
+        0.199459,
+        0.19925,
+        0.200167,
+        0.200292,
+        0.199917,
+        0.198875,
+        0.199375,
+        0.198583,
+        0.199209,
+        0.198291,
+        0.199584,
+        0.199375,
+        0.197042,
+        0.168792,
+        0.169167,
+        0.16925,
+        0.19925,
+        0.169958,
+        0.169584,
+        0.1755,
+        0.170542,
+        0.196417,
+        0.195,
+        0.169542,
+        0.168875,
+        0.169417,
+        0.169666,
+        0.169708,
+        0.168834,
+        0.169667,
+        0.169167,
+        0.169875,
+        0.168959,
+        0.169542,
+        0.168958,
+        0.170958,
+        0.168792,
+        0.170042,
+        0.169334,
+        0.168917,
+        0.1685,
+        0.169375,
+        0.170292,
+        0.1695,
+        0.168417,
+        0.168792,
+        0.169459,
+        0.169542,
+        0.168542,
+        0.169583,
+        0.169708,
+        0.168666,
+        0.169375,
+        0.178167,
+        0.16875,
+        0.168875,
+        0.16875,
+        0.169959,
+        0.16825,
+        0.147333,
+        0.146,
+        0.147917,
+        0.146125,
+        0.147333,
+        0.147666,
+        0.14825,
+        0.14775,
+        0.339,
+        0.549625,
+        0.171,
+        0.155417,
+        0.149083,
+        0.147708,
+        0.148166,
+        0.146667,
+        0.147167,
+        0.146209,
+        0.155708,
+        0.146541,
+        0.155375,
+        0.146084,
+        0.147625,
+        0.146625,
+        0.152375,
+        0.145875,
+        0.148459,
+        0.147125,
+        0.146875,
+        0.146417,
+        0.14625,
+        0.146333,
+        0.155583,
+        0.147042,
+        0.147041,
+        0.146083,
+        0.147541
+      ],
+      "stage" : "vad",
+      "unit" : "ms"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 1579.791209,
+      "p95" : 1579.791209,
+      "samples" : [
+        1579.791209
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_state_load",
+      "p50" : 167.177292,
+      "p95" : 167.177292,
+      "samples" : [
+        167.177292
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 440.390625,
+      "p95" : 449.072792,
+      "samples" : [
+        447.375708,
+        431.042084,
+        446.673333,
+        440.390625,
+        429.860083,
+        449.072792
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 457.897625,
+      "p95" : 472.518833,
+      "samples" : [
+        457.897625,
+        452.719292,
+        470.654458,
+        462.880208,
+        448.5915,
+        472.518833
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 1507.475083,
+      "p95" : 2005.221334,
+      "samples" : [
+        2005.221334,
+        1081.642625,
+        1908.6069579999998,
+        1507.475083,
+        1255.640917,
+        1564.112625
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 112.45643269230769,
+      "p95" : 137.63013899999999,
+      "samples" : [
+        103.85637506666667,
+        130.1201082,
+        112.45643269230769,
+        118.56493977777778,
+        137.63013899999999,
+        85.77229484615386
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 23,
+      "p95" : 27,
+      "samples" : [
+        24,
+        23,
+        24,
+        27,
+        22,
+        8
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_ms_per_call",
+      "p50" : 144.03680446153845,
+      "p95" : 210.8471166,
+      "samples" : [
+        132.0276723333333,
+        210.8471166,
+        144.03680446153845,
+        163.78705566666667,
+        205.20204133333337,
+        117.79634923076924
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampling_ms_per_request",
+      "p50" : 8.762462,
+      "p95" : 11.269832000000001,
+      "samples" : [
+        11.269832000000001,
+        3.94825,
+        10.092084,
+        9.070291999999998,
+        4.492586,
+        8.762462
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "grammar_fallbacks",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_calls",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "batch_profile_1",
+      "p50" : 77.235625,
+      "p95" : 77.235625,
+      "samples" : [
+        77.235625
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_2",
+      "p50" : 99.997958,
+      "p95" : 99.997958,
+      "samples" : [
+        99.997958
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_3",
+      "p50" : 137.601792,
+      "p95" : 137.601792,
+      "samples" : [
+        137.601792
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_4",
+      "p50" : 176.350959,
+      "p95" : 176.350959,
+      "samples" : [
+        176.350959
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_5",
+      "p50" : 221.088209,
+      "p95" : 221.088209,
+      "samples" : [
+        221.088209
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_6",
+      "p50" : 248.015708,
+      "p95" : 248.015708,
+      "samples" : [
+        248.015708
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_7",
+      "p50" : 293.578292,
+      "p95" : 293.578292,
+      "samples" : [
+        293.578292
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_8",
+      "p50" : 326.338458,
+      "p95" : 326.338458,
+      "samples" : [
+        326.338458
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_9",
+      "p50" : 210.137917,
+      "p95" : 210.137917,
+      "samples" : [
+        210.137917
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_10",
+      "p50" : 212.229583,
+      "p95" : 212.229583,
+      "samples" : [
+        212.229583
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_12",
+      "p50" : 216.705458,
+      "p95" : 216.705458,
+      "samples" : [
+        216.705458
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_16",
+      "p50" : 227.494791,
+      "p95" : 227.494791,
+      "samples" : [
+        227.494791
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_24",
+      "p50" : 240.974167,
+      "p95" : 240.974167,
+      "samples" : [
+        240.974167
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_32",
+      "p50" : 260.54925,
+      "p95" : 260.54925,
+      "samples" : [
+        260.54925
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_48",
+      "p50" : 446.226958,
+      "p95" : 446.226958,
+      "samples" : [
+        446.226958
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_2",
+      "p50" : 100.675458,
+      "p95" : 100.675458,
+      "samples" : [
+        100.675458
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_4",
+      "p50" : 183.288667,
+      "p95" : 183.288667,
+      "samples" : [
+        183.288667
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_6",
+      "p50" : 264.004958,
+      "p95" : 264.004958,
+      "samples" : [
+        264.004958
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_8",
+      "p50" : 350.480291,
+      "p95" : 350.480291,
+      "samples" : [
+        350.480291
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_9",
+      "p50" : 221.491041,
+      "p95" : 221.491041,
+      "samples" : [
+        221.491041
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_12",
+      "p50" : 227.405,
+      "p95" : 227.405,
+      "samples" : [
+        227.405
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_1",
+      "p50" : 77.425708,
+      "p95" : 84.106625,
+      "samples" : [
+        83.063542,
+        78.365167,
+        79.715,
+        77.063084,
+        78.213542,
+        78.16275,
+        77.668833,
+        77.085666,
+        77.152042,
+        78.013542,
+        83.288208,
+        77.308875,
+        84.106625,
+        77.057708,
+        82.344917,
+        77.020917,
+        77.088458,
+        77.36125,
+        77.539542,
+        78.2465,
+        82.529875,
+        77.216125,
+        84.937458,
+        77.292709,
+        81.486333,
+        76.94125,
+        81.719583,
+        77.1935,
+        76.706834,
+        76.935917,
+        76.942208,
+        76.841666,
+        77.425708,
+        76.917375,
+        78.344417,
+        78.397791,
+        77.202041
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_2_3",
+      "p50" : 140.79275,
+      "p95" : 142.633166,
+      "samples" : [
+        142.06125,
+        105.567042,
+        104.892583,
+        140.79275,
+        140.842833,
+        103.983667,
+        142.633166
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_4_8",
+      "p50" : 251.986583,
+      "p95" : 297.453708,
+      "samples" : [
+        253.863292,
+        247.385583,
+        251.6975,
+        251.986583,
+        297.453708,
+        252.753834,
+        252.717125,
+        247.674791,
+        227.741917
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_9plus",
+      "p50" : 210.976,
+      "p95" : 214.213542,
+      "samples" : [
+        210.976,
+        214.213542
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "draft_tokens",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "accepted_draft_tokens",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 366.333792,
+      "p95" : 366.333792,
+      "samples" : [
+        366.333792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_state_load",
+      "p50" : 186.893166,
+      "p95" : 186.893166,
+      "samples" : [
+        186.893166
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 501.528625,
+      "p95" : 510.423958,
+      "samples" : [
+        510.154375,
+        494.482125,
+        509.022125,
+        501.528625,
+        491.398334,
+        510.423958
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 525.983833,
+      "p95" : 536.853792,
+      "samples" : [
+        530.139208,
+        522.1815,
+        535.687917,
+        525.983833,
+        518.576292,
+        536.853792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 1724.983708,
+      "p95" : 2534.955417,
+      "samples" : [
+        2534.955417,
+        1219.7685,
+        2447.690042,
+        1843.097792,
+        1421.454667,
+        1724.983708
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 145.05727499999998,
+      "p95" : 155.00938883333333,
+      "samples" : [
+        134.98673613333332,
+        145.05727499999998,
+        149.1283013076923,
+        149.0632407777778,
+        155.00938883333333,
+        93.42767307692307
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 23,
+      "p95" : 27,
+      "samples" : [
+        24,
+        23,
+        24,
+        27,
+        22,
+        8
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_ms_per_call",
+      "p50" : 257.9552141428572,
+      "p95" : 300.57295324999996,
+      "samples" : [
+        249.56054579999994,
+        296.60487525,
+        300.57295324999996,
+        257.9552141428572,
+        277.61370819999996,
+        239.99410728571428
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampling_ms_per_request",
+      "p50" : 9.624959999999998,
+      "p95" : 12.455835,
+      "samples" : [
+        12.455835,
+        3.935874,
+        11.444248,
+        9.624959999999998,
+        4.53375,
+        10.904499
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "grammar_fallbacks",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_calls",
+      "p50" : 7,
+      "p95" : 10,
+      "samples" : [
+        10,
+        4,
+        8,
+        7,
+        5,
+        7
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "batch_profile_1",
+      "p50" : 76.287167,
+      "p95" : 76.287167,
+      "samples" : [
+        76.287167
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_2",
+      "p50" : 108.012167,
+      "p95" : 108.012167,
+      "samples" : [
+        108.012167
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_3",
+      "p50" : 155.718167,
+      "p95" : 155.718167,
+      "samples" : [
+        155.718167
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_4",
+      "p50" : 205.143958,
+      "p95" : 205.143958,
+      "samples" : [
+        205.143958
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_5",
+      "p50" : 263.048708,
+      "p95" : 263.048708,
+      "samples" : [
+        263.048708
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_6",
+      "p50" : 305.482334,
+      "p95" : 305.482334,
+      "samples" : [
+        305.482334
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_7",
+      "p50" : 355.955917,
+      "p95" : 355.955917,
+      "samples" : [
+        355.955917
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_8",
+      "p50" : 390.779,
+      "p95" : 390.779,
+      "samples" : [
+        390.779
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_9",
+      "p50" : 268.477334,
+      "p95" : 268.477334,
+      "samples" : [
+        268.477334
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_10",
+      "p50" : 269.605208,
+      "p95" : 269.605208,
+      "samples" : [
+        269.605208
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_12",
+      "p50" : 273.115125,
+      "p95" : 273.115125,
+      "samples" : [
+        273.115125
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_16",
+      "p50" : 283.853584,
+      "p95" : 283.853584,
+      "samples" : [
+        283.853584
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_24",
+      "p50" : 297.976333,
+      "p95" : 297.976333,
+      "samples" : [
+        297.976333
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_32",
+      "p50" : 316.394667,
+      "p95" : 316.394667,
+      "samples" : [
+        316.394667
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_48",
+      "p50" : 514.411792,
+      "p95" : 514.411792,
+      "samples" : [
+        514.411792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_2",
+      "p50" : 111.682417,
+      "p95" : 111.682417,
+      "samples" : [
+        111.682417
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_4",
+      "p50" : 217.448041,
+      "p95" : 217.448041,
+      "samples" : [
+        217.448041
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_6",
+      "p50" : 327.605459,
+      "p95" : 327.605459,
+      "samples" : [
+        327.605459
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_8",
+      "p50" : 422.205708,
+      "p95" : 422.205708,
+      "samples" : [
+        422.205708
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_9",
+      "p50" : 282.104542,
+      "p95" : 282.104542,
+      "samples" : [
+        282.104542
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "batch_profile_all_logits_12",
+      "p50" : 287.322833,
+      "p95" : 287.322833,
+      "samples" : [
+        287.322833
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_1",
+      "p50" : 81.0465,
+      "p95" : 81.472708,
+      "samples" : [
+        81.297541,
+        80.611709,
+        81.0465,
+        76.933209,
+        81.472708
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_2_3",
+      "p50" : 116.027458,
+      "p95" : 164.69725,
+      "samples" : [
+        160.209958,
+        113.97625,
+        114.572042,
+        113.958834,
+        164.253208,
+        164.268334,
+        115.415458,
+        116.027458,
+        164.69725,
+        116.662125
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_4_8",
+      "p50" : 311.321667,
+      "p95" : 353.217875,
+      "samples" : [
+        305.155583,
+        298.602083,
+        317.317084,
+        317.000958,
+        311.321667,
+        303.578125,
+        300.54225,
+        353.217875,
+        320.3645,
+        319.386667,
+        323.904584,
+        308.971083,
+        324.533333,
+        309.709,
+        305.658125,
+        271.68275,
+        329.403875,
+        329.060542
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "decode_ms_batch_9plus",
+      "p50" : 273.858209,
+      "p95" : 274.998208,
+      "samples" : [
+        273.858209,
+        274.998208
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "draft_tokens",
+      "p50" : 6,
+      "p95" : 15,
+      "samples" : [
+        15,
+        1,
+        15,
+        6,
+        1,
+        10
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "accepted_draft_tokens",
+      "p50" : 2,
+      "p95" : 6,
+      "samples" : [
+        5,
+        1,
+        5,
+        2,
+        1,
+        6
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 1018.262833,
+      "p95" : 1018.262833,
+      "samples" : [
+        1018.262833
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "first_chunk_synthesis",
+      "p50" : 360.113,
+      "p95" : 424.676333,
+      "samples" : [
+        255.328209,
+        358.201208,
+        400.157792,
+        283.147459,
+        360.113,
+        422.946666,
+        286.285791,
+        363.360208,
+        424.676333,
+        285.140792,
+        367.805875,
+        410.817416,
+        281.25275,
+        358.734625,
+        418.910833
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 5.0648689022781435,
+      "p95" : 5.678965147168678,
+      "samples" : [
+        5.678965147168678,
+        5.025108681375524,
+        5.310405151375885,
+        5.121006577706918,
+        4.998431048032145,
+        5.024274148078992,
+        5.0648689022781435,
+        4.953762025587568,
+        5.003810749208857,
+        5.0852071702178625,
+        4.893885939152005,
+        5.172614200951987,
+        5.155505146171905,
+        5.017636644357929,
+        5.072678557348265
+      ],
+      "stage" : "tts",
+      "unit" : "x"
+    },
+    {
+      "name" : "endpoint_to_first_audio",
+      "p50" : 4386.449625,
+      "p95" : 4392.351958,
+      "samples" : [
+        3230.849708,
+        4392.351958,
+        4380.981083,
+        4387.573375,
+        4386.449625
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    }
+  ],
+  "notes" : [
+    "llm_nospec valid outputs: 6\/6",
+    "llm valid outputs: 6\/6",
+    "verified ggml-base.en.bin for loading in 1 ms",
+    "verified ggml-silero-v6.2.0.bin for loading in 4 ms",
+    "verified NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf for loading in 3 ms",
+    "verified kokoro-v1_0.safetensors for loading in 0 ms",
+    "verified af_heart.safetensors for loading in 0 ms"
+  ],
+  "peakFootprintMB" : 1738.6447982788086,
+  "startedAt" : "2026-09-19T16:04:06Z",
+  "thermalStates" : [
+    "nominal",
+    "fair"
+  ]
+}

@@ -18,6 +18,10 @@ public struct BargeInSettings: Sendable, Equatable {
     /// Transcripts with fewer words are rejected unless they contain an interruption keyword
     /// that the assistant is not itself saying.
     public var minimumTranscriptWords = 2
+    /// Without a keyword, a transcript needs at least this many words the assistant is not
+    /// saying: faint residual echo decodes to fragments of the reply plus one garbled word
+    /// ("is the day"), a real interruption to new content ("call mom instead").
+    public var minimumNovelWords = 2
     public var interruptionKeywords: Set<String> = [
         "stop", "wait", "cancel", "no", "nope", "yes", "yeah", "yep", "pause", "quiet", "enough",
         "hold", "hang", "hey", "actually", "nevermind", "never", "sorry", "excuse",
@@ -311,6 +315,10 @@ public struct EchoBargeInController: Sendable {
             return reject(.tooShort, similarity: similarity)
         }
         if similarity >= config.echoSimilarityThreshold {
+            return reject(.echo, similarity: similarity)
+        }
+        let novelWords = words.count - TranscriptSimilarity.align(words, to: reference).matches
+        if novelWords < settings.minimumNovelWords {
             return reject(.echo, similarity: similarity)
         }
         return confirm(candidate, reason: .distinctSpeech, similarity: similarity)

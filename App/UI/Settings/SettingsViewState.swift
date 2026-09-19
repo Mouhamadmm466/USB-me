@@ -194,13 +194,16 @@ struct SettingsViewState: Equatable, Sendable {
         /// What it does in this app.
         var role: String
         var url: URL?
+        /// Attribution text the license requires the app to show.
+        var notice: String?
         var id: String { name }
 
-        init(name: String, license: String, role: String, url: URL? = nil) {
+        init(name: String, license: String, role: String, url: URL? = nil, notice: String? = nil) {
             self.name = name
             self.license = license
             self.role = role
             self.url = url
+            self.notice = notice
         }
 
         /// Third-party components shipped with or downloaded by the app.
@@ -209,7 +212,9 @@ struct SettingsViewState: Equatable, Sendable {
             License(name: "Whisper base.en", license: "MIT", role: "Speech recognition model (OpenAI)", url: URL(string: "https://github.com/openai/whisper")),
             License(name: "Silero VAD", license: "MIT", role: "Voice activity detection model", url: URL(string: "https://github.com/snakers4/silero-vad")),
             License(name: "llama.cpp", license: "MIT", role: "Language model runtime", url: URL(string: "https://github.com/ggml-org/llama.cpp")),
-            License(name: "NVIDIA Nemotron 3 Nano 4B", license: "NVIDIA Nemotron Open Model License", role: "Language model", url: URL(string: "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF")),
+            License(name: "NVIDIA Nemotron 3 Nano 4B", license: "NVIDIA Nemotron Open Model License", role: "Language model",
+                    url: URL(string: "https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-nemotron-open-model-license/"),
+                    notice: "Licensed by NVIDIA Corporation under the NVIDIA Nemotron Model License."),
             License(name: "Kokoro 82M", license: "Apache-2.0", role: "Voice model", url: URL(string: "https://huggingface.co/mlx-community/Kokoro-82M-bf16")),
             License(name: "KokoroSwift", license: "MIT", role: "Voice runtime", url: URL(string: "https://github.com/mlalma/kokoro-ios")),
             License(name: "MisakiSwift", license: "Apache-2.0", role: "Pronunciation for the voice", url: URL(string: "https://github.com/mlalma/MisakiSwift")),

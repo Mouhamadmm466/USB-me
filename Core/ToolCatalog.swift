@@ -180,7 +180,7 @@ public enum ToolCatalog {
         ),
         ToolSpec(
             id: .getCalendarEvents,
-            promptDescription: "Read the user's calendar for a day or range.",
+            promptDescription: "Read the user's calendar for a day or range. Use it for every question about their schedule (\"am I free friday\", \"when is my dentist appointment\").",
             arguments: [
                 ToolArgumentSpec("when", .text(maxLength: 60), required: true, "day or range " + dateHint),
             ],
@@ -190,7 +190,7 @@ public enum ToolCatalog {
         ),
         ToolSpec(
             id: .createCalendarEvent,
-            promptDescription: "Add a new event to the user's calendar.",
+            promptDescription: "Add an event, appointment, meeting or plan to the calendar (\"add\", \"schedule\", \"create an event\", \"put it on my calendar\").",
             arguments: [
                 ToolArgumentSpec("title", .text(maxLength: 100), required: true, "short event title"),
                 ToolArgumentSpec("start", .text(maxLength: 60), required: true, "start " + dateHint),
@@ -219,7 +219,7 @@ public enum ToolCatalog {
         ),
         ToolSpec(
             id: .createReminder,
-            promptDescription: "Create a reminder.",
+            promptDescription: "Create a reminder or to-do (\"remind me to\", \"add a reminder\", \"don't let me forget\"). Not for events or appointments.",
             arguments: [
                 ToolArgumentSpec("title", .text(maxLength: 120), required: true, "what to be reminded about"),
                 ToolArgumentSpec("due", .text(maxLength: 60), required: false, "when " + dateHint),
@@ -230,7 +230,7 @@ public enum ToolCatalog {
         ),
         ToolSpec(
             id: .searchFiles,
-            promptDescription: "Search the folders the user has shared with this app.",
+            promptDescription: "List files in the folders the user shared with this app that match some words (\"find my tax files\").",
             arguments: [
                 ToolArgumentSpec("query", .text(maxLength: 80), required: true, "words from the file name"),
             ],
@@ -240,7 +240,7 @@ public enum ToolCatalog {
         ),
         ToolSpec(
             id: .openFile,
-            promptDescription: "Open a file from the folders the user has shared with this app.",
+            promptDescription: "Open or show one file from the shared folders by its name (\"open the budget\", \"show me my resume\").",
             arguments: [
                 ToolArgumentSpec("file_query", .text(maxLength: 120), required: true, "words from the file name"),
             ],

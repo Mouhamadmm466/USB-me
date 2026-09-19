@@ -410,8 +410,67 @@ public actor DeviceBenchmarkRunner {
             if configuration.synthesizer == nil {
                 report.notes.append("end_to_end excludes TTS (no Kokoro engine in this build)")
             }
+            try await benchmarkEndToEndPerCommand(whisper: whisper, nemotron: nemotron, builder: builder, clock: clock)
         } catch {
             report.errors.append("end_to_end: \(error)")
+        }
+    }
+
+    /// Endpoint → first audio for every benchmark command: each utterance is spoken by Kokoro
+    /// (resampled to 16 kHz) and runs through Whisper → primed Nemotron → the first chunk of a
+    /// reply of the kind the app would speak for that tool.
+    private func benchmarkEndToEndPerCommand(whisper: WhisperRuntime, nemotron: NemotronRuntime, builder: PromptBuilder, clock: AgentClock) async throws {
+        guard let synthesizer = configuration.synthesizer else { return }
+        var all: [Double] = []
+        for utterance in configuration.llmUtterances {
+            let spoken = try await synthesizer.synthesize(utterance)
+            let audio = Self.resample(spoken.samples, from: spoken.sampleRate, to: AudioFrame.sampleRate)
+            await nemotron.prime(cacheablePrefix: builder.cacheablePrefix, suffixHead: builder.suffixHead(session: SessionState(), clock: clock))
+            let watch = Stopwatch()
+            let final = try await whisper.final(audio, context: ASRContext())
+            let request = builder.request(session: SessionState(), utterance: final.text, clock: clock, maxOutputTokens: configuration.llmConfig.maxOutputTokens)
+            let (text, _) = try await nemotron.complete(request)
+            let reply = Self.representativeReply(for: OutputValidator().validate(text))
+            _ = try await synthesizer.synthesize(SpeechChunker().chunks(for: reply).first ?? reply)
+            let ms = watch.elapsedMilliseconds
+            all.append(ms)
+            let key = utterance.lowercased().filter { $0.isLetter || $0 == " " }.split(separator: " ").prefix(3).joined(separator: "_")
+            record("end_to_end", "command_\(key)", "ms", [ms])
+            report.notes.append("end_to_end heard '\(final.text)' for '\(utterance)'")
+            sampleSystem()
+        }
+        record("end_to_end", "endpoint_to_first_audio_all_commands", "ms", all)
+    }
+
+    /// A reply of the length the app speaks first for each kind of result (its real text depends
+    /// on the user's contacts and calendar).
+    static func representativeReply(for result: Result<AgentOutput, OutputValidationError>) -> String {
+        guard case let .success(output) = result else { return "Sorry, could you say that again?" }
+        switch output {
+        case let .answer(speech), let .clarification(speech), let .unsupported(speech): return speech
+        case let .proposedAction(call, _):
+            switch call.tool {
+            case .composeMessage: return "Text Alex Kim: \u{201C}I'll be 20 minutes late.\u{201D} Should I send it?"
+            case .initiateCall: return "Should I call Mom on mobile?"
+            case .getCalendarEvents: return "You have two events tomorrow: Team sync at 10 AM and Dentist at 3 PM."
+            case .createCalendarEvent: return "Add \u{201C}Lunch\u{201D} Friday at noon. Should I add it to your calendar?"
+            case .updateCalendarEvent: return "Move \u{201C}Team sync\u{201D} to 4 PM today? Please say yes or no."
+            case .createReminder: return "Remind you to call the dentist tomorrow at 10 AM. Should I create it?"
+            default: return "Okay, opening it."
+            }
+        }
+    }
+
+    /// Linear-interpolation resampler (benchmark input only).
+    static func resample(_ samples: [Float], from source: Double, to target: Double) -> [Float] {
+        guard source != target, !samples.isEmpty else { return samples }
+        let count = Int(Double(samples.count) * target / source)
+        return (0..<count).map { index in
+            let position = Double(index) * source / target
+            let lower = Int(position)
+            let upper = min(lower + 1, samples.count - 1)
+            let fraction = Float(position - Double(lower))
+            return samples[lower] * (1 - fraction) + samples[upper] * fraction
         }
     }
 

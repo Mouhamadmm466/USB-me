@@ -16,12 +16,16 @@ public struct ASRConfig: Codable, Sendable, Equatable {
     public var finalTemperatureIncrement: Float = 0.2
     /// Bias the final pass with up to this many contact names via Whisper's initial prompt.
     public var maxBiasNames: Int = 40
+    /// Vocabulary prompt for the final pass (short commands such as "cancel" or "call mom" are
+    /// otherwise misheard as "Console" / "Cool Mom"). Deliberately never contains "yes", "okay"
+    /// or other affirmations: a prompt raises the chance Whisper emits its words from noise.
+    public var domainPrompt: String? = "Voice commands: call, text, message, remind, cancel, schedule, open."
     /// Utterances shorter than this (seconds) whose text is a known Whisper hallucination are
     /// treated as empty.
     public var hallucinationGuardSeconds: Double = 1.2
-    /// Above this no-speech probability a known silence hallucination ("you", "thank you") is
-    /// dropped whatever the utterance length (Whisper emits them on noise and room tone).
-    public var noSpeechThreshold: Float = 0.5
+    /// A final transcript that is only a known silence hallucination ("you", "Okay.") is dropped
+    /// unless the speech gate finds at least this much speech in the clip.
+    public var minimumSpeechMillisecondsForHallucinationPhrase: Double = 250
 
     public init() {}
 }
@@ -34,10 +38,7 @@ public enum TranscriptCleaner {
         "bye", "bye.", "you", "okay.", "so", "the end", "i'm sorry", "please subscribe",
     ]
 
-    public static func clean(
-        _ raw: String, audioSeconds: Double, guardSeconds: Double,
-        noSpeechProbability: Float = 0, noSpeechThreshold: Float = 1
-    ) -> String {
+    public static func clean(_ raw: String, audioSeconds: Double, guardSeconds: Double) -> String {
         var text = raw
         // Drop [BLANK_AUDIO], (music), *laughs* style annotations.
         for (open, close) in [("[", "]"), ("(", ")"), ("*", "*")] {
@@ -49,19 +50,25 @@ public enum TranscriptCleaner {
         text = text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = text.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: " .!?,"))
-        let isKnownHallucination = silenceHallucinations.contains(normalized) || silenceHallucinations.contains(normalized + ".")
-        if isKnownHallucination, audioSeconds < guardSeconds || noSpeechProbability > noSpeechThreshold {
+        if audioSeconds < guardSeconds, isKnownHallucination(text) {
             return ""
         }
         if normalized.isEmpty || normalized.allSatisfy({ !$0.isLetter && !$0.isNumber }) { return "" }
         return text
     }
 
+    /// True when the whole transcript is a phrase Whisper is known to produce from silence/noise.
+    public static func isKnownHallucination(_ text: String) -> Bool {
+        let normalized = text.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: " .!?,"))
+        return !normalized.isEmpty && (silenceHallucinations.contains(normalized) || silenceHallucinations.contains(normalized + "."))
+    }
+
     /// Builds Whisper's initial prompt from names so rare proper nouns are recognized.
-    public static func biasPrompt(_ names: [String], limit: Int) -> String? {
+    public static func biasPrompt(_ names: [String], limit: Int, domain: String? = nil) -> String? {
         let unique = Array(NSOrderedSet(array: names.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }))
             .compactMap { $0 as? String }
-        guard !unique.isEmpty else { return nil }
-        return "Contacts: " + unique.prefix(limit).joined(separator: ", ") + "."
+        let contacts = unique.isEmpty ? nil : "Contacts: " + unique.prefix(limit).joined(separator: ", ") + "."
+        let parts = [domain, contacts].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 }

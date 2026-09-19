@@ -12,6 +12,12 @@ struct VoiceAgentApp: App {
                 BenchmarkView()
             } else if arguments.contains("-RunEval") {
                 DeviceEvalView()
+            } else if arguments.contains("-VoiceSelfTest") {
+                #if KOKORO_TTS
+                VoiceSelfTestView()
+                #else
+                Text("The voice self-test needs Kokoro (device build).")
+                #endif
             } else if arguments.contains("-DesignGallery") {
                 DesignGalleryView()
             } else {

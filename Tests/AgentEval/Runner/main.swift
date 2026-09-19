@@ -180,7 +180,7 @@ func scoreCommand() async throws {
         illegalTransitions += record.illegalTransitions
         let reported = record.observations.reduce(0) { $0 + $1.consequentialExecutions.count }
         if reported != record.recordedSideEffects { recorderMismatches += 1 }
-        scores.append(scorer.score(evalCase, observations: record.observations))
+        scores.append(scorer.score(evalCase, observations: record.observations, details: record.details ?? []))
     }
     var notes = [
         "cases scored: \(scores.count) of \(dataset.cases.count) in the dataset",

@@ -54,7 +54,9 @@ if [[ $SKIP_MODELS == 0 ]]; then
 fi
 
 log "Launching benchmark"
-xcrun devicectl device process launch --device "$DEVICE" --terminate-existing "$BUNDLE_ID" -RunBenchmark >/dev/null
+LAUNCHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# "--" ends devicectl's own options: app arguments such as -EvalRun would otherwise be parsed as flags.
+xcrun devicectl device process launch --device "$DEVICE" --terminate-existing "$BUNDLE_ID" -- -RunBenchmark >/dev/null
 
 OUT="$ROOT/Tests/Benchmarks/Results"
 mkdir -p "$OUT/tmp"
@@ -63,7 +65,8 @@ for _ in $(seq 1 180); do
   sleep 10
   if xcrun devicectl device copy from --device "$DEVICE" --domain-type appDataContainer --domain-identifier "$BUNDLE_ID" \
       --source "Documents/BenchmarkReports/latest.json" --destination "$OUT/tmp/latest.json" >/dev/null 2>&1; then
-    if [[ -s "$OUT/tmp/latest.json" ]] && python3 -c "import json,sys; d=json.load(open('$OUT/tmp/latest.json')); sys.exit(0 if d.get('finishedAt') else 1)" 2>/dev/null; then
+    # Only a report started by this launch counts (latest.json from an earlier run is still there).
+    if [[ -s "$OUT/tmp/latest.json" ]] && python3 -c "import json,sys; d=json.load(open('$OUT/tmp/latest.json')); sys.exit(0 if d.get('finishedAt') and d.get('startedAt','') >= '$LAUNCHED_AT' else 1)" 2>/dev/null; then
       break
     fi
   fi

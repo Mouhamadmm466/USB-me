@@ -31,6 +31,11 @@ struct LicensesView: View {
                         Text(entry.license)
                             .textStyle(.footnote, weight: .medium)
                             .foregroundStyle(Palette.jade)
+                        if let notice = entry.notice {
+                            Text(notice)
+                                .textStyle(.footnote)
+                                .foregroundStyle(Palette.inkSecondary)
+                        }
                     }
                     .padding(.vertical, 2)
                     .accessibilityElement(children: .combine)

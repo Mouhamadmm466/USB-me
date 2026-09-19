@@ -305,6 +305,12 @@ public final class VoiceSessionController {
         let recognizer = dependencies.recognizer
         let bias = ASRContext(biasPhrases: biasNames)
         let metrics = dependencies.metrics
+        // An utterance that began over the assistant (a barge-in, or the echo tail) is checked
+        // against what the assistant was saying: its own voice must never become a request — or a
+        // "yes" to its own confirmation question.
+        let echoReference = utterance.startedDuringAssistantSpeech
+            ? (dependencies.speech.spokenText.lastSpokenText ?? bargeIn.assistantText) : nil
+        let echoThreshold = configuration.endpointing.echoSimilarityThreshold
         turnTask = Task { [weak self] in
             let watch = Stopwatch()
             let final = try? await recognizer.final(utterance.samples, context: bias)
@@ -312,6 +318,16 @@ public final class VoiceSessionController {
             guard let self else { return }
             guard let final, !final.text.isEmpty else {
                 self.turnTask = nil
+                self.coordinator.updatePartialTranscript(nil)
+                self.coordinator.settle(reason: .emptyTranscript)
+                self.enterListening(reason: .emptyTranscript)
+                return
+            }
+            if let echoReference, !echoReference.isEmpty,
+               TranscriptSimilarity.echoSimilarity(candidate: final.text, reference: echoReference) >= echoThreshold {
+                PrivacySafeLogger.shared.log(.safety(check: "self_transcription", outcome: "dropped"))
+                self.turnTask = nil
+                self.pendingFirstAudio = nil
                 self.coordinator.updatePartialTranscript(nil)
                 self.coordinator.settle(reason: .emptyTranscript)
                 self.enterListening(reason: .emptyTranscript)

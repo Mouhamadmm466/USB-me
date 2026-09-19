@@ -39,4 +39,8 @@ public final class SpokenTextTracker: @unchecked Sendable {
     }
 
     public var isSpeaking: Bool { lock.withLock { current != nil } }
+
+    /// The most recent reply text (being spoken or already finished), for checking whether an
+    /// utterance that began over the assistant is only its echo.
+    public var lastSpokenText: String? { lock.withLock { lastText } }
 }

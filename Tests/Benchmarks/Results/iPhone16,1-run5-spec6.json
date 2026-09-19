@@ -1,0 +1,694 @@
+{
+  "asrTranscript" : "Text Alex that I will be 20 minutes late.",
+  "asrWordErrorRate" : 0,
+  "availableMemoryAtStartMB" : 6130.389839172363,
+  "batteryEnd" : 1,
+  "batteryStart" : 1,
+  "environment" : {
+    "appVersion" : "1.0.0",
+    "deviceModel" : "iPhone16,1",
+    "isSimulator" : false,
+    "physicalMemoryGB" : 7.4999847412109375,
+    "processorCount" : 6,
+    "systemVersion" : "Version 26.6.1 (Build 23G83)"
+  },
+  "errors" : [
+
+  ],
+  "finishedAt" : "2026-09-19T15:49:44Z",
+  "llmOutputs" : {
+    "Text Alex that I will be 20 minutes late" : "{\"type\":\"proposed_action\",\"tool\":\"compose_message\",\"arguments\":{\"contact_query\":\"Alex\",\"message\":\"I'll be 20 minutes late.\"},\"requires_confirmation\":true}",
+    "call mom" : "{\"type\":\"proposed_action\",\"tool\":\"initiate_call\",\"arguments\":{\"contact_query\":\"mom\"},\"requires_confirmation\":true}",
+    "move my team sync to 4 pm" : "{\"type\":\"proposed_action\",\"tool\":\"update_calendar_event\",\"arguments\":{\"event_query\":\"team sync\",\"new_start\":\"4 pm\"},\"requires_confirmation\":true}",
+    "remind me to call the dentist tomorrow at 10" : "{\"type\":\"proposed_action\",\"tool\":\"create_reminder\",\"arguments\":{\"title\":\"Call dentist\",\"due\":\"tomorrow at 10\"},\"requires_confirmation\":true}",
+    "what's 15 percent of 80" : "{\"type\":\"answer\",\"speech\":\"15 percent of 80 is 12.\"}",
+    "what's on my calendar tomorrow" : "{\"type\":\"proposed_action\",\"tool\":\"get_calendar_events\",\"arguments\":{\"when\":\"tomorrow\"},\"requires_confirmation\":false}"
+  },
+  "metrics" : [
+    {
+      "name" : "cold_load",
+      "p50" : 787.572959,
+      "p95" : 787.572959,
+      "samples" : [
+        787.572959
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "final_transcript",
+      "p50" : 184.802,
+      "p95" : 197.128959,
+      "samples" : [
+        180.904791,
+        173.087791,
+        184.802,
+        192.351958,
+        197.128959
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "partial_1_5s",
+      "p50" : 53.912083,
+      "p95" : 55.142458,
+      "samples" : [
+        48.171417,
+        55.142458,
+        54.876792,
+        52.372625,
+        53.912083
+      ],
+      "stage" : "asr",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 20.592647806841917,
+      "p95" : 21.98631387005222,
+      "samples" : [
+        21.036272610381005,
+        21.98631387005222,
+        20.592647806841917,
+        19.784371001827807,
+        19.304938854772725
+      ],
+      "stage" : "asr",
+      "unit" : "x"
+    },
+    {
+      "name" : "silero_frame",
+      "p50" : 0.146875,
+      "p95" : 0.179709,
+      "samples" : [
+        1.669792,
+        0.20825,
+        0.225167,
+        0.177625,
+        0.171833,
+        0.170791,
+        0.170041,
+        0.169541,
+        0.168,
+        0.168625,
+        0.168834,
+        0.17075,
+        0.16875,
+        0.168958,
+        0.167791,
+        0.170583,
+        0.169041,
+        0.169917,
+        0.168917,
+        0.175583,
+        0.16875,
+        0.176458,
+        0.167791,
+        0.168333,
+        0.168209,
+        0.170667,
+        0.168375,
+        0.169334,
+        0.179709,
+        0.168083,
+        0.168291,
+        0.16875,
+        0.179709,
+        0.18175,
+        0.168917,
+        0.176875,
+        0.168916,
+        0.168666,
+        0.178708,
+        0.14825,
+        0.145875,
+        0.146875,
+        0.157791,
+        0.146416,
+        0.14725,
+        0.146375,
+        0.158458,
+        0.146667,
+        0.159042,
+        0.1515,
+        0.147292,
+        0.146583,
+        0.146375,
+        0.159542,
+        0.146416,
+        0.147458,
+        0.147667,
+        0.147584,
+        0.146833,
+        0.147333,
+        0.146667,
+        0.148292,
+        0.146667,
+        0.158166,
+        0.146833,
+        0.147875,
+        0.146125,
+        0.154167,
+        0.145959,
+        0.1465,
+        0.14675,
+        0.145583,
+        0.146166,
+        0.1585,
+        0.146084,
+        0.158292,
+        0.147459,
+        0.146791,
+        0.13425,
+        0.130333,
+        0.1295,
+        0.129208,
+        0.13,
+        0.13525,
+        0.129333,
+        0.135458,
+        0.129416,
+        0.134916,
+        0.129625,
+        0.131291,
+        0.13075,
+        0.1415,
+        0.129875,
+        0.132791,
+        0.129833,
+        0.13025,
+        0.129916,
+        0.136166,
+        0.129,
+        0.130333,
+        0.129041,
+        0.129708,
+        0.129583,
+        0.128958,
+        0.129166,
+        0.130375,
+        0.13225,
+        0.1305,
+        0.129291,
+        0.129458,
+        0.129125,
+        0.13025,
+        0.174209,
+        0.133541,
+        0.130917,
+        0.13075,
+        0.130125,
+        0.13025
+      ],
+      "stage" : "vad",
+      "unit" : "ms"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 4328.128541,
+      "p95" : 4328.128541,
+      "samples" : [
+        4328.128541
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_state_load",
+      "p50" : 188.710791,
+      "p95" : 188.710791,
+      "samples" : [
+        188.710791
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 438.904416,
+      "p95" : 448.22225,
+      "samples" : [
+        442.754375,
+        430.168459,
+        444.227041,
+        438.904416,
+        426.5325,
+        448.22225
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 455.232917,
+      "p95" : 467.807459,
+      "samples" : [
+        455.232917,
+        449.05725,
+        464.928167,
+        461.933917,
+        453.086041,
+        467.807459
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 1498.215084,
+      "p95" : 2008.957458,
+      "samples" : [
+        2008.957458,
+        1074.735167,
+        1919.281375,
+        1498.215084,
+        1259.982791,
+        1557.753209
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 113.465718,
+      "p95" : 138.90838183333332,
+      "samples" : [
+        104.41353886666667,
+        128.91334160000002,
+        113.465718,
+        117.70118533333331,
+        138.90838183333332,
+        85.3485353076923
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 23,
+      "p95" : 27,
+      "samples" : [
+        24,
+        23,
+        24,
+        27,
+        22,
+        8
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_ms_per_call",
+      "p50" : 145.1718943076923,
+      "p95" : 210.0916584,
+      "samples" : [
+        132.11870833333336,
+        210.0916584,
+        145.1718943076923,
+        162.71686588888892,
+        204.61522899999997,
+        117.52498684615384
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampling_ms_per_request",
+      "p50" : 8.897124999999997,
+      "p95" : 11.873794,
+      "samples" : [
+        11.873794,
+        3.940291,
+        9.477541999999998,
+        8.897124999999997,
+        4.53529,
+        9.688707999999998
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "ms"
+    },
+    {
+      "name" : "grammar_fallbacks",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_calls",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "draft_tokens",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "accepted_draft_tokens",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm_nospec",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 378.873834,
+      "p95" : 378.873834,
+      "samples" : [
+        378.873834
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "prefix_state_load",
+      "p50" : 47.771208,
+      "p95" : 47.771208,
+      "samples" : [
+        47.771208
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "suffix_prompt_eval",
+      "p50" : 509.539041,
+      "p95" : 518.607875,
+      "samples" : [
+        518.339917,
+        503.142875,
+        515.521667,
+        509.539041,
+        497.190375,
+        518.607875
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "time_to_first_token",
+      "p50" : 535.551667,
+      "p95" : 545.767792,
+      "samples" : [
+        539.354167,
+        531.654917,
+        540.921333,
+        535.551667,
+        526.521375,
+        545.767792
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "structured_result_total",
+      "p50" : 1752.1037919999999,
+      "p95" : 2632.224083,
+      "samples" : [
+        2632.224083,
+        1234.026625,
+        2502.044083,
+        1831.797417,
+        1404.915125,
+        1752.1037919999999
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "ms_per_sampled_token",
+      "p50" : 146.17675,
+      "p95" : 152.8094166153846,
+      "samples" : [
+        140.92561106666665,
+        146.17675,
+        152.8094166153846,
+        146.91759733333333,
+        151.28745833333332,
+        94.88430130769228
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampled_tokens",
+      "p50" : 9,
+      "p95" : 15,
+      "samples" : [
+        15,
+        5,
+        13,
+        9,
+        6,
+        13
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "forced_tokens",
+      "p50" : 23,
+      "p95" : 27,
+      "samples" : [
+        24,
+        23,
+        24,
+        27,
+        22,
+        8
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_ms_per_call",
+      "p50" : 284.346875,
+      "p95" : 307.496968625,
+      "samples" : [
+        288.14005555555553,
+        299.96872950000005,
+        307.496968625,
+        256.19426200000004,
+        273.96598339999997,
+        284.346875
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "sampling_ms_per_request",
+      "p50" : 9.291999,
+      "p95" : 11.672915,
+      "samples" : [
+        11.452835000000002,
+        3.960793,
+        11.384792000000001,
+        9.291999,
+        4.274542,
+        11.672915
+      ],
+      "stage" : "llm",
+      "unit" : "ms"
+    },
+    {
+      "name" : "grammar_fallbacks",
+      "p50" : 0,
+      "p95" : 0,
+      "samples" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "decode_calls",
+      "p50" : 6,
+      "p95" : 9,
+      "samples" : [
+        9,
+        4,
+        8,
+        7,
+        5,
+        6
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "draft_tokens",
+      "p50" : 6,
+      "p95" : 18,
+      "samples" : [
+        18,
+        1,
+        16,
+        6,
+        1,
+        12
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "accepted_draft_tokens",
+      "p50" : 2,
+      "p95" : 7,
+      "samples" : [
+        6,
+        1,
+        5,
+        2,
+        1,
+        7
+      ],
+      "stage" : "llm",
+      "unit" : "count"
+    },
+    {
+      "name" : "cold_load",
+      "p50" : 1007.942083,
+      "p95" : 1007.942083,
+      "samples" : [
+        1007.942083
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "first_chunk_synthesis",
+      "p50" : 355.228084,
+      "p95" : 426.578709,
+      "samples" : [
+        260.772,
+        390.190334,
+        403.838833,
+        266.245917,
+        350.507541,
+        426.578709,
+        280.845834,
+        358.97325,
+        421.930708,
+        287.955708,
+        346.821375,
+        411.898,
+        282.048208,
+        355.228084,
+        404.805208
+      ],
+      "stage" : "tts",
+      "unit" : "ms"
+    },
+    {
+      "name" : "real_time_factor",
+      "p50" : 5.140965121820593,
+      "p95" : 5.5604129277683185,
+      "samples" : [
+        5.5604129277683185,
+        4.613133240763468,
+        5.262000150441203,
+        5.446092906656668,
+        5.135410196495601,
+        4.981495689228128,
+        5.162974929512395,
+        5.014301204894793,
+        5.036371991203826,
+        5.035496639642927,
+        5.18999153382631,
+        5.1590442293965975,
+        5.140965121820593,
+        5.067166930416459,
+        5.249438391612788
+      ],
+      "stage" : "tts",
+      "unit" : "x"
+    },
+    {
+      "name" : "endpoint_to_first_audio",
+      "p50" : 3228.517458,
+      "p95" : 3242.116,
+      "samples" : [
+        3195.508958,
+        3223.8671249999998,
+        3234.587458,
+        3228.517458,
+        3242.116
+      ],
+      "stage" : "end_to_end",
+      "unit" : "ms"
+    }
+  ],
+  "notes" : [
+    "llm_nospec valid outputs: 6\/6",
+    "llm valid outputs: 6\/6",
+    "verified ggml-base.en.bin for loading in 0 ms",
+    "verified ggml-silero-v6.2.0.bin for loading in 0 ms",
+    "verified NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf for loading in 0 ms",
+    "verified kokoro-v1_0.safetensors for loading in 1 ms",
+    "verified af_heart.safetensors for loading in 16 ms"
+  ],
+  "peakFootprintMB" : 1915.6136627197266,
+  "startedAt" : "2026-09-19T15:48:54Z",
+  "thermalStates" : [
+    "nominal"
+  ]
+}

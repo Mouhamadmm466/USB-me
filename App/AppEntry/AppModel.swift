@@ -148,7 +148,7 @@ final class AppModel {
             guard let whisperURL = asr[ModelFileName.whisperBaseEn], let llmURL = llm[ModelFileName.nemotronNano4B] else {
                 throw BenchmarkModeError.missing("model files")
             }
-            let whisper = WhisperRuntime(modelURL: whisperURL)
+            let whisper = WhisperRuntime(modelURL: whisperURL, speechGateModelURL: asr[ModelFileName.sileroVAD])
             try await whisper.load()
             runtimes.whisper = whisper
             if let vadURL = asr[ModelFileName.sileroVAD], let silero = try? SileroVAD(modelURL: vadURL) {

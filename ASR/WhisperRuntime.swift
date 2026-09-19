@@ -18,15 +18,19 @@ public actor WhisperRuntime: SpeechRecognizer {
     private let queue = DispatchSerialQueue(label: "voiceagent.asr.inference", qos: .userInitiated)
     private var handle: WhisperHandle?
     public private(set) var loadMilliseconds: Double = 0
-    /// Whisper's no-speech probability for the most recent pass (lowest across its segments).
-    public private(set) var lastNoSpeechProbability: Float = 0
+    /// Confirms that a transcript made only of a known silence hallucination ("you", "Okay.")
+    /// came from real speech. Its own instance: it is reset for every clip it checks.
+    private let speechGate: SileroVAD?
 
     public nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
 
-    public init(modelURL: URL, config: ASRConfig = ASRConfig(), logger: PrivacySafeLogger = .shared) {
+    /// - Parameter speechGateModelURL: Silero VAD model used to verify hallucination-prone
+    ///   transcripts (nil disables the check; the length-based guard still applies).
+    public init(modelURL: URL, config: ASRConfig = ASRConfig(), speechGateModelURL: URL? = nil, logger: PrivacySafeLogger = .shared) {
         self.modelURL = modelURL
         self.config = config
         self.logger = logger
+        speechGate = speechGateModelURL.flatMap { try? SileroVAD(modelURL: $0) }
     }
 
     public var isLoaded: Bool { handle != nil }
@@ -58,8 +62,7 @@ public actor WhisperRuntime: SpeechRecognizer {
         let seconds = Double(samples.count) / AudioFrame.sampleRate
         let text = try transcribe(samples, final: false, prompt: nil)
         return PartialTranscript(
-            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds,
-                                          noSpeechProbability: lastNoSpeechProbability, noSpeechThreshold: config.noSpeechThreshold),
+            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds),
             revision: revision,
             audioDurationSeconds: seconds
         )
@@ -67,11 +70,17 @@ public actor WhisperRuntime: SpeechRecognizer {
 
     public func final(_ samples: [Float], context: ASRContext) async throws -> FinalTranscript {
         let seconds = Double(samples.count) / AudioFrame.sampleRate
-        let prompt = TranscriptCleaner.biasPrompt(context.biasPhrases, limit: config.maxBiasNames)
-        let text = try transcribe(samples, final: true, prompt: prompt)
+        let prompt = TranscriptCleaner.biasPrompt(context.biasPhrases, limit: config.maxBiasNames, domain: config.domainPrompt)
+        let raw = try transcribe(samples, final: true, prompt: prompt)
+        var text = TranscriptCleaner.clean(raw, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds)
+        // "you" / "Okay." on noise longer than the guard: keep it only if the VAD heard speech
+        // ("okay" would otherwise count as a yes to a pending action).
+        if TranscriptCleaner.isKnownHallucination(text), let speechGate,
+           speechGate.speechMilliseconds(in: samples) < config.minimumSpeechMillisecondsForHallucinationPhrase {
+            text = ""
+        }
         return FinalTranscript(
-            text: TranscriptCleaner.clean(text, audioSeconds: seconds, guardSeconds: config.hallucinationGuardSeconds,
-                                          noSpeechProbability: lastNoSpeechProbability, noSpeechThreshold: config.noSpeechThreshold),
+            text: text,
             audioDurationSeconds: seconds
         )
     }
@@ -121,14 +130,11 @@ public actor WhisperRuntime: SpeechRecognizer {
             throw ASRError.inferenceFailed(Int(status))
         }
         var text = ""
-        var noSpeech: Float = 1
         for segment in 0..<whisper_full_n_segments(context) {
             if let piece = whisper_full_get_segment_text(context, segment) {
                 text += String(cString: piece)
             }
-            noSpeech = min(noSpeech, whisper_full_get_segment_no_speech_prob(context, segment))
         }
-        lastNoSpeechProbability = whisper_full_n_segments(context) > 0 ? noSpeech : 1
         logger.log(.stageLatency(stage: final ? .endpointToFinalTranscript : .partialTranscript, milliseconds: Int(watch.elapsedMilliseconds)))
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }

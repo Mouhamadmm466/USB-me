@@ -54,4 +54,19 @@ public final class SileroVAD: VoiceActivityDetecting, @unchecked Sendable {
     public func reset() async {
         lock.withLock { whisper_vad_reset_state(context) }
     }
+
+    /// Milliseconds of speech (frames at or above `threshold`) in a whole utterance. Resets the
+    /// detector before and after, so it can share an instance only with other whole-clip calls.
+    public func speechMilliseconds(in samples: [Float], threshold: Float = 0.5) -> Double {
+        lock.withLock { whisper_vad_reset_state(context) }
+        var speechFrames = 0
+        var index = 0
+        while index < samples.count {
+            let end = min(index + frameSamples, samples.count)
+            if probability(Array(samples[index..<end])) >= threshold { speechFrames += 1 }
+            index = end
+        }
+        lock.withLock { whisper_vad_reset_state(context) }
+        return Double(speechFrames * frameSamples) / AudioFrame.sampleRate * 1000
+    }
 }
