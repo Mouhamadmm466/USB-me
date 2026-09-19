@@ -86,7 +86,11 @@ final class AppModel {
     }
 
     init(arguments: [String] = ProcessInfo.processInfo.arguments) {
+        #if DEVELOPER_MODES
         isDemoMode = arguments.contains("-DemoMode")
+        #else
+        isDemoMode = false
+        #endif
         modelManager = ModelManager()
         let scopes = BookmarkFileScopeStore.standard()
         fileScopes = scopes

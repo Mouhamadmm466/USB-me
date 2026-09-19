@@ -53,6 +53,24 @@ side effect on its own.
     there is no API that takes a runtime string. llama.cpp and whisper.cpp logging is silenced.
 11. **No secrets.** The app has no API keys, accounts or credentials. (Keychain is therefore unused;
     if a secret is ever introduced it must go in the Keychain.)
+12. **The assistant cannot answer itself.** Its own voice reaching the microphone must never become a
+    request or a confirmation:
+    - iOS voice processing (echo cancellation) is on whenever the microphone is open.
+    - While it speaks, a barge-in needs a strict VAD onset, then a quick transcript that contains an
+      interruption keyword the assistant is not itself saying, or at least two words it is not
+      saying (residual echo decodes to fragments of the reply).
+    - Every utterance that began over the assistant (a barge-in, or inside the echo tail) is checked
+      again on its *final* transcript against the reply text and dropped when it matches
+      (`VoiceSessionController`). A spoken "yes" that overlaps "…please say yes or no" is therefore
+      ignored; the user answers after the question.
+13. **ASR hallucinations never approve.** Whisper emits "you", "Thank you" or "Okay." on silence
+    and noise; "okay" would count as a yes. Such transcripts are dropped when the clip is short, or
+    when the Silero speech gate finds less than 250 ms of speech in it. The final-pass vocabulary
+    prompt deliberately contains no affirmation words.
+14. **Partial ASR stays out of decisions.** The turn context is evaluated early (`prime`) while the
+    user speaks, but only the finalized transcript is appended, and the primed state is used only if
+    the final request starts with exactly the primed text (token-for-token); otherwise it is
+    discarded.
 
 ## Prompt injection
 
@@ -64,6 +82,9 @@ side effect on its own.
   (`Docs/EVALUATION.md`).
 
 ## Known residual risks
+
+- Barge-in without effective echo cancellation (e.g. a Bluetooth speaker with no AEC reference):
+  the user's interruption can be missed; the self-transcription guards above still hold.
 
 - ASR mishears a name or number and the user approves without listening. Mitigation: the
   confirmation always includes the resolved full name and the card shows the number.

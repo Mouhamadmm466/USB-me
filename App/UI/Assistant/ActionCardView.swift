@@ -44,6 +44,7 @@ struct ActionCardView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(card.title), waiting for your confirmation")
+        .accessibilityIdentifier("actionCard")
         .task(id: card.expiresAt) { await watchExpiry() }
         .haptic(.impact(weight: .medium), trigger: confirmTaps)
         .haptic(.impact(weight: .light), trigger: cancelTaps)
@@ -83,6 +84,7 @@ struct ActionCardView: View {
         .buttonStyle(.capsule(.prominent))
         .disabled(isExpired)
         .accessibilityHint("Confirms: \(card.title).")
+        .accessibilityIdentifier("actionCard.confirm")
 
         let cancel = Button {
             respond {
@@ -94,6 +96,7 @@ struct ActionCardView: View {
         }
         .buttonStyle(.capsule(.secondary))
         .accessibilityHint("Nothing will be done.")
+        .accessibilityIdentifier("actionCard.cancel")
 
         if dynamicTypeSize.isAccessibilitySize {
             VStack(spacing: Spacing.s + 2) {

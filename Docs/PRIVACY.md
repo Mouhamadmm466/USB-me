@@ -27,6 +27,11 @@ codes — never audio, transcripts, contact names, phone numbers, message text, 
 file names. This is enforced by the logger's type system (`SafeLabel`), and the native runtimes'
 own logging is silenced. Benchmark reports use fixed synthetic phrases, not user data.
 
+Developer builds (Debug/Profile configurations) add launch modes for the benchmark, the on-device
+evaluation and the voice self-test; they use synthetic phrases and fake contacts/calendars and write
+their reports to the app's Documents folder for the developer's Mac to collect. The Release (App
+Store) configuration compiles these modes out.
+
 ## Controls
 
 - **Clear history** (Settings → Privacy) deletes all stored turns.

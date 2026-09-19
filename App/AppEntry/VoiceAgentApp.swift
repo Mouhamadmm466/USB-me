@@ -8,6 +8,9 @@ struct VoiceAgentApp: App {
 
     var body: some Scene {
         WindowGroup {
+            #if DEVELOPER_MODES
+            // Developer launch modes (Debug and Profile configurations only; compiled out of the
+            // Release/App Store build): see Scripts/benchmark_device.sh, eval_device.sh.
             if arguments.contains("-RunBenchmark") {
                 BenchmarkView()
             } else if arguments.contains("-RunEval") {
@@ -23,6 +26,9 @@ struct VoiceAgentApp: App {
             } else {
                 RootView()
             }
+            #else
+            RootView()
+            #endif
         }
     }
 }

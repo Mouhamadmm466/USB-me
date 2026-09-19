@@ -1,4 +1,4 @@
-#if KOKORO_TTS
+#if KOKORO_TTS && DEVELOPER_MODES
 import Agent
 import ASR
 import Audio
@@ -55,7 +55,13 @@ final class VoiceSelfTestController {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("SelfTest", isDirectory: true)
     }
 
-    private func log(_ line: String) { lines.append(line) }
+    private func log(_ line: String) {
+        lines.append(line)
+        // Progress is also written as it happens, so a stalled run can be diagnosed remotely.
+        try? FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
+        let stamped = lines.enumerated().map { "\($0.offset): \($0.element)" }.joined(separator: "\n")
+        try? stamped.write(to: Self.directory.appendingPathComponent("progress.txt"), atomically: true, encoding: .utf8)
+    }
 
     func run() async {
         UIApplication.shared.isIdleTimerDisabled = true
@@ -98,8 +104,10 @@ final class VoiceSelfTestController {
         let whisper = WhisperRuntime(modelURL: whisperURL, speechGateModelURL: vadURL)
         try await whisper.load()
         let vad = try SileroVAD(modelURL: vadURL)
+        log("Loading Nemotron (the first run after a prompt change evaluates the prefix, ~20 s)")
         let nemotron = NemotronRuntime(modelURL: llmURL, stateCacheDirectory: BenchmarkController.llmStateDirectory)
         try await nemotron.prepare(cacheablePrefix: PromptBuilder().cacheablePrefix)
+        log("Loading Kokoro")
         let kokoro = KokoroRuntime(modelURL: weights, voiceURL: voiceURL)
         try await kokoro.warmUp()
 
@@ -169,7 +177,9 @@ final class VoiceSelfTestController {
             configuration: .default
         )
         coordinator.transition(to: .idle, reason: .modelsReady)
+        log("Starting the session")
         guard await voice.start() else { throw SelfTestError.sessionDidNotStart }
+        log("Session started (state \(coordinator.state.rawValue))")
         try await Task.sleep(for: .seconds(1))
 
         func settled() -> Bool {

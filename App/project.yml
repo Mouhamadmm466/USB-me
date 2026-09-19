@@ -5,6 +5,10 @@ options:
     iOS: "18.0"
   createIntermediateGroups: true
   developmentLanguage: en
+configs:
+  Debug: debug
+  Profile: release
+  Release: release
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -72,6 +76,13 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
+      # Profile = Release optimization + developer launch modes (benchmark, on-device evaluation,
+      # voice self-test, design gallery, demo mode). The Release (App Store) build has none.
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS DEVELOPER_MODES"
+        Profile:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS DEVELOPER_MODES"
   # Simulator build for UI development and UI tests. Same sources; no Kokoro (MLX has no
   # simulator support), so speech output is disabled and the UI says so. Never shipped.
   VoiceAgentSim:
@@ -104,6 +115,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
         CODE_SIGNING_ALLOWED: NO
+        # The simulator app is development-only: demo mode and the gallery are always available.
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEVELOPER_MODES"
   VoiceAgentUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -126,6 +139,8 @@ schemes:
         VoiceAgent: all
     run:
       config: Debug
+    profile:
+      config: Profile
     archive:
       config: Release
   VoiceAgentSim:

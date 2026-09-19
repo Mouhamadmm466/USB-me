@@ -1,3 +1,4 @@
+#if DEVELOPER_MODES
 import AgentEval
 import Core
 import DeviceBenchmark
@@ -203,3 +204,4 @@ struct DeviceEvalView: View {
         .task { await controller.run() }
     }
 }
+#endif

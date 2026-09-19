@@ -240,7 +240,7 @@ public enum ToolCatalog {
         ),
         ToolSpec(
             id: .openFile,
-            promptDescription: "Open or show one file from the shared folders by its name (\"open the budget\", \"show me my resume\").",
+            promptDescription: "Open or show one document, photo or file from the shared folders by its name (\"open the budget\", \"show me my resume\").",
             arguments: [
                 ToolArgumentSpec("file_query", .text(maxLength: 120), required: true, "words from the file name"),
             ],

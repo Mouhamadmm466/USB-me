@@ -97,6 +97,7 @@ struct AssistantBottomBar: View {
             }
             .buttonStyle(.glassCircle(diameter: 50))
             .accessibilityLabel("Type a request")
+            .accessibilityIdentifier("typeRequest")
             .accessibilityShowsLargeContentViewer()
 
             Spacer(minLength: Spacing.l)
@@ -126,6 +127,7 @@ struct AssistantBottomBar: View {
                     .submitLabel(.send)
                     .onSubmit(send)
                     .accessibilityLabel("Request")
+                    .accessibilityIdentifier("requestField")
                 Button(action: send) {
                     Image(systemName: "arrow.up")
                         .font(.system(size: 15, weight: .bold))
@@ -137,6 +139,7 @@ struct AssistantBottomBar: View {
                 .buttonStyle(.plain)
                 .disabled(!canSend)
                 .accessibilityLabel("Send")
+                .accessibilityIdentifier("sendRequest")
             }
             .padding(.leading, 18)
             .padding(.trailing, 7)

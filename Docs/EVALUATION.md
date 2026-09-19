@@ -225,15 +225,37 @@ change the dataset, edit the generator and rerun it; `--check` verifies the comm
 
 ## Running against the real agent
 
-_Lead's section — runner usage, run configuration and results._
+Two runners share the harness (`CaseRunner`: real `AgentCoordinator`, prompt, grammar, validator,
+resolver, confirmation manager and executor; fake contacts/calendar/messages from the case's fixture):
 
 ```sh
-swift run -c release agent-eval run --model ModelCache/NVIDIA-Nemotron3-Nano-4B-Q4_K_M.gguf \
-    --state-cache <dir> [--limit N | --category NAME | --tag TAG] [--resume RUN_DIR]
+# On the iPhone (Metal, the production runtime; ~2 s per case). Resumable: rerun with the same --run.
+Scripts/eval_device.sh --run device-full            # all 3,249 cases, scored on the Mac at the end
+Scripts/eval_device.sh --run device-300 --limit 300 # stratified subset
+
+# On a Mac (CPU; 20–60 s per case on the Intel build Mac, so use subsets)
+swift run -c release agent-eval run --state-cache ModelCache/llm-state [--limit N | --category NAME | --tag TAG] [--resume RUN_DIR]
 swift run -c release agent-eval score --run RUN_DIR
 ```
 
-Results: _to be filled in by the lead (run id, model/prompt version, headline metrics, release gate)._
+`--limit N` picks a deterministic stratified subset (round-robin across categories), so small runs
+cover every category and two runs with the same N use the same cases.
+
+### Results
+
+| Run | Host | Prompt | Cases | Case pass | Tool selection | Argument (fields) | Confirmation | False consequential executions | Release gate |
+|---|---|---|---:|---:|---:|---:|---:|---:|---|
+| `run-2026-09-19T163410Z` | Mac CPU | 2026-09-19.1 | 30 (stratified) | 76.7% | 77.5% | 80.0% | 100% | 0 | PASS (4 release cases) |
+| `run-2026-09-19T170516Z` | Mac CPU | 2026-09-19.2 | 30 (same cases) | 86.7% | 85.0% | 89.2% | 100% | 0 | PASS (4 release cases) |
+
+What changed between the two prompts (found by the first run): the model answered "am I busy
+tomorrow" from nothing instead of reading the calendar (rule 7 and a calendar-question example),
+added a time the user never said to a date-only reminder (rule 1, date-copy example), and opened
+a file request with the wrong tool (open_file description and example). Few-shot examples use
+wording and content that do not occur in the dataset.
+
+The full-suite run on the iPhone is pending (the phone must stay connected and in the foreground for
+about two hours); its report will be added here with per-category results.
 
 ## Audio evaluation plan
 

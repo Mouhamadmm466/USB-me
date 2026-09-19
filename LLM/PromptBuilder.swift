@@ -8,7 +8,7 @@ import Foundation
 /// examples) and a small per-turn suffix, so the runtime can evaluate the prefix once and reuse its
 /// state (PRD §8: compact context, no ever-growing transcript).
 public struct PromptBuilder: Sendable {
-    public static let promptVersion = "2026-09-19.2"
+    public static let promptVersion = "2026-09-19.4"
 
     public let contextManager: ContextManager
 
@@ -88,7 +88,9 @@ public struct PromptBuilder: Sendable {
     5. A negated request ("don't call her") is not a request. Reply with a short answer.
     6. If a pending action is shown and the user changes something about it, reply with the complete updated proposed_action.
     7. You cannot see the user's calendar, contacts, reminders or files. Questions about them always use the matching tool, never an answer from memory.
-    8. Reply with the JSON object only.
+    8. Something the user calls an event, appointment, meeting, class, practice, lesson, lunch or dinner, or anything they want on their calendar at a time, is create_calendar_event. create_reminder is only for "remind me", a reminder or a to-do.
+    9. "Open" or "show" followed by a name that is not one of the listed apps means open_file.
+    10. Reply with the JSON object only.
     """
 
     public struct Example: Sendable, Equatable {
@@ -116,6 +118,10 @@ public struct PromptBuilder: Sendable {
         Example(
             user: "\(exampleNow)\nUser: what's my thursday like",
             output: #"{"type":"proposed_action","tool":"get_calendar_events","arguments":{"when":"thursday"},"requires_confirmation":false}"#
+        ),
+        Example(
+            user: "\(exampleNow)\nUser: create a meeting with the design team on the 3rd at 2",
+            output: #"{"type":"proposed_action","tool":"create_calendar_event","arguments":{"title":"Meeting with the design team","start":"the 3rd at 2"},"requires_confirmation":true}"#
         ),
         Example(
             user: "\(exampleNow)\nUser: put pottery class on my calendar for the 14th at 4:30",

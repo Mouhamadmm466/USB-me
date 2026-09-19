@@ -41,11 +41,11 @@ if [[ -z "$DEVICE" ]]; then
   [[ -n "$DEVICE" ]] || { echo "No connected iPhone found (xcrun devicectl list devices)." >&2; exit 1; }
 fi
 
-APP="$ROOT/.build/xcode-device/Build/Products/Release-iphoneos/VoiceAgent.app"
+APP="$ROOT/.build/xcode-device/Build/Products/Profile-iphoneos/VoiceAgent.app"
 if [[ $SKIP_BUILD == 0 ]]; then
   UDID="$(xcrun devicectl device info details --device "$DEVICE" 2>/dev/null | awk '/ udid:/ {print $NF; exit}')"
   log "Building Release device app"
-  xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -configuration Release \
+  xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -configuration Profile \
     -destination "platform=iOS,id=$UDID" -derivedDataPath .build/xcode-device -allowProvisioningUpdates build | tail -3
   log "Installing"
   xcrun devicectl device install app --device "$DEVICE" "$APP" >/dev/null

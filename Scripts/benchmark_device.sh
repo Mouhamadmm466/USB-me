@@ -32,10 +32,10 @@ fi
 UDID="$(xcrun devicectl device info details --device "$DEVICE" 2>/dev/null | awk '/ udid:/ {print $NF; exit}')"
 log "Device $DEVICE (udid $UDID)"
 
-APP="$ROOT/.build/xcode-device/Build/Products/Release-iphoneos/VoiceAgent.app"
+APP="$ROOT/.build/xcode-device/Build/Products/Profile-iphoneos/VoiceAgent.app"
 if [[ $SKIP_BUILD == 0 ]]; then
   log "Building Release device app"
-  xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -configuration Release \
+  xcodebuild -project App/VoiceAgent.xcodeproj -scheme VoiceAgent -configuration Profile \
     -destination "platform=iOS,id=$UDID" -derivedDataPath .build/xcode-device -allowProvisioningUpdates build \
     | tail -3
 fi

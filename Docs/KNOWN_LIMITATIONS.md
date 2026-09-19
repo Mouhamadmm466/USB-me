@@ -28,6 +28,24 @@ the chosen models, or what could be verified in this environment.
 - Background operation is not supported: a session stops when the app leaves the foreground;
   model downloads pause in the background and resume from the last byte on return.
 
+## Latency (measured on iPhone 15 Pro, `Docs/DEVICE_MATRIX.md`)
+
+- Nemotron needs 1.3 s (P50) to produce a complete structured result, above the PRD's 750 ms
+  target: each sampled token costs 77 ms on the A17 Pro GPU and a command needs 5–15 of them.
+  End of speech → first audio is about 2.9 s for a long dictated message. Speculative decoding
+  was implemented and measured, and is off because it is slower on this GPU.
+- The first launch after install spends ~1 minute compiling GPU shaders and evaluating the prompt
+  prefix; later launches warm up in ~6 s.
+
+## Voice interaction
+
+- A reply spoken *over* the assistant that consists of words the assistant is saying ("yes" while
+  it says "please say yes or no") is ignored as possible echo; answer after the question.
+- Barge-in relies on iOS echo cancellation. On routes without it (some Bluetooth speakers) the
+  assistant may not notice being interrupted; tapping the orb always stops it.
+- Whisper base.en transcribes British spellings for British speakers ("mum"); contact matching is
+  fuzzy enough for this, but exact-name matches rank higher.
+
 ## Models
 
 - Whisper base.en can mis-hear uncommon names; the assistant always reads back the resolved full

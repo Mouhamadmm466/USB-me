@@ -78,7 +78,7 @@ public struct ActionSummarizer: Sendable {
             let newStart = changes.newStartDate ?? event.startDate
             let newEnd = changes.newEndDate ?? (changes.newStartDate.map { $0.addingTimeInterval(event.endDate.timeIntervalSince(event.startDate)) } ?? event.endDate)
             if changes.newStartDate != nil || changes.newEndDate != nil {
-                fields.append(.init(label: "New time", value: cardWhen(newStart, newEnd, allDay: event.isAllDay)))
+                fields.append(.init(label: "New time", value: cardWhen(newStart, newEnd, allDay: staysAllDay(event, changes))))
             }
             if let newTitle = changes.newTitle { fields.append(.init(label: "New name", value: newTitle)) }
             if let newLocation = changes.newLocation { fields.append(.init(label: "New place", value: newLocation)) }
@@ -320,12 +320,19 @@ public struct ActionSummarizer: Sendable {
         return "\(shortDay(start)) \(time(start)) – \(shortDay(end)) \(time(end))"
     }
 
+    /// An all-day event moved to a clock time becomes a timed event (as `CalendarStore` applies
+    /// it), so the read-back must say the time.
+    func staysAllDay(_ event: EventReference, _ changes: EventChanges) -> Bool {
+        guard event.isAllDay else { return false }
+        return [changes.newStartDate, changes.newEndDate].compactMap { $0 }.allSatisfy { clock.calendar.startOfDay(for: $0) == $0 }
+    }
+
     func updateDescription(_ event: EventReference, _ changes: EventChanges) -> String {
         var parts: [String] = []
         if let newStart = changes.newStartDate {
             let duration = event.endDate.timeIntervalSince(event.startDate)
             let newEnd = changes.newEndDate ?? newStart.addingTimeInterval(duration)
-            parts.append("move \u{201C}\(event.title)\u{201D} to \(eventWhen(newStart, newEnd, allDay: event.isAllDay))")
+            parts.append("move \u{201C}\(event.title)\u{201D} to \(eventWhen(newStart, newEnd, allDay: staysAllDay(event, changes)))")
         } else if let newEnd = changes.newEndDate {
             parts.append("change \u{201C}\(event.title)\u{201D} to end at \(time(newEnd))")
         }

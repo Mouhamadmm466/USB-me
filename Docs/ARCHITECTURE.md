@@ -74,11 +74,42 @@ ActionSummarizer ─▶ SpeechChunker ─▶ Kokoro ─▶ AudioEngine playback 
 See `Core/AgentState.swift` (`AgentStateMachine.allowed`). `error` is reachable from every state;
 all other transitions are enumerated and unit tested (`Tests/Unit/Core`).
 
+## Nemotron runtime (LLM/NemotronRuntime.swift)
+
+- **Prefix state cache.** The static prompt (system rules, tool list, few-shot examples, ~2.4K
+  tokens) is evaluated once; the resulting sequence state (4 attention layers' KV cache + Mamba-2
+  recurrent state) is snapshotted in memory and on disk, keyed by model, prompt and llama.cpp
+  build. Every turn restores it and evaluates only the turn suffix (0.16 s load vs 17.7 s cold).
+- **Priming.** At speech onset the voice loop asks the coordinator to `prime` the runtime with the
+  turn context up to "User:" (clock, pending action, recent turns). After the endpoint only the
+  utterance and the reply opening are evaluated; the primed state is used only when the final
+  request starts with exactly the primed tokens. No partial transcript is involved.
+- **Grammar + jump-forward.** Greedy decoding under a GBNF grammar generated from `ToolCatalog`.
+  An NFA of the same language finds text the grammar forces (keys, punctuation, the rest of an enum
+  value, `requires_confirmation` fixed per tool) and evaluates it in the same decode call as the
+  sampled token; the reply opening `{"type":"` is evaluated with the prompt.
+- **Speculative decoding (off).** Prompt-lookup drafting from the utterance with llama.cpp's
+  recurrent-state rollback (`n_rs_seq`) is implemented and tested, but disabled: on the A17 Pro,
+  2–8 token decode calls cost nearly linearly more than one token (`Docs/DEVICE_MATRIX.md`).
+
+## Voice loop safety (Agent/VoiceLoop/VoiceSessionController.swift)
+
+- Utterances enter the agent only after endpointing, as `FinalTranscript`s.
+- While the assistant speaks, frames go to `EchoBargeInController`: strict VAD onset → duck TTS →
+  quick partial of the onset → confirm only for an interruption keyword the assistant is not saying
+  or ≥ 2 words it is not saying; otherwise unduck.
+- An utterance that began over the assistant (barge-in or echo tail) is compared again, on its final
+  transcript, with the reply text and dropped if it matches: the assistant's own voice can never
+  answer its own question.
+- Whisper hallucinations on noise ("you", "Okay.") are dropped by length or by a Silero speech gate.
+
 ## Resource scheduling (PRD §14)
 
-- While the user speaks: ASR partials only (LLM idle, TTS idle).
+- While the user speaks: ASR partials; one short LLM priming call (~0.2 s GPU) at speech onset.
 - After endpoint: Whisper final, then Nemotron (evaluated suffix only; system prefix state cached).
 - While speaking: Kokoro synthesizes the next chunk; LLM generation is not run concurrently unless
   measured safe on the device.
-- Nemotron stays resident during a session; memory warnings unload TTS first, then the LLM.
-- Thermal `serious` ⇒ shorter partial cadence and CPU-friendly settings; `critical` ⇒ stop session.
+- Nemotron stays resident during a session; a memory warning unloads Kokoro when it is not
+  speaking (it reloads on the next reply, ~1 s). Measured peak with everything resident: 1.27 GB.
+- Thermal `critical` ⇒ the session stops (the user can start it again); every change is logged.
+  The on-device evaluation pauses at `critical` until the phone cools down.
