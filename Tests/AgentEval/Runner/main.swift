@@ -48,6 +48,15 @@ func makeRuntime() -> NemotronRuntime {
     return NemotronRuntime(modelURL: URL(fileURLWithPath: value("--model") ?? defaultModel), config: config, stateCacheDirectory: cache)
 }
 
+/// The Mac model (e.g. "MacBookPro16,2"), not the host name: reports get committed and shared.
+func hardwareModel() -> String {
+    var size = 0
+    sysctlbyname("hw.model", nil, &size, nil, 0)
+    var model = [CChar](repeating: 0, count: max(size, 1))
+    sysctlbyname("hw.model", &model, &size, nil, 0)
+    return String(decoding: model.prefix(while: { $0 != 0 }).map { UInt8(bitPattern: $0) }, as: UTF8.self)
+}
+
 func gitCommit() -> String? {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
@@ -101,7 +110,7 @@ func runCommand() async throws {
         startedAt: Date(), modelIdentifier: runtime.modelIdentifier,
         modelSHA256: "be5d9a656a51922f24f1f09a759cebb694e1f5d9728bf0ef9f8c972c5a0b5ef2",
         promptVersion: PromptBuilder.promptVersion, runtime: "llama.cpp b11046 (CPU on this host)",
-        gitCommit: gitCommit(), host: ProcessInfo.processInfo.hostName, threads: value("--threads").flatMap(Int.init),
+        gitCommit: gitCommit(), host: hardwareModel(), threads: value("--threads").flatMap(Int.init),
         caseCount: cases.count, filters: filters
     )
     let encoder = JSONEncoder()
