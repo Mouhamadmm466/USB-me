@@ -2,11 +2,13 @@ import Core
 import Foundation
 import Telemetry
 
-/// The four output types the model may produce (PRD §7).
+/// The output types the model may produce (PRD §7, extended in V2 with `task`).
 public enum AgentOutputType: String, Codable, Sendable, CaseIterable, SafeLabelConvertible {
     case answer
     case clarification
     case proposedAction = "proposed_action"
+    /// A job: something that takes several steps and produces something, rather than one tool call.
+    case task
     case unsupported
 }
 
@@ -18,6 +20,9 @@ public enum AgentOutput: Sendable, Equatable {
     case unsupported(speech: String)
     /// `modelRequestedConfirmation` is recorded for evaluation only; policy comes from `RiskLevel`.
     case proposedAction(ProposedToolCall, modelRequestedConfirmation: Bool)
+    /// The request is a job, not a command: `outcome` is what the user wants to end up with, in
+    /// their own terms. Planning it is a separate, scoped pass — the model does not plan here.
+    case task(outcome: String)
 
     public var type: AgentOutputType {
         switch self {
@@ -25,14 +30,21 @@ public enum AgentOutput: Sendable, Equatable {
         case .clarification: .clarification
         case .unsupported: .unsupported
         case .proposedAction: .proposedAction
+        case .task: .task
         }
     }
 
     public var speech: String? {
         switch self {
         case let .answer(speech), let .clarification(speech), let .unsupported(speech): speech
-        case .proposedAction: nil
+        case .proposedAction, .task: nil
         }
+    }
+
+    /// What the user wants to end up with, when this is a job.
+    public var outcome: String? {
+        if case let .task(outcome) = self { return outcome }
+        return nil
     }
 }
 

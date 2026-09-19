@@ -13,7 +13,16 @@ public struct DemoLanguageModel: LanguageModel {
     public func prepare(cacheablePrefix: String) async throws {}
 
     public func generate(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error> {
-        let output = Self.respond(to: Self.utterance(in: request), hasPending: request.suffix.contains("Pending action"))
+        // The demo model answers three contracts, the same as the real one: a turn, a plan for a
+        // job, and the prose of an artifact. Which is being asked for is visible in the request.
+        let output: String
+        if request.suffix.contains("Capabilities:") {
+            output = Self.plan(for: request)
+        } else if request.suffix.contains("Sections, in order:") {
+            output = Self.sections(for: request)
+        } else {
+            output = Self.respond(to: Self.utterance(in: request), hasPending: request.suffix.contains("Pending action"))
+        }
         return AsyncThrowingStream { continuation in
             continuation.yield(.text(output))
             continuation.yield(.completed(LLMGenerationStats()))
@@ -28,11 +37,40 @@ public struct DemoLanguageModel: LanguageModel {
         return text
     }
 
+    /// A two-step plan: read what is known, then write it down. Enough to show the whole path.
+    static func plan(for request: LLMRequest) -> String {
+        let canWrite = request.suffix.contains("write_artifact(")
+        let canRead = request.suffix.contains("search_knowledge(")
+        var steps: [String] = []
+        if canRead {
+            steps.append(#"{"do":"search_knowledge","why":"Read what you've shared","arguments":{"query":"what this is about"}}"#)
+        }
+        steps.append(#"{"do":"search_intelligence","why":"Pull what's already known","arguments":{"query":"the project"}}"#)
+        if canWrite {
+            steps.append(#"{"do":"write_artifact","why":"Write it up for you","arguments":{"title":"What I found","kind":"brief","about":"what you asked about"}}"#)
+        }
+        return #"{"title":"What I found","steps":[\#(steps.joined(separator: ","))]}"#
+    }
+
+    /// One plain sentence per section, so the demo artifact reads like a document.
+    static func sections(for request: LLMRequest) -> String {
+        let count = request.suffix
+            .components(separatedBy: "Sections, in order: ").last?
+            .components(separatedBy: ";").count ?? 1
+        let bodies = (0..<max(1, count)).map { _ in #""This is a demo, so there is nothing real to put here.""# }
+        return #"{"sections":[\#(bodies.joined(separator: ","))]}"#
+    }
+
     static func respond(to utterance: String, hasPending: Bool) -> String {
         let text = utterance.trimmingCharacters(in: .whitespacesAndNewlines)
         let lower = text.lowercased()
         func json(_ value: String) -> String {
             value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        }
+        if lower.hasPrefix("prep me") || lower.hasPrefix("prepare me")
+            || lower.contains("study plan") || lower.contains("where are we")
+            || lower.hasPrefix("look up") || lower.hasPrefix("summarize") {
+            return #"{"type":"task","outcome":"\#(json(text))"}"#
         }
         if let range = lower.range(of: #"^(text|message|tell)\s+(\w+)\s+(that\s+)?"#, options: .regularExpression) {
             let parts = lower[range].split(separator: " ")

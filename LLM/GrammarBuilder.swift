@@ -15,10 +15,13 @@ import Foundation
 public enum GrammarBuilder {
     public static func agentOutputGrammar(tools: [ToolSpec] = ToolCatalog.all) -> String {
         var rules: [String] = []
-        rules.append(#"root ::= answer | clarification | unsupported | proposal"#)
+        rules.append(#"root ::= answer | clarification | unsupported | task | proposal"#)
         rules.append(#"answer ::= "{\"type\":\"answer\",\"speech\":" speech "}""#)
         rules.append(#"clarification ::= "{\"type\":\"clarification\",\"speech\":" speech "}""#)
         rules.append(#"unsupported ::= "{\"type\":\"unsupported\",\"speech\":" speech "}""#)
+        // A job, not a command: the outcome the user wants, in their words. Planning is a separate,
+        // scoped pass — nothing here decides what will actually be done.
+        rules.append(#"task ::= "{\"type\":\"task\",\"outcome\":" speech "}""#)
         rules.append(#"proposal ::= "{\"type\":\"proposed_action\"," call "}""#)
         rules.append("call ::= " + tools.map { "call-\(ruleName($0.id))" }.joined(separator: " | "))
 

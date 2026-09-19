@@ -66,6 +66,21 @@ struct RootView: View {
         .sheet(item: $model.exportedFile) { file in
             ShareSheet(items: [file])
         }
+        .sheet(item: $model.openedArtifact) { opened in
+            NavigationStack {
+                ArtifactScreen(
+                    artifact: opened.artifact,
+                    sources: opened.sources,
+                    onShare: { model.shareArtifact(opened.artifact) },
+                    onForget: { model.forgetArtifact(opened.artifact.id) }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Done") { model.openedArtifact = nil }
+                    }
+                }
+            }
+        }
         .fileImporter(
             isPresented: $model.isDocumentPickerPresented,
             allowedContentTypes: [.pdf, .plainText, .rtf, .html, .text, .data],

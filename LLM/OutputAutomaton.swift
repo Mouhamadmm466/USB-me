@@ -123,6 +123,7 @@ enum AgentOutputPattern {
             .sequence([.literal(#"{"type":"answer","speech":"#), string, .literal("}")]),
             .sequence([.literal(#"{"type":"clarification","speech":"#), string, .literal("}")]),
             .sequence([.literal(#"{"type":"unsupported","speech":"#), string, .literal("}")]),
+            .sequence([.literal(#"{"type":"task","outcome":"#), string, .literal("}")]),
             .sequence([
                 .literal(#"{"type":"proposed_action","#),
                 .alternation(tools.map(call)),

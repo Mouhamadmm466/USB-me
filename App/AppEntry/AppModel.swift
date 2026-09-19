@@ -65,6 +65,8 @@ final class AppModel {
     var exportedFile: URL?
     /// Presents the Files picker for importing a document.
     var isDocumentPickerPresented = false
+    /// The artifact being read, with the sources it was built from.
+    var openedArtifact: ArtifactViewState?
     @ObservationIgnored private(set) var intelligence: PersonalIntelligence?
     @ObservationIgnored let presenter = IntelligencePresenter()
 
@@ -228,6 +230,7 @@ final class AppModel {
         configuration.continueListeningAfterResponse = settings.continueListening
         let intelligence = makeIntelligence(languageModel: languageModel)
         setIntelligence(intelligence)
+        let jobs = makeJobService(languageModel: languageModel, intelligence: intelligence)
         let coordinator = AgentCoordinator(
             dependencies: AgentDependencies(
                 languageModel: languageModel,
@@ -238,6 +241,7 @@ final class AppModel {
                 capabilities: DeviceCapabilities(canSendText: { await messages.canSendText() },
                                                  canPlaceCalls: { await calls.canPlaceCalls() }),
                 intelligence: intelligence,
+                jobs: jobs,
                 clock: AgentClock(),
                 metrics: .shared
             ),
@@ -325,7 +329,22 @@ final class AppModel {
                 Task { await self.refreshSettingsState() }
             },
             openSystemSettings: { _ in AppModel.openSystemSettings() },
-            dismissPermission: { [weak self] in self?.coordinator?.dismissPermissionPrompt() }
+            dismissPermission: { [weak self] in self?.coordinator?.dismissPermissionPrompt() },
+            approveJob: { [weak self] id in
+                guard let self, let coordinator else { return }
+                Task { @MainActor in
+                    await coordinator.approveJob(id: id)
+                    await self.refreshIntelligence()
+                }
+            },
+            cancelJob: { [weak self] id in
+                guard let self, let coordinator else { return }
+                Task { @MainActor in
+                    await coordinator.cancelJob(id: id)
+                    await self.refreshIntelligence()
+                }
+            },
+            openArtifact: { [weak self] id in self?.openArtifact(id) }
         )
     }
 

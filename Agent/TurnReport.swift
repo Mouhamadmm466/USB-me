@@ -1,5 +1,6 @@
 import Core
 import Foundation
+import Intelligence
 import LLM
 
 /// What the agent did in response to one user utterance. Consumed by tests, the evaluation
@@ -41,6 +42,8 @@ public struct TurnReport: Sendable, Equatable {
     /// Size of the personal-context block added to the prompt; 0 when the utterance named nothing
     /// the intelligence knows, which is the common case.
     public var personalContextTokens = 0
+    /// The job this turn planned or ran, if it was one.
+    public var plan: Plan?
 
     public init() {}
 

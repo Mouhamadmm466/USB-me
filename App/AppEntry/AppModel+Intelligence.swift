@@ -1,6 +1,7 @@
 import Agent
 import Core
 import Foundation
+import LLM
 import Intelligence
 import SwiftUI
 import Telemetry
@@ -33,6 +34,32 @@ extension AppModel {
             PrivacySafeLogger.shared.log(.error(domain: "intelligence", code: "store_open_failed"))
             return nil
         }
+    }
+
+    /// Planning and running jobs. Everything stays local: the runtime's executors reach the user's
+    /// own documents and world, and nothing else exists yet.
+    func makeJobService(
+        languageModel: any LanguageModel, intelligence: PersonalIntelligence?
+    ) -> JobService? {
+        guard let intelligence else { return nil }
+        let writer = LanguageModelArtifactWriter(
+            model: languageModel, store: intelligence.store, logger: .shared
+        )
+        let runtime = AgentRuntime(
+            store: intelligence.store,
+            executors: [IntelligenceStepExecutor(
+                intelligence: intelligence, artifacts: writer, logger: .shared
+            )],
+            logger: .shared
+        )
+        return JobService(
+            store: intelligence.store,
+            planner: Planner(model: languageModel, logger: .shared),
+            runtime: runtime,
+            // Nothing in V2 reaches the network yet, so availability is the honest offline one.
+            availability: { .offline },
+            logger: .shared
+        )
     }
 
     // MARK: Reading
@@ -113,6 +140,40 @@ extension AppModel {
             )
         } catch {
             PrivacySafeLogger.shared.log(.error(domain: "intelligence", code: "detail_failed"))
+        }
+    }
+
+    /// Opens something the assistant wrote. Read from the store, so it is the same document the
+    /// job actually produced — not a fresh generation.
+    func openArtifact(_ id: UUID) {
+        guard let intelligence else { return }
+        Task { @MainActor in
+            guard let artifact = try? await intelligence.store.artifact(id) else { return }
+            let sources = (try? await intelligence.store.entities(artifact.sourceIDs))?.map(\.title) ?? []
+            openedArtifact = ArtifactViewState(artifact: artifact, sources: sources)
+            selectedTab = .activity
+        }
+    }
+
+    /// Writes the artifact to a file the user can keep or send on.
+    func shareArtifact(_ artifact: Artifact) {
+        let name = artifact.title.replacingOccurrences(of: "/", with: "-")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name).md")
+        do {
+            try Data(artifact.markdown.utf8).write(to: url, options: .atomic)
+            exportedFile = url
+        } catch {
+            PrivacySafeLogger.shared.log(.error(domain: "intelligence", code: "artifact_share_failed"))
+        }
+    }
+
+    func forgetArtifact(_ id: UUID) {
+        guard let intelligence else { return }
+        Task { @MainActor in
+            try? await intelligence.store.forgetArtifact(id)
+            openedArtifact = nil
+            entityDetails[id] = nil
+            await refreshIntelligence()
         }
     }
 
