@@ -3,7 +3,7 @@
 Living status for the offline iPhone voice agent. Updated continuously while building.
 Source of truth for requirements: `Offline_iPhone_Voice_Agent_PRD_and_Autonomous_Build_Prompt.docx` (PRD).
 
-_Last updated: 2026-09-19 (session 1, evening)._
+_Last updated: 2026-09-19 (session 2: V2 — the personal intelligence)._
 
 ## Environment facts that shape the plan
 
@@ -128,12 +128,44 @@ Evaluation (Mac CPU smoke, 30 stratified cases, prompt v1): 76.7% case pass, rel
 
 ## TestFlight
 
+- **2026-09-19: build 2.0.0 (2) uploaded to App Store Connect** — the V2 build (personal
+  intelligence, jobs, artifacts, attention). Archive validated and uploaded with
+  `xcodebuild -exportArchive`; App Store Connect accepted the package and began processing.
+  779 tests pass, the Release configuration builds free of developer launch modes, and the privacy
+  manifest already covers the disk-space and file-timestamp reads the intelligence store makes.
 - **2026-09-19: build 1.0.0 (1) uploaded to App Store Connect** (`xcodebuild -exportArchive` with
   `App/ExportOptions-AppStore.plist`; upload-time package and SPI analysis passed with no warnings).
   App record and internal testing are managed by the owner in App Store Connect.
 - Before the upload: app icons re-encoded without an alpha channel (rejected otherwise), privacy
   manifest added, Release configuration verified free of developer launch modes.
 - Next upload: bump `CURRENT_PROJECT_VERSION` in `App/project.yml` (build numbers must increase).
+
+## V2 — the personal intelligence (this session)
+
+Built on branch `v2`, extending V1 rather than replacing it. See
+[Docs/INTELLIGENCE.md](Docs/INTELLIGENCE.md) and `V2_IMPLEMENTATION_PLAN.md`.
+
+- [x] **Intelligence store** — entities + an assertion log with provenance, authority, validity and
+  state; entity columns are a materialized view of the winning statements (schema v1–v5, FTS5).
+- [x] **Memory pipeline** — deterministic pre-filter, grammar generated from the predicate catalog,
+  validator, policy (accept · ask · drop), entity resolution, conflict resolution, activity + undo.
+- [x] **Personal context** — entity linking, budgeted retrieval, knowledge passages; empty for any
+  utterance that names nothing known, so V1's latency path is untouched.
+- [x] **Knowledge** — PDF/text/Markdown/RTF/DOCX/HTML parsing in-process, heading-aware chunking,
+  FTS5 BM25 retrieval with recency and project nudges.
+- [x] **Capabilities, playbooks, plans** — a registry over V1's tools plus V2's own, scope decided
+  before the model runs, plan grammar built from that scope, plans persisted and resumable.
+- [x] **Agent runtime** — one step at a time, checkpointed, with step/attempt/wall-clock/thermal
+  limits; a question to the user is a stopping point, not a guess.
+- [x] **Artifacts** — Markdown in a Swift-owned skeleton, versioned, with sources.
+- [x] **UI** — five tabs (Home, Projects, Ask, Memory, Activity), job cards, artifact reader,
+  entity detail with provenance, export and delete.
+- [x] **Attention** — deterministic rules for what needs the user, shared by Home and the spoken
+  answer.
+- [x] **Evaluation** — `Tests/IntelligenceEval`: 28 hand-written cases across six suites, runnable
+  deterministically or against the real model (`agent-eval intelligence`).
+- [ ] **Not built yet**: network policy and web research (PRD phases 9–10), connected services (11),
+  the share extension (12). Everything V2 does today is local.
 
 ## Not done (testing stopped at the owner's request)
 
