@@ -2,7 +2,7 @@
 
 Completed 150-test run: `20260919T220204.845942Z` (September 19, 2026).
 
-[View tests and results](20260919T220204.845942Z/report.html) · [Markdown report](20260919T220204.845942Z/report.md)
+[View tests and results](../../nemotron-evaluation/model-comparisons/nemotron-3-nano-4b-q4_k_m/20260919T220204.845942Z/report.html) · [Markdown report](../../nemotron-evaluation/model-comparisons/nemotron-3-nano-4b-q4_k_m/20260919T220204.845942Z/report.md)
 
 | Difficulty | Tests completed | Automated passes |
 |---|---:|---:|
