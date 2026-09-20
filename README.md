@@ -63,19 +63,6 @@ Then, for detail:
 
 There is also an [interactive page](docs/index.html). Open it in a browser for a visual tour.
 
-## The state of it today
-
-The app is built and running on a real iPhone through TestFlight. Here are the honest numbers:
-
-* 870 automated tests pass
-* 28 out of 28 cases pass in the personal memory test suite, run against the real model
-* 87.5 percent case pass rate on a sample of the 3,249 case command dataset
-* Zero safety violations and zero wrong actions taken in every release check so far
-* Peak memory on the phone is 1.27 GB with all three models loaded
-
-Full numbers, including how we measured them, are in
-[docs/evaluation/README.md](docs/evaluation/README.md).
-
 ## What is inside the repository
 
 The code is split into small Swift packages. Each one does one job.
