@@ -87,6 +87,20 @@ final class AppModel {
         )
     }
 
+    func applyIngestion(calendar: Bool, reminders: Bool) {
+        settings.ingestCalendar = calendar
+        settings.ingestReminders = reminders
+        persistSettings()
+    }
+
+    /// The EventKit adapters the ingestion sources read through — the same ones the tools use, so
+    /// what the assistant sees and what the world model keeps can never disagree.
+    func toolEnvironmentForIngestion() -> (calendar: any CalendarStore, reminders: any ReminderStore)? {
+        let environment = isDemoMode ? demoEnvironment : systemToolEnvironment()
+        guard let environment else { return nil }
+        return (environment.calendar, environment.reminders)
+    }
+
     func applyNetworkMode(_ mode: NetworkMode) {
         settings.networkMode = mode.rawValue
         persistSettings()
@@ -104,7 +118,7 @@ final class AppModel {
 
     @ObservationIgnored private let modelManager: ModelManager
     @ObservationIgnored private let fileScopes: BookmarkFileScopeStore
-    @ObservationIgnored private let permissions: PermissionManager
+    @ObservationIgnored let permissions: PermissionManager
     @ObservationIgnored private var container: ModelContainer?
     @ObservationIgnored private var sessionStore: SessionStore?
     @ObservationIgnored private var settingsStore: SettingsStore?
@@ -113,6 +127,8 @@ final class AppModel {
     @ObservationIgnored private var tasks: [Task<Void, Never>] = []
     @ObservationIgnored private var benchmarkTask: Task<Void, Never>?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    /// Demo mode's fake tool world, so the ingestion switches do something visible there too.
+    @ObservationIgnored private var demoEnvironment: ToolEnvironment?
 
     struct Runtimes {
         var whisper: WhisperRuntime?
@@ -269,7 +285,10 @@ final class AppModel {
             Task { @MainActor in await self.refreshIntelligence() }
         }
         self.coordinator = coordinator
-        Task { @MainActor in await refreshIntelligence() }
+        Task { @MainActor in
+            await syncIngestion()
+            await refreshIntelligence()
+        }
         if let whisper = runtimes.whisper, let vad = runtimes.vad {
             let contacts = environment.contacts
             let permissions = permissions
@@ -308,10 +327,20 @@ final class AppModel {
                 ContactRecord(identifier: "demo-priya", givenName: "Priya", familyName: "Patel",
                               phones: [LabeledPhone(label: "mobile", number: "+1 (555) 010-2002")]),
             ],
-            events: [EventReference(eventIdentifier: "demo-sync", title: "Team sync",
-                                    startDate: now.addingTimeInterval(86_400), endDate: now.addingTimeInterval(88_200))],
+            events: [
+                EventReference(eventIdentifier: "demo-sync", title: "Team sync",
+                               startDate: now.addingTimeInterval(86_400), endDate: now.addingTimeInterval(88_200)),
+                EventReference(eventIdentifier: "demo-review", title: "Beta review with Sarah",
+                               startDate: now.addingTimeInterval(3 * 86_400),
+                               endDate: now.addingTimeInterval(3 * 86_400 + 3_600), location: "Room 3"),
+            ],
             clock: AgentClock()
         )
+        demoEnvironment = suite.environment
+        Task { await suite.reminders.seed([
+            "demo-deck": ReminderDraft(title: "Send Sarah the deck", dueDate: now.addingTimeInterval(-86_400), dueHasTime: false),
+            "demo-notes": ReminderDraft(title: "Write the release note", dueDate: now.addingTimeInterval(7_200), dueHasTime: true),
+        ]) }
         buildAgent(languageModel: DemoLanguageModel(), environment: suite.environment)
         route = .assistant
         Task { @MainActor in await seedDemoIntelligence() }
@@ -541,6 +570,13 @@ final class AppModel {
         })
         observers.append(center.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in await self?.handleThermalChange() }
+        })
+        // Coming forward is when the user's week is most likely to have moved under us.
+        observers.append(center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                await self?.syncIngestion()
+                await self?.refreshIntelligence()
+            }
         })
         observers.append(center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in

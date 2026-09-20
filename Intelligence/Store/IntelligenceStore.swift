@@ -64,7 +64,8 @@ public struct IntelligenceCounts: Sendable, Equatable {
 public actor IntelligenceStore {
     /// Not private: the activity log is a separate file for readability, not a separate owner.
     let db: SQLiteDatabase
-    private let logger: PrivacySafeLogger?
+    /// Not private: the store is split across files for readability, not ownership.
+    let logger: PrivacySafeLogger?
     public nonisolated let path: String
     public private(set) var searchMode: SearchMode = .prefix
 
@@ -888,7 +889,8 @@ public actor IntelligenceStore {
             .map(Self.entity(from:))
     }
 
-    private static func entity(from row: SQLRow) -> IntelligenceEntity {
+    /// Not private: the store's extensions in sibling files read entity rows too.
+    static func entity(from row: SQLRow) -> IntelligenceEntity {
         IntelligenceEntity(
             id: UUID(uuidString: row.string(0) ?? "") ?? UUID(),
             kind: EntityKind(rawValue: row.string(1) ?? "") ?? .document,

@@ -113,6 +113,28 @@ the title, the headings, their order, the source list and the date; the model wr
 inside each section, in one grammar-constrained pass. A rewrite keeps the version the user already
 read.
 
+## What comes in on its own
+
+The store also reads what the user's phone already holds — their calendar, their reminders — on
+launch and when the app comes forward. Four rules make that a world model rather than surveillance,
+and `IngestionService` is the only place they live:
+
+- **Observation authority.** Everything ingested is written as `observed` at observation authority,
+  which loses to anything the user said. A calendar entry that disagrees with them stays visible as
+  the thing that disagreed.
+- **It links, it never invents.** An attendee is attached to a person the user already has, or
+  ignored — a name on an invite is not evidence they know someone. The same goes for the item
+  itself: a reminder the assistant created is already in the store, so the sync attaches to it
+  (`adopted`) instead of making a twin. The name match is exact, because a guess would merge two
+  different things, which is worse than one duplicate.
+- **It cannot put the user on the hook.** Commitments and decisions come from their own voice only;
+  an event called "send Sarah the deck" becomes an event, not a promise.
+- **It is idempotent and reversible.** A digest of the meaningful fields means an unchanged item
+  costs nothing, a deleted one is pruned, and switching a source off takes back what it created —
+  and only its own statements from what it merely recognised.
+
+Each sync leaves one line in Activity ("2 new events, 1 you already had"), never one row per item.
+
 ## Attention
 
 "What needs my attention?" is answered by rules, not by the model: late first (nothing outranks

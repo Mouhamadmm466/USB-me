@@ -77,6 +77,64 @@ extension AppModel {
         )
     }
 
+    /// What the world model is allowed to read, from the settings row the user edits.
+    var ingestionPolicy: IngestionPolicy {
+        IngestionPolicy(calendar: settings.ingestCalendar, reminders: settings.ingestReminders)
+    }
+
+    /// Reads the sources the user has switched on. Runs on launch and when the app comes forward:
+    /// often enough that their week is current, cheap enough that it costs nothing.
+    func syncIngestion() async {
+        guard let intelligence, ingestionPolicy.isOn, let environment = toolEnvironmentForIngestion() else { return }
+        intelligenceState.memory.ingestion.isSyncing = true
+        defer { intelligenceState.memory.ingestion.isSyncing = false }
+
+        let policy = ingestionPolicy
+        let runner = IngestionRunner(
+            store: intelligence.store,
+            sources: [
+                CalendarIngestionSource(store: environment.calendar, policy: policy),
+                ReminderIngestionSource(store: environment.reminders, policy: policy),
+            ],
+            permissions: permissions,
+            logger: .shared
+        )
+        let reports = await runner.sync(policy: policy)
+        if reports.values.contains(where: { !$0.isEmpty }) {
+            entityDetails.removeAll()
+        }
+        await refreshIntelligence()
+    }
+
+    func setIngestion(calendar: Bool? = nil, reminders: Bool? = nil) {
+        let wasCalendar = settings.ingestCalendar
+        let wasReminders = settings.ingestReminders
+        applyIngestion(calendar: calendar ?? wasCalendar, reminders: reminders ?? wasReminders)
+        intelligenceState.memory.ingestion.calendar = settings.ingestCalendar
+        intelligenceState.memory.ingestion.reminders = settings.ingestReminders
+
+        Task { @MainActor in
+            guard let intelligence else { return }
+            // Switching a source off takes back what it brought. What the user has since attached
+            // their own words to stays theirs.
+            if wasCalendar, !settings.ingestCalendar {
+                _ = try? await intelligence.store.forgetEverything(from: .calendar)
+            }
+            if wasReminders, !settings.ingestReminders {
+                _ = try? await intelligence.store.forgetEverything(from: .reminders)
+            }
+            entityDetails.removeAll()
+            if settings.ingestCalendar || settings.ingestReminders {
+                // Asking for the permission here is right: the user just asked for this.
+                if settings.ingestCalendar { _ = await permissions.request(.calendar) }
+                if settings.ingestReminders { _ = await permissions.request(.reminders) }
+                await syncIngestion()
+            } else {
+                await refreshIntelligence()
+            }
+        }
+    }
+
     // MARK: Reading
 
     /// Reads files the user picked and indexes them. Security-scoped access is opened and closed
@@ -114,14 +172,20 @@ extension AppModel {
         guard let intelligence else { return }
         do {
             let snapshot = try await intelligence.snapshot(now: Date())
-            let settings = await intelligence.settings
-            var state = presenter.viewState(from: snapshot, settings: settings)
+            let policy = await intelligence.settings
+            var state = presenter.viewState(from: snapshot, settings: policy)
             state.memory.searchText = intelligenceState.memory.searchText
             state.memory.results = intelligenceState.memory.results
             state.memory.isImporting = intelligenceState.memory.isImporting
             state.memory.importError = intelligenceState.memory.importError
             state.memory.documents = (try? await intelligence.documents(limit: 50))?
                 .map { presenter.documentRow($0) } ?? []
+            state.memory.ingestion = IntelligenceViewState.Ingestion(
+                calendar: settings.ingestCalendar,
+                reminders: settings.ingestReminders,
+                summary: await ingestionSummary(),
+                isSyncing: intelligenceState.memory.ingestion.isSyncing
+            )
             intelligenceState = state
         } catch {
             PrivacySafeLogger.shared.log(.error(domain: "intelligence", code: "snapshot_failed"))
@@ -219,6 +283,8 @@ extension AppModel {
                 self?.updateMemoryPolicy { $0.confirmInferences = enabled }
             },
             addDocument: { [weak self] in self?.isDocumentPickerPresented = true },
+            setCalendarIngestion: { [weak self] enabled in self?.setIngestion(calendar: enabled) },
+            setReminderIngestion: { [weak self] enabled in self?.setIngestion(reminders: enabled) },
             forgetDocument: { [weak self] id in
                 guard let self, let intelligence else { return }
                 Task { @MainActor in
@@ -260,6 +326,21 @@ extension AppModel {
                 }
             }
         )
+    }
+
+    /// "42 events and 18 reminders" — what is currently held from the sources that are on.
+    private func ingestionSummary() async -> String? {
+        guard let intelligence, ingestionPolicy.isOn else { return nil }
+        let store = intelligence.store
+        var parts: [String] = []
+        if settings.ingestCalendar, let events = try? await store.links(of: .calendar).count, events > 0 {
+            parts.append(events == 1 ? "1 event" : "\(events) events")
+        }
+        if settings.ingestReminders, let reminders = try? await store.links(of: .reminders).count, reminders > 0 {
+            parts.append(reminders == 1 ? "1 reminder" : "\(reminders) reminders")
+        }
+        guard !parts.isEmpty else { return "Nothing read yet." }
+        return "Keeping track of " + parts.joined(separator: " and ") + "."
     }
 
     // MARK: Private helpers

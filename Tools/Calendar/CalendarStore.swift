@@ -18,6 +18,31 @@ public protocol CalendarStore: Sendable {
 public protocol ReminderStore: Sendable {
     /// Creates the reminder in the default list and returns its identifier.
     func createReminder(_ draft: ReminderDraft) async throws -> String
+    /// Reminders the user has, for reading rather than writing: everything still open, plus
+    /// anything completed since `completedSince` so a sync can mark them done.
+    func reminders(completedSince: Date?) async throws -> [ReminderReference]
+}
+
+public extension ReminderStore {
+    func reminders(completedSince: Date?) async throws -> [ReminderReference] { [] }
+}
+
+/// One of the user's reminders, as read.
+public struct ReminderReference: Codable, Sendable, Hashable {
+    public let identifier: String
+    public let title: String
+    public let dueDate: Date?
+    public let isCompleted: Bool
+    /// The list it lives in ("Groceries", "Work"), which is often the only context a reminder has.
+    public let listName: String?
+
+    public init(identifier: String, title: String, dueDate: Date?, isCompleted: Bool, listName: String? = nil) {
+        self.identifier = identifier
+        self.title = title
+        self.dueDate = dueDate
+        self.isCompleted = isCompleted
+        self.listName = listName
+    }
 }
 
 /// Identifiers for EventKit occurrences. A recurring event's occurrences share one
@@ -221,6 +246,48 @@ public final class SystemEventKitStore: CalendarStore, ReminderStore, @unchecked
             try store.save(reminder, commit: true)
             return reminder.calendarItemIdentifier
         }
+    }
+
+    /// Everything open, plus what was finished recently so a sync can mark it done.
+    ///
+    /// EventKit's predicate fetch is callback-based; it is bridged here the same way the rest of
+    /// this adapter bridges the store, and only value types cross back.
+    public func reminders(completedSince: Date?) async throws -> [ReminderReference] {
+        let calendar = calendar
+        return try await withCheckedThrowingContinuation { continuation in
+            queue.async {
+                let lists = self.store.calendars(for: .reminder)
+                guard !lists.isEmpty else { return continuation.resume(returning: []) }
+                let incomplete = self.store.predicateForIncompleteReminders(
+                    withDueDateStarting: nil, ending: nil, calendars: lists
+                )
+                self.store.fetchReminders(matching: incomplete) { open in
+                    let openReferences = (open ?? []).compactMap { Self.reference(from: $0, calendar: calendar) }
+                    guard let completedSince else {
+                        return continuation.resume(returning: openReferences)
+                    }
+                    let completed = self.store.predicateForCompletedReminders(
+                        withCompletionDateStarting: completedSince, ending: nil, calendars: lists
+                    )
+                    self.store.fetchReminders(matching: completed) { done in
+                        let doneReferences = (done ?? []).compactMap { Self.reference(from: $0, calendar: calendar) }
+                        continuation.resume(returning: openReferences + doneReferences)
+                    }
+                }
+            }
+        }
+    }
+
+    static func reference(from reminder: EKReminder, calendar: Calendar) -> ReminderReference? {
+        let title = reminder.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !title.isEmpty else { return nil }
+        return ReminderReference(
+            identifier: reminder.calendarItemIdentifier,
+            title: title,
+            dueDate: reminder.dueDateComponents.flatMap(calendar.date(from:)),
+            isCompleted: reminder.isCompleted,
+            listName: reminder.calendar?.title
+        )
     }
 
     /// Due-date components: year/month/day only when `hasTime` is false.

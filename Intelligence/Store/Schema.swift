@@ -8,7 +8,7 @@ import Foundation
 /// must still open the database and fall back to prefix matching.
 enum IntelligenceSchema {
     /// Index 0 is schema version 1.
-    static let migrations: [String] = [v1, v2, v3, v4, v5, v6]
+    static let migrations: [String] = [v1, v2, v3, v4, v5, v6, v7, v8]
 
     static var currentVersion: Int32 { Int32(migrations.count) }
 
@@ -265,6 +265,31 @@ enum IntelligenceSchema {
     static let networkColumns = """
     id, at, capability, provider, host, categories, reason, payload, outcome, refusal, \
     bytes_sent, bytes_received, plan_id
+    """
+
+    // MARK: - v7: what came from outside
+
+    private static let v7 = """
+    CREATE TABLE external_links (
+        source_type TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        entity_id TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+        digest TEXT NOT NULL,
+        linked_at REAL NOT NULL,
+        PRIMARY KEY (source_type, source_id)
+    ) WITHOUT ROWID;
+
+    CREATE INDEX external_links_entity ON external_links(entity_id);
+    """
+
+    // MARK: - v8: what ingestion made, and what it only recognised
+
+    /// A source often finds something the user already has — the assistant put the reminder there
+    /// itself. Ingestion attaches to that one instead of making a second copy, and this flag is how
+    /// it remembers the difference: switching the source off takes back what it created, and only
+    /// its own statements from what it merely recognised.
+    private static let v8 = """
+    ALTER TABLE external_links ADD COLUMN adopted INTEGER NOT NULL DEFAULT 0;
     """
 
     // MARK: - Full text

@@ -164,8 +164,16 @@ Built on branch `v2`, extending V1 rather than replacing it. See
   answer.
 - [x] **Evaluation** — `Tests/IntelligenceEval`: 28 hand-written cases across six suites, runnable
   deterministically or against the real model (`agent-eval intelligence`).
-- [ ] **Not built yet**: network policy and web research (PRD phases 9–10), connected services (11),
-  the share extension (12). Everything V2 does today is local.
+- [x] **Network policy and web research** (PRD 9–10) — off / ask / approved, a per-capability gate,
+  a leak check that refuses to send a name the user did not put in their own request, and a log of
+  every attempt including the refusals (Settings → "What left this iPhone"). 18 tests.
+- [x] **Ingestion** (first half of PRD 12) — calendar and reminders observers, off by default, each
+  behind its own switch and its own permission. Everything they write is an observation, which loses
+  to the user's own words; they link to people and items the user already has and invent neither;
+  they cannot create a commitment or a decision; and switching one off takes back what it created.
+  17 tests.
+- [ ] **Not built yet**: connected services (PRD 11), the share extension and App Group inbox (the
+  second half of 12). Everything else V2 does is local.
 
 ## Not done (testing stopped at the owner's request)
 

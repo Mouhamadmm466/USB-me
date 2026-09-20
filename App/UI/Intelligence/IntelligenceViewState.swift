@@ -65,6 +65,16 @@ struct IntelligenceViewState: Equatable {
         var entityID: UUID?
     }
 
+    /// The sources the user has let the world model read, and what they have brought in.
+    struct Ingestion: Equatable {
+        var calendar = false
+        var reminders = false
+        /// "42 events, 18 reminders" — what is currently held from those sources.
+        var summary: String?
+        /// True while a sync is running.
+        var isSyncing = false
+    }
+
     /// A document the user brought in.
     struct DocumentRow: Identifiable, Equatable {
         let id: UUID
@@ -92,6 +102,8 @@ struct IntelligenceViewState: Equatable {
         var results: [Item] = []
         var searchText = ""
         var documents: [DocumentRow] = []
+        /// What the world model is allowed to feed itself from.
+        var ingestion = Ingestion()
         /// Set while a file is being read and indexed.
         var isImporting = false
         /// Why the last import failed, in the user's words.
@@ -127,6 +139,9 @@ struct IntelligenceIntents {
     var setLearningEnabled: @MainActor (_ enabled: Bool) -> Void = { _ in }
     var setConfirmInferences: @MainActor (_ enabled: Bool) -> Void = { _ in }
     var addDocument: @MainActor () -> Void = {}
+    /// Let the world model read the calendar, or stop it and take back what it brought.
+    var setCalendarIngestion: @MainActor (_ enabled: Bool) -> Void = { _ in }
+    var setReminderIngestion: @MainActor (_ enabled: Bool) -> Void = { _ in }
     var forgetDocument: @MainActor (_ documentID: UUID) -> Void = { _ in }
     var exportEverything: @MainActor () -> Void = {}
     var deleteEverything: @MainActor () -> Void = {}

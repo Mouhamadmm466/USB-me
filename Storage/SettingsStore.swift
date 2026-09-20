@@ -19,6 +19,11 @@ public final class AppSettingsRecord {
     /// Whether anything may reach the internet: "off", "ask" or "approved" (V2). Off by default,
     /// and stored as a string so the store does not need to know the vocabulary.
     public var networkMode: String = "off"
+    /// Keep track of what is on the user's calendar (V2). Off until they say otherwise: permission
+    /// to read the calendar for one command is not permission to keep a copy of their week.
+    public var ingestCalendar: Bool = false
+    /// Keep track of their reminders.
+    public var ingestReminders: Bool = false
 
     public init(
         hasCompletedOnboarding: Bool = false,
@@ -28,7 +33,9 @@ public final class AppSettingsRecord {
         hapticsEnabled: Bool = true,
         learningEnabled: Bool = true,
         confirmInferences: Bool = true,
-        networkMode: String = "off"
+        networkMode: String = "off",
+        ingestCalendar: Bool = false,
+        ingestReminders: Bool = false
     ) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.retainHistory = retainHistory
@@ -38,6 +45,8 @@ public final class AppSettingsRecord {
         self.learningEnabled = learningEnabled
         self.confirmInferences = confirmInferences
         self.networkMode = networkMode
+        self.ingestCalendar = ingestCalendar
+        self.ingestReminders = ingestReminders
     }
 }
 
@@ -51,6 +60,8 @@ public struct AppSettings: Sendable, Equatable, Codable {
     public var learningEnabled = true
     public var confirmInferences = true
     public var networkMode = "off"
+    public var ingestCalendar = false
+    public var ingestReminders = false
 
     public init() {}
 }
@@ -68,6 +79,8 @@ public actor SettingsStore {
         settings.learningEnabled = record.learningEnabled
         settings.confirmInferences = record.confirmInferences
         settings.networkMode = record.networkMode
+        settings.ingestCalendar = record.ingestCalendar
+        settings.ingestReminders = record.ingestReminders
         return settings
     }
 
@@ -81,6 +94,8 @@ public actor SettingsStore {
         record.learningEnabled = settings.learningEnabled
         record.confirmInferences = settings.confirmInferences
         record.networkMode = settings.networkMode
+        record.ingestCalendar = settings.ingestCalendar
+        record.ingestReminders = settings.ingestReminders
         try modelContext.save()
     }
 

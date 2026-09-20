@@ -20,6 +20,7 @@ struct MemoryScreen: View {
                     results
                 } else {
                     summary
+                    sources
                     documents
                     if !state.questions.isEmpty {
                         VStack(alignment: .leading, spacing: Spacing.m) {
@@ -102,6 +103,71 @@ struct MemoryScreen: View {
                 .background(Palette.surface, in: .rounded(Radius.large))
                 .overlay(RoundedRectangle(cornerRadius: Radius.large, style: .continuous)
                     .strokeBorder(Palette.hairline, lineWidth: 0.5))
+            }
+        }
+    }
+
+    /// The sources the world model is allowed to read. Off until the user says otherwise, and
+    /// switching one off takes back everything it brought.
+    private var sources: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            Text("What I keep track of")
+                .textStyle(.title3)
+                .foregroundStyle(Palette.ink)
+                .accessibilityAddTraits(.isHeader)
+
+            Card(padding: Spacing.l) {
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    Toggle(isOn: Binding(
+                        get: { state.memory.ingestion.calendar },
+                        set: { intents.setCalendarIngestion($0) }
+                    )) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Your calendar")
+                                .textStyle(.body, weight: .medium)
+                                .foregroundStyle(Palette.ink)
+                            Text("What's on, when, and who's in it — so I can answer without asking you first.")
+                                .textStyle(.footnote)
+                                .foregroundStyle(Palette.inkSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .tint(Palette.jade)
+
+                    Hairline()
+
+                    Toggle(isOn: Binding(
+                        get: { state.memory.ingestion.reminders },
+                        set: { intents.setReminderIngestion($0) }
+                    )) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Your reminders")
+                                .textStyle(.body, weight: .medium)
+                                .foregroundStyle(Palette.ink)
+                            Text("What you've told yourself to do, and what you've already done.")
+                                .textStyle(.footnote)
+                                .foregroundStyle(Palette.inkSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .tint(Palette.jade)
+
+                    if let summary = state.memory.ingestion.summary {
+                        Hairline()
+                        HStack(spacing: Spacing.s) {
+                            if state.memory.ingestion.isSyncing { ProgressView().controlSize(.mini) }
+                            Text(summary)
+                                .textStyle(.footnote)
+                                .foregroundStyle(Palette.inkSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                    Text("Anything from these is marked as coming from them, never outranks what you tell me, and goes when you switch it off.")
+                        .textStyle(.footnote)
+                        .foregroundStyle(Palette.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
