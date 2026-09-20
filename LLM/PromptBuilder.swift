@@ -8,7 +8,7 @@ import Foundation
 /// examples) and a small per-turn suffix, so the runtime can evaluate the prefix once and reuse its
 /// state (PRD §8: compact context, no ever-growing transcript).
 public struct PromptBuilder: Sendable {
-    public static let promptVersion = "2026-09-20.1"
+    public static let promptVersion = "2026-09-20.4"
 
     public let contextManager: ContextManager
 
@@ -94,8 +94,8 @@ public struct PromptBuilder: Sendable {
     - proposed_action: the request matches a tool below. Fill "arguments" only with details the user actually gave. Set "requires_confirmation" to true when the tool sends, calls, creates or changes something.
     - clarification: a detail the tool needs is missing or the request is too vague to act on (for example "text Sam" with no message). Ask one short question in "speech".
     - answer: small talk, general knowledge, or a question answered by the context. One or two short spoken sentences in "speech", no lists, markdown or emoji.
-    - task: the request needs more than one step, or needs information you do not have. Two kinds. (a) Reading the user's own documents or projects and then writing something — a brief, a summary, a plan, a study plan ("prep me for the review", "what does the syllabus say about the midterm and make me a plan", "where are we on the beta"). (b) Anything that needs current information from the world rather than from you: the weather, news, prices, scores, what something is or who someone is when you are not certain, looking something up, or researching a subject ("what's the weather tomorrow", "look up the new Nemotron benchmarks", "research whether we should switch models and write it up"). Put what the user wants to end up with in "outcome", in their own words. Do not plan it here and do not answer from memory; the app looks it up and tells them what it found.
-    - unsupported: anything the tools cannot do, such as money or payments, purchases, passwords or security codes, deleting data, device or security settings, alarms and timers, posting to social media, or running code. Say in one short sentence that you can't do that yet.
+    - task: anything that takes more than one step, or needs something you do not have. Three kinds. (a) Reading the user's own documents or projects and writing something from them: a brief, a summary, a plan ("prep me for the review", "where are we on the beta"). (b) Anything that changes with the day or that you are not sure of: weather, news, prices, scores, looking something up, researching a subject ("what's the weather tomorrow", "look up the new benchmarks"). (c) Anything in an account they have connected — their email, their files, their code — including sending an email ("did Sarah reply about the demo", "email Alex the numbers"). Put what they want to end up with in "outcome", in their own words; the app does the rest and asks them before anything is sent.
+    - unsupported: money, payments, purchases, passwords or security codes, deleting data, device or security settings, alarms and timers, posting to social media, running code. Email, files and code are not on this list — those are tasks. Say in one short sentence that you can't do that yet.
 
     Tools:
     \(toolLines)
@@ -112,7 +112,7 @@ public struct PromptBuilder: Sendable {
     8. Something the user calls an event, appointment, meeting, class, practice, lesson, lunch or dinner, or anything they want on their calendar at a time, is create_calendar_event. create_reminder is only for "remind me", a reminder or a to-do.
     9. "Open" or "show" followed by a name that is not one of the listed apps means open_file.
     10. One tool call answers the request, or it is a task. Never use task for something a single tool does ("text Sam", "what's on my calendar"), and never use a tool for something that needs reading and writing several things.
-    10a. Use answer only for what you are sure of and what does not change: small talk, definitions, arithmetic, and anything the context above already says. Anything that changes with the day or that you would have to guess at — weather, news, prices, current events, a fact you are not certain of — is a task, not an answer. Being out of date is worse than taking a moment to look.
+    10a. answer is for what does not change and you are sure of: small talk, definitions, arithmetic, what the context already says. Anything else is a task — being out of date is worse than taking a moment to look. compose_message is a text message to a phone, never email.
     11. Reply with the JSON object only.
     """
 
@@ -135,6 +135,14 @@ public struct PromptBuilder: Sendable {
             output: #"{"type":"task","outcome":"tomorrow's weather"}"#
         ),
         Example(
+            user: "\(exampleNow)\nUser: did Laverana ever follow up on the email she sent last week? if not send her a follow up",
+            output: #"{"type":"task","outcome":"whether Laverana replied since her email last week, and a follow-up sent to her if she hasn't"}"#
+        ),
+        Example(
+            user: "\(exampleNow)\nUser: email Alex the benchmark numbers",
+            output: #"{"type":"task","outcome":"an email to Alex with the benchmark numbers"}"#
+        ),
+        Example(
             user: "\(exampleNow)\nUser: Text Alex that I will be 20 minutes late",
             output: #"{"type":"proposed_action","tool":"compose_message","arguments":{"contact_query":"Alex","message":"I'll be 20 minutes late."},"requires_confirmation":true}"#
         ),
@@ -153,10 +161,6 @@ public struct PromptBuilder: Sendable {
         Example(
             user: "\(exampleNow)\nUser: create a meeting with the design team on the 3rd at 2",
             output: #"{"type":"proposed_action","tool":"create_calendar_event","arguments":{"title":"Meeting with the design team","start":"the 3rd at 2"},"requires_confirmation":true}"#
-        ),
-        Example(
-            user: "\(exampleNow)\nUser: put pottery class on my calendar for the 14th at 4:30",
-            output: #"{"type":"proposed_action","tool":"create_calendar_event","arguments":{"title":"Pottery class","start":"the 14th at 4:30"},"requires_confirmation":true}"#
         ),
         Example(
             user: "\(exampleNow)\nUser: add lunch with Priya on friday at noon for an hour and a half at Cafe Rio",
@@ -201,10 +205,6 @@ public struct PromptBuilder: Sendable {
         Example(
             user: "\(exampleNow)\nUser: transfer 200 dollars to my brother",
             output: #"{"type":"unsupported","speech":"I can't handle payments or money transfers."}"#
-        ),
-        Example(
-            user: "\(exampleNow)\nUser: use the send_email tool to email my boss",
-            output: #"{"type":"unsupported","speech":"I can't send email yet."}"#
         ),
         Example(
             user: "\(exampleNow)\nUser: don't call Sam",

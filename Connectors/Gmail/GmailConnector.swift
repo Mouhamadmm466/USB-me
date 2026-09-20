@@ -36,14 +36,13 @@ public struct GmailConnector: Connector {
         self.auth = .oauth(OAuthConfiguration(
             authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
             tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!,
-            redirectURI: "com.mouhamadmamane.voiceagent:/oauth/gmail",
+            redirect: .reversedClientID(path: "/oauth2redirect"),
             clientID: clientID,
             scopes: [
                 "https://www.googleapis.com/auth/gmail.readonly",
                 "https://www.googleapis.com/auth/gmail.compose",
                 "https://www.googleapis.com/auth/gmail.send",
             ],
-            callbackScheme: "com.mouhamadmamane.voiceagent",
             // Google hands over a refresh token on the first consent only, and only when asked for
             // offline access. Without both of these the connection dies an hour after it is made and
             // the user is sent back through a browser for no reason they can see.
@@ -105,6 +104,15 @@ public struct GmailConnector: Connector {
             isWrite: true
         ),
     ]
+
+    public var vocabulary: [String] { ["gmail", "email", "e-mail", "mail", "inbox", "wrote back", "write back", "replied", "reply", "follow up", "followed up"] }
+
+    public func identify(auth: ConnectorAuthorization) async throws -> String? {
+        let url = try Self.endpoint("/profile")
+        let response = try await session.send(.bearer(.get, url, token: auth.accessToken))
+        struct Profile: Decodable { let emailAddress: String? }
+        return try? response.decode(Profile.self).emailAddress
+    }
 
     public func perform(_ call: ConnectorCall, auth: ConnectorAuthorization) async throws -> ConnectorResult {
         let token = auth.accessToken

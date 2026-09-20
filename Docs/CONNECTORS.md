@@ -83,10 +83,24 @@ the second.
 
 Both Google services need an OAuth client of the user's own: Google will not let an app reach an
 account without one, and a client shipped inside the app would belong to whoever built it rather than
-to whoever uses it. The user makes a project at `console.cloud.google.com`, adds an iOS OAuth client
-for the app's bundle id, and pastes the client ID into the service's screen. It is not a secret — it
-is in every authorization URL — so it lives in a plain file next to the account list. There is no
-client *secret* anywhere, which is what PKCE is for.
+to whoever uses it. It is not a secret — it is in every authorization URL — so it lives in a plain
+file next to the account list. There is no client *secret* anywhere, which is what PKCE is for.
+Gmail and Drive share one client, because they are one Google project.
+
+Three things have to be right, and each one fails in a way that does not explain itself:
+
+1. **The client must be of type iOS**, with the bundle id `com.mouhamadmamane.voiceagent`. A Web
+   client will be rejected: web clients require an https redirect and a client secret.
+2. **The redirect is not ours to choose.** Google's iOS clients accept exactly one: the client ID
+   with its components reversed, used as a URL scheme —
+   `com.googleusercontent.apps.<id>:/oauth2redirect`. Anything else comes back as
+   `redirect_uri_mismatch` before the user ever sees a consent screen. `OAuthConfiguration.Redirect`
+   derives it from the client ID so it cannot drift.
+3. **The account must be a test user.** Reading mail is a *restricted* scope, so while the project's
+   publishing status is Testing only accounts listed under Test users on the OAuth consent screen
+   can grant it — everyone else gets "access blocked" with no reason given. In Testing, the refresh
+   token also expires after seven days, so the connection will ask again about once a week until the
+   project is verified.
 
 GitHub uses a fine-grained personal access token instead. An OAuth app would need a client secret,
 and a secret shipped inside an app is not a secret; for one person, a token they create with exactly

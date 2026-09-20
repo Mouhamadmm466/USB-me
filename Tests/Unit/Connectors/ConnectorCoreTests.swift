@@ -103,7 +103,7 @@ private struct StubConnector: Connector {
         let connector = StubConnector(auth: .oauth(OAuthConfiguration(
             authorizationEndpoint: URL(string: "https://example.com/auth")!,
             tokenEndpoint: URL(string: "https://example.com/token")!,
-            redirectURI: "app:/cb", clientID: "abc", scopes: ["read"], callbackScheme: "app"
+            redirect: .fixed(uri: "app:/cb", scheme: "app"), clientID: "abc", scopes: ["read"]
         )))
         let tokens = EphemeralTokenStore()
         let registry = ConnectorRegistry(connectors: [connector], accounts: EphemeralAccountStore(), tokens: tokens)
@@ -142,7 +142,7 @@ private struct StubConnector: Connector {
     private let configuration = OAuthConfiguration(
         authorizationEndpoint: URL(string: "https://example.com/auth")!,
         tokenEndpoint: URL(string: "https://example.com/token")!,
-        redirectURI: "app:/cb", clientID: "client-123", scopes: ["read", "write"], callbackScheme: "app"
+        redirect: .fixed(uri: "app:/cb", scheme: "app"), clientID: "client-123", scopes: ["read", "write"]
     )
 
     @Test func theChallengeGoesOutAndTheVerifierStaysHere() throws {
@@ -213,5 +213,53 @@ private enum ConnectorStepExecutorPayload {
             .filter { !$0.value.isEmpty }
             .map { "\($0.key): \($0.value)" }
             .joined(separator: "\n")
+    }
+}
+
+@Suite struct GoogleRedirectTests {
+    /// The bug that made connecting Gmail impossible: Google's iOS clients do not let you choose a
+    /// redirect. It is the client ID with its components reversed, used as a URL scheme, and
+    /// anything else is refused with `redirect_uri_mismatch` before the user sees a consent screen.
+    private let clientID = "27611766407-t1rc9ncmein0pt950f2h5nv0taa8ucnk.apps.googleusercontent.com"
+
+    @Test func theRedirectIsTheClientIDReversed() {
+        let configuration = OAuthConfiguration(
+            authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
+            tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!,
+            redirect: .reversedClientID(path: "/oauth2redirect"),
+            clientID: clientID,
+            scopes: ["https://www.googleapis.com/auth/gmail.readonly"]
+        )
+
+        #expect(configuration.callbackScheme
+            == "com.googleusercontent.apps.27611766407-t1rc9ncmein0pt950f2h5nv0taa8ucnk")
+        #expect(configuration.redirectURI
+            == "com.googleusercontent.apps.27611766407-t1rc9ncmein0pt950f2h5nv0taa8ucnk:/oauth2redirect")
+    }
+
+    @Test func gmailAndDriveAskGoogleForTheSameThing() {
+        // Both are one Google project with one client, so both must derive the same redirect —
+        // otherwise connecting the second one fails after the first one worked.
+        guard case let .oauth(gmail) = GmailConnector(clientID: clientID).auth,
+              case let .oauth(drive) = DriveConnector(clientID: clientID).auth else {
+            return #expect(Bool(false), "both should use OAuth")
+        }
+        #expect(gmail.redirectURI == drive.redirectURI)
+        #expect(gmail.callbackScheme == drive.callbackScheme)
+        #expect(gmail.redirectURI.hasPrefix("com.googleusercontent.apps."))
+    }
+
+    @Test func theAuthorizationURLCarriesTheScopesGmailActuallyNeeds() throws {
+        guard case let .oauth(configuration) = GmailConnector(clientID: clientID).auth else {
+            return #expect(Bool(false), "Gmail should use OAuth")
+        }
+        let url = try #require(OAuthFlow(configuration: configuration).authorizationURL?.absoluteString)
+
+        #expect(url.contains("gmail.readonly"))
+        #expect(url.contains("gmail.send"))
+        // Without both of these Google hands over no refresh token, and the connection dies an hour
+        // later with nothing to renew it.
+        #expect(url.contains("access_type=offline"))
+        #expect(url.contains("prompt=consent"))
     }
 }

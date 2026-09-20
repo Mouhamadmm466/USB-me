@@ -29,10 +29,28 @@ public protocol Connector: Sendable {
 
     /// Runs one capability with an authorization that is already valid.
     func perform(_ call: ConnectorCall, auth: ConnectorAuthorization) async throws -> ConnectorResult
+
+    /// Whose account this is, asked of the service itself.
+    ///
+    /// Shown to the user so they can see which account they connected — which matters the moment
+    /// somebody has two. Guessing it from the token is impossible and guessing it from the app's
+    /// own state would be a lie, so a connector that cannot answer says nothing.
+    func identify(auth: ConnectorAuthorization) async throws -> String?
+
+    /// The words a person uses for this service when they are not thinking about software.
+    ///
+    /// Nobody says "search my Gmail"; they say "my email", "my inbox", "did she write back". This
+    /// is how the app can tell that a request needed a service that is not connected, and say so,
+    /// instead of failing with something the user cannot act on.
+    var vocabulary: [String] { get }
 }
 
 public extension Connector {
     func capability(_ id: CapabilityID) -> ConnectorCapability? { capabilities.first { $0.id == id } }
+
+    func identify(auth: ConnectorAuthorization) async throws -> String? { nil }
+
+    var vocabulary: [String] { [name.lowercased()] }
 }
 
 /// Something a connected service can do.

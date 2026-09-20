@@ -93,6 +93,18 @@ public struct GitHubConnector: Connector {
         self.session = session
     }
 
+    public var vocabulary: [String] { ["github", "repo", "repository", "pull request", "issue", "commit", "codebase"] }
+
+    public func identify(auth: ConnectorAuthorization) async throws -> String? {
+        guard let url = URL(string: "https://api.github.com/user") else { return nil }
+        let response = try await session.send(.bearer(
+            .get, url, token: auth.accessToken, accept: "application/vnd.github+json",
+            extraHeaders: ["X-GitHub-Api-Version": "2022-11-28"]
+        ))
+        struct Account: Decodable { let login: String? }
+        return try? response.decode(Account.self).login
+    }
+
     public func perform(_ call: ConnectorCall, auth: ConnectorAuthorization) async throws -> ConnectorResult {
         let token = auth.accessToken
         switch call.capability {

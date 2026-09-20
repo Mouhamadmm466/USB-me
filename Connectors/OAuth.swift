@@ -8,42 +8,71 @@ import Foundation
 /// for: the app proves it is the same app that started the sign-in by holding a verifier it never
 /// sent, which is a guarantee an embedded string could never give.
 public struct OAuthConfiguration: Sendable, Equatable {
+    /// How the provider decides where to send the user back.
+    public enum Redirect: Sendable, Equatable {
+        /// A scheme the app chose and registered with the provider.
+        case fixed(uri: String, scheme: String)
+        /// Google's iOS clients do not let you choose. The redirect *is* the client ID with its
+        /// components reversed, used as a URL scheme, and anything else comes back as
+        /// `redirect_uri_mismatch` — which is exactly what happened when this was the bundle id.
+        case reversedClientID(path: String)
+    }
+
     public var authorizationEndpoint: URL
     public var tokenEndpoint: URL
-    /// Registered with the provider; the app's own URL scheme.
-    public var redirectURI: String
+    public var redirect: Redirect
     /// Set by the user. Empty until they create a project with the provider and paste it in, which
     /// is a step no amount of code can do for them.
     public var clientID: String
     public var scopes: [String]
-    /// The callback scheme `ASWebAuthenticationSession` waits for.
-    public var callbackScheme: String
     /// Extra parameters this provider needs on the authorization request.
     public var additionalParameters: [String: String]
 
     public init(
         authorizationEndpoint: URL,
         tokenEndpoint: URL,
-        redirectURI: String,
+        redirect: Redirect,
         clientID: String = "",
         scopes: [String],
-        callbackScheme: String,
         additionalParameters: [String: String] = [:]
     ) {
         self.authorizationEndpoint = authorizationEndpoint
         self.tokenEndpoint = tokenEndpoint
-        self.redirectURI = redirectURI
+        self.redirect = redirect
         self.clientID = clientID
         self.scopes = scopes
-        self.callbackScheme = callbackScheme
         self.additionalParameters = additionalParameters
+    }
+
+    public var redirectURI: String {
+        switch redirect {
+        case let .fixed(uri, _): uri
+        case let .reversedClientID(path): "\(reversedClientID):\(path)"
+        }
+    }
+
+    /// The scheme `ASWebAuthenticationSession` waits for. It intercepts the callback itself, so
+    /// this does not have to be registered in Info.plist — but it does have to be exactly what the
+    /// provider will redirect to, or the sheet sits there until the user gives up.
+    public var callbackScheme: String {
+        switch redirect {
+        case let .fixed(_, scheme): scheme
+        case .reversedClientID: reversedClientID
+        }
+    }
+
+    /// "123-abc.apps.googleusercontent.com" becomes "com.googleusercontent.apps.123-abc".
+    var reversedClientID: String {
+        let suffix = ".apps.googleusercontent.com"
+        guard clientID.hasSuffix(suffix) else { return clientID }
+        return "com.googleusercontent.apps.\(clientID.dropLast(suffix.count))"
     }
 
     public var isConfigured: Bool { !clientID.isEmpty }
 
     public func with(clientID: String) -> OAuthConfiguration {
         var copy = self
-        copy.clientID = clientID
+        copy.clientID = clientID.trimmingCharacters(in: .whitespacesAndNewlines)
         return copy
     }
 }

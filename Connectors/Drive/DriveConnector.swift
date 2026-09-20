@@ -56,10 +56,9 @@ public struct DriveConnector: Connector {
         auth = .oauth(OAuthConfiguration(
             authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
             tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!,
-            redirectURI: "com.mouhamadmamane.voiceagent:/oauth/drive",
+            redirect: .reversedClientID(path: "/oauth2redirect"),
             clientID: clientID,
             scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-            callbackScheme: "com.mouhamadmamane.voiceagent",
             // Google returns a refresh token only when both of these are sent, and only on a fresh
             // consent. Without them the connection stops working an hour after the user sets it up
             // and there is nothing left to refresh it with.
@@ -73,6 +72,20 @@ public struct DriveConnector: Connector {
         public static let search = CapabilityID("drive.search")
         public static let list = CapabilityID("drive.list")
         public static let read = CapabilityID("drive.read")
+    }
+
+    public var vocabulary: [String] { ["drive", "google doc", "google docs", "google sheet", "spreadsheet", "my files", "shared with me"] }
+
+    public func identify(auth: ConnectorAuthorization) async throws -> String? {
+        guard let url = URL.build("https://www.googleapis.com/drive/v3/about",
+                                  ["fields": "user(emailAddress,displayName)"]) else { return nil }
+        let response = try await session.send(.bearer(.get, url, token: auth.accessToken))
+        struct About: Decodable {
+            struct User: Decodable { let emailAddress: String?; let displayName: String? }
+            let user: User?
+        }
+        let about = try? response.decode(About.self)
+        return about?.user?.emailAddress ?? about?.user?.displayName
     }
 
     public func perform(_ call: ConnectorCall, auth: ConnectorAuthorization) async throws -> ConnectorResult {

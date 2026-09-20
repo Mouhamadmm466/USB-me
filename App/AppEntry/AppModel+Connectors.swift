@@ -67,7 +67,8 @@ extension AppModel {
         guard await AppModel.connectors.account(connector.id) == nil else { return false }
         switch connector.auth {
         case .oauth:
-            return await AppModel.connectorConfiguration.clientID(for: connector.id) == nil
+            return await AppModel.connectorConfiguration
+                .clientID(for: AppModel.configurationKey(for: connector.id)) == nil
         case .token:
             return true
         }
@@ -80,9 +81,17 @@ extension AppModel {
         case .oauth:
             """
             \(connector.name) needs an OAuth client of your own — Google won't let an app reach your \
-            account without one. Make a project at console.cloud.google.com, add an iOS OAuth client \
-            with the bundle id com.mouhamadmamane.voiceagent, and paste the client ID here. It isn't \
-            a secret; it just has to be yours.
+            account without one, and one shipped inside the app would belong to whoever built it \
+            rather than to you.
+
+            At console.cloud.google.com: make a project, enable the Gmail and Drive APIs, then \
+            Credentials → Create credentials → OAuth client ID → iOS, with the bundle ID \
+            com.mouhamadmamane.voiceagent. Paste the client ID here; it isn't a secret.
+
+            Then, on the OAuth consent screen, add your own Google account under Test users. Reading \
+            mail is a restricted scope, so until the app is verified only accounts on that list can \
+            allow it — and Google refuses with "access blocked" rather than explaining why. While the \
+            project is in Testing, the connection lasts seven days before it asks again.
             """
         }
     }
@@ -98,7 +107,8 @@ extension AppModel {
         Task { @MainActor in
             defer { connectors.connecting = nil }
             do {
-                guard let clientID = await AppModel.connectorConfiguration.clientID(for: serviceID) else {
+                let key = AppModel.configurationKey(for: serviceID)
+                guard let clientID = await AppModel.connectorConfiguration.clientID(for: key) else {
                     throw OAuthError.notConfigured(connector.name)
                 }
                 let flow = OAuthFlow(configuration: base.with(clientID: clientID))
@@ -134,7 +144,9 @@ extension AppModel {
         Task { @MainActor in
             switch connector.auth {
             case .oauth:
-                await AppModel.connectorConfiguration.set(trimmed, for: serviceID)
+                await AppModel.connectorConfiguration.set(
+                    trimmed, for: AppModel.configurationKey(for: serviceID)
+                )
                 await refreshConnectors()
             case .token:
                 do {
@@ -162,12 +174,15 @@ extension AppModel {
     /// Who the account belongs to, asked of the service itself so the user sees the address they
     /// actually signed in with rather than one the app guessed.
     private func label(for connector: any Connector, authorization: ConnectorAuthorization) async -> String {
-        let probe = connector.capabilities.first { !$0.isWrite }
-        guard let probe else { return connector.name }
-        let result = try? await connector.perform(
-            ConnectorCall(capability: probe.id, arguments: [:]), auth: authorization
-        )
-        return result?.items.first?.person ?? connector.name
+        let identified = try? await connector.identify(auth: authorization)
+        return identified ?? connector.name
+    }
+
+    /// Gmail and Drive are one Google project with one OAuth client, so the client ID is asked for
+    /// once and used by both. Making someone paste the same string twice is how they end up with
+    /// two projects and one of them misconfigured.
+    static func configurationKey(for connectorID: String) -> String {
+        ["gmail", "drive"].contains(connectorID) ? "google" : connectorID
     }
 
     /// Safari's own sign-in sheet. `prefersEphemeralWebBrowserSession` is deliberately off: the

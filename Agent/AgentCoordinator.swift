@@ -607,7 +607,9 @@ public final class AgentCoordinator {
             dependencies.logger.log(.error(domain: "runtime", code: "planning_failed"))
             // Most of the time a plan that cannot be made is a plan that needed the internet. Say
             // which it is: "I can't" and "you haven't let me" are different answers.
-            if await jobs.networkIsSwitchedOff() {
+            if let service = await jobs.serviceTheRequestNeeds(transcript) {
+                await speak("I'd need your \(service) for that, and it isn't connected yet. You can connect it in Settings, under Connected services.", report: &report)
+            } else if await jobs.networkIsSwitchedOff() {
                 await speak("I'd need the internet for that, and it's switched off. You can change that in Settings, under Internet.", report: &report)
             } else if await !jobs.canReachTheWeb() {
                 await speak("That needs the internet and I can't reach it right now.", report: &report)

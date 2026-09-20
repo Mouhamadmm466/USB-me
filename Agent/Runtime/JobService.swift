@@ -70,6 +70,22 @@ public actor JobService {
         await availability().networkAllowed == false
     }
 
+    /// The service a request plainly needed and does not have.
+    ///
+    /// Called when a plan could not be made, to turn "I couldn't work out how to do that" into
+    /// something the user can act on. It reads their own words only — the assistant saying "you
+    /// haven't connected your email" when they asked about email is the difference between a bug
+    /// and an instruction.
+    public func serviceTheRequestNeeds(_ request: String) async -> String? {
+        guard let connectors else { return nil }
+        let live = await connectors.connected()
+        let text = " " + request.lowercased() + " "
+        for connector in connectors.all where !live.contains(connector.id) {
+            if connector.vocabulary.contains(where: { text.contains(" \($0)") }) { return connector.name }
+        }
+        return nil
+    }
+
     /// True when the job can simply run: every step only reads, and none of it leaves the phone.
     ///
     /// Reading the user's own documents and memory is not a decision — asking them to approve a
