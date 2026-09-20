@@ -8,7 +8,7 @@ import Foundation
 /// must still open the database and fall back to prefix matching.
 enum IntelligenceSchema {
     /// Index 0 is schema version 1.
-    static let migrations: [String] = [v1, v2, v3, v4, v5]
+    static let migrations: [String] = [v1, v2, v3, v4, v5, v6]
 
     static var currentVersion: Int32 { Int32(migrations.count) }
 
@@ -238,6 +238,33 @@ enum IntelligenceSchema {
 
     static let artifactColumns = """
     id, title, kind, markdown, version, plan_id, subject_id, sources, created_at, updated_at
+    """
+
+    // MARK: - v6: what left the device
+
+    private static let v6 = """
+    CREATE TABLE network_log (
+        id TEXT PRIMARY KEY,
+        at REAL NOT NULL,
+        capability TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        host TEXT NOT NULL,
+        categories TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        outcome TEXT NOT NULL,
+        refusal TEXT,
+        bytes_sent INTEGER NOT NULL DEFAULT 0,
+        bytes_received INTEGER NOT NULL DEFAULT 0,
+        plan_id TEXT
+    );
+
+    CREATE INDEX network_log_at ON network_log(at);
+    """
+
+    static let networkColumns = """
+    id, at, capability, provider, host, categories, reason, payload, outcome, refusal, \
+    bytes_sent, bytes_received, plan_id
     """
 
     // MARK: - Full text

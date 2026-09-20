@@ -41,7 +41,11 @@ public struct DemoLanguageModel: LanguageModel {
     static func plan(for request: LLMRequest) -> String {
         let canWrite = request.suffix.contains("write_artifact(")
         let canRead = request.suffix.contains("search_knowledge(")
+        let canSearchWeb = request.suffix.contains("search_web(")
         var steps: [String] = []
+        if canSearchWeb {
+            steps.append(#"{"do":"search_web","why":"Look it up","arguments":{"query":"what you asked about"}}"#)
+        }
         if canRead {
             steps.append(#"{"do":"search_knowledge","why":"Read what you've shared","arguments":{"query":"what this is about"}}"#)
         }

@@ -47,17 +47,32 @@ extension AppModel {
         )
         let runtime = AgentRuntime(
             store: intelligence.store,
-            executors: [IntelligenceStepExecutor(
-                intelligence: intelligence, artifacts: writer, logger: .shared
-            )],
+            executors: [
+                IntelligenceStepExecutor(intelligence: intelligence, artifacts: writer, logger: .shared),
+                // The only door out of the phone, and it is gated and logged on every request.
+                WebStepExecutor(
+                    store: intelligence.store,
+                    policy: { [weak self] in await self?.currentNetworkPolicy() ?? NetworkPolicy() },
+                    approve: { [weak self] descriptor in
+                        guard let self else { return false }
+                        return await self.askToSend(descriptor)
+                    },
+                    logger: .shared
+                ),
+            ],
             logger: .shared
         )
         return JobService(
             intelligence: intelligence,
             planner: Planner(model: languageModel, logger: .shared),
             runtime: runtime,
-            // Nothing in V2 reaches the network yet, so availability is the honest offline one.
-            availability: { .offline },
+            availability: { [weak self] in
+                let policy = await self?.currentNetworkPolicy() ?? NetworkPolicy()
+                return CapabilityAvailability(
+                    networkAllowed: policy.mode != .off,
+                    isOnline: policy.isOnline
+                )
+            },
             logger: .shared
         )
     }
@@ -375,4 +390,100 @@ extension AppModel {
         }
         await refreshIntelligence()
     }
+}
+
+// MARK: - The internet
+
+/// A request waiting on the user's yes or no, with the continuation their answer resumes.
+struct PendingNetworkRequest: Identifiable {
+    let id = UUID()
+    let descriptor: NetworkRequestDescriptor
+    let answer: @Sendable (Bool) -> Void
+}
+
+extension AppModel {
+    /// The policy the web capabilities are gated by, read fresh for each request so changing the
+    /// mode takes effect immediately — including while a job is running.
+    func currentNetworkPolicy() -> NetworkPolicy {
+        NetworkPolicy(
+            mode: networkMode,
+            isOnline: Reachability.isOnline,
+            allowedHosts: WikipediaProvider().hosts
+        )
+    }
+
+    func setNetworkMode(_ mode: NetworkMode) {
+        applyNetworkMode(mode)
+        networkState.mode = mode
+        // A request waiting for a yes is not carried across a change of mind.
+        pendingNetworkRequest?.answer(false)
+        pendingNetworkRequest = nil
+    }
+
+    /// Shows one request and waits for the user. Returns false if they say no, dismiss it, or the
+    /// app goes away — nothing is sent on a timeout or an ambiguity.
+    func askToSend(_ descriptor: NetworkRequestDescriptor) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let request = PendingNetworkRequest(descriptor: descriptor) { allowed in
+                continuation.resume(returning: allowed)
+            }
+            Task { @MainActor in
+                self.pendingNetworkRequest?.answer(false)
+                self.pendingNetworkRequest = request
+            }
+        }
+    }
+
+    func answerNetworkRequest(_ allowed: Bool) {
+        pendingNetworkRequest?.answer(allowed)
+        pendingNetworkRequest = nil
+        Task { @MainActor in await refreshNetworkState() }
+    }
+
+    func refreshNetworkState() async {
+        guard let intelligence else {
+            networkState = SettingsViewState.Network(mode: networkMode)
+            return
+        }
+        let store = intelligence.store
+        let entries = (try? await store.networkLog(limit: 100)) ?? []
+        let summary = (try? await store.networkSummary()) ?? (sent: 0, refused: 0, bytes: 0)
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB]
+        formatter.countStyle = .file
+        networkState = SettingsViewState.Network(
+            mode: networkMode,
+            sent: summary.sent,
+            refused: summary.refused,
+            bytesText: formatter.string(fromByteCount: Int64(summary.bytes)),
+            log: entries.map { entry in
+                SettingsViewState.Network.LogRow(
+                    id: entry.id,
+                    provider: entry.provider,
+                    payload: entry.payload,
+                    categories: entry.categories.map(\.displayName).joined(separator: ", "),
+                    reason: entry.reason,
+                    outcome: entry.outcome,
+                    detail: entry.refusal?.explanation,
+                    timeText: presenter.relative(entry.at, now: Date())
+                )
+            }
+        )
+    }
+
+    func clearNetworkLog() {
+        guard let intelligence else { return }
+        Task { @MainActor in
+            try? await intelligence.store.clearNetworkLog()
+            await refreshNetworkState()
+        }
+    }
+}
+
+/// Whether there is any route off the device at all.
+///
+/// Deliberately coarse: the app never probes the network to find out, it only reports what the
+/// system already knows, and a wrong "online" only costs a failed request that is logged anyway.
+enum Reachability {
+    nonisolated(unsafe) static var isOnline: Bool = true
 }

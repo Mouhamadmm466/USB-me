@@ -66,6 +66,11 @@ struct RootView: View {
         .sheet(item: $model.exportedFile) { file in
             ShareSheet(items: [file])
         }
+        .sheet(item: $model.pendingNetworkRequest) { request in
+            NetworkRequestSheet(descriptor: request.descriptor) { model.answerNetworkRequest($0) }
+                // Swiping it away is a no: nothing leaves on an ambiguity.
+                .onDisappear { model.answerNetworkRequest(false) }
+        }
         .sheet(item: $model.openedArtifact) { opened in
             NavigationStack {
                 ArtifactScreen(

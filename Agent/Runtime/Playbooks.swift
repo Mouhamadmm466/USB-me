@@ -129,5 +129,10 @@ public enum PlaybookLibrary {
         CapabilityID(.createReminder): ["remind me", "reminder", "don't let me forget"],
         CapabilityID(.openFile): ["open the", "show me the file"],
         CapabilityID(.openSupportedApp): ["open maps", "open music", "open settings"],
+        // Reaching the world is a thing the user asks for in words, like any other capability that
+        // has consequences. The network mode then decides whether it may actually go.
+        .searchWeb: [" online", " internet", " wikipedia", " google", "on the web", "search the web"],
+        .readWebPage: ["https://", "read this page", "read the page", "open this link",
+                       "what does this link say", " this link"],
     ]
 }

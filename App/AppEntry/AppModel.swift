@@ -65,10 +65,19 @@ final class AppModel {
     var exportedFile: URL?
     /// Presents the Files picker for importing a document.
     var isDocumentPickerPresented = false
+    /// What the internet section shows: the mode, and the record of what left.
+    var networkState = SettingsViewState.Network()
+    /// A request waiting on the user's yes or no, with the continuation that carries their answer.
+    var pendingNetworkRequest: PendingNetworkRequest?
     /// The artifact being read, with the sources it was built from.
     var openedArtifact: ArtifactViewState?
     @ObservationIgnored private(set) var intelligence: PersonalIntelligence?
     @ObservationIgnored let presenter = IntelligencePresenter()
+
+    /// Whether anything may reach the internet right now, from the settings row the user edits.
+    var networkMode: NetworkMode {
+        NetworkMode(rawValue: settings.networkMode) ?? .off
+    }
 
     /// The two switches the intelligence reads, taken from the settings row the user edits.
     var memoryPolicy: MemoryPolicySettings {
@@ -76,6 +85,11 @@ final class AppModel {
             learningEnabled: settings.learningEnabled,
             confirmInferences: settings.confirmInferences
         )
+    }
+
+    func applyNetworkMode(_ mode: NetworkMode) {
+        settings.networkMode = mode.rawValue
+        persistSettings()
     }
 
     func applyMemoryPolicy(_ policy: MemoryPolicySettings) {
@@ -385,7 +399,8 @@ final class AppModel {
             storage: storage,
             permissions: permissionRows,
             sharedFolders: sharedFolders,
-            privacy: .init(keepHistory: settings.retainHistory, retentionDays: settings.historyRetentionDays, storedTurnCount: storedTurnCount),
+            privacy: .init(keepHistory: settings.retainHistory, retentionDays: settings.historyRetentionDays,
+                           storedTurnCount: storedTurnCount, network: networkState),
             voice: .init(continueListening: settings.continueListening, hapticsEnabled: settings.hapticsEnabled,
                          speechOutputAvailable: Self.speechOutputAvailable),
             diagnostics: diagnostics,
@@ -462,7 +477,9 @@ final class AppModel {
             cancelBenchmark: { [weak self] in
                 self?.benchmarkTask?.cancel()
                 self?.diagnostics.phase = .idle
-            }
+            },
+            setNetworkMode: { [weak self] mode in self?.setNetworkMode(mode) },
+            clearNetworkLog: { [weak self] in self?.clearNetworkLog() }
         )
     }
 
@@ -482,6 +499,7 @@ final class AppModel {
         let usage = await modelManager.storageUsage()
         storage = SettingsViewState.Storage(modelBytes: usage.totalBytes, freeBytes: usage.availableBytes)
         storedTurnCount = try? await sessionStore?.count()
+        await refreshNetworkState()
     }
 
     // MARK: - Persistence

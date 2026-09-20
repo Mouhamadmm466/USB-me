@@ -1,10 +1,11 @@
 import Core
+import Intelligence
 import SwiftUI
 
 /// Sections of Settings, for deep links (for example the shared-folder permission card
 /// opens Settings at `.permissions`).
 enum SettingsSection: String, CaseIterable, Hashable, Sendable {
-    case models, storage, permissions, files, privacy, voice, diagnostics, about
+    case models, storage, permissions, files, privacy, network, voice, diagnostics, about
 }
 
 /// Settings: models, storage, permissions, privacy, voice, diagnostics and about. Present it
@@ -32,6 +33,7 @@ struct SettingsScreen: View {
                     permissionsSection
                     filesSection
                     privacySection
+                    networkSection
                     voiceSection
                     diagnosticsSection
                     aboutSection
@@ -211,6 +213,43 @@ struct SettingsScreen: View {
             SettingsHeader("Privacy")
         }
         .id(SettingsSection.privacy)
+    }
+
+    // MARK: Internet
+
+    /// The only door out of the phone, and the record of everything that went through it.
+    private var networkSection: some View {
+        Section {
+            Picker(selection: Binding(
+                get: { state.privacy.network.mode },
+                set: { actions.setNetworkMode($0) }
+            )) {
+                ForEach(NetworkMode.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            } label: {
+                RowLabel(title: "Reach the internet", subtitle: state.privacy.network.mode.explanation)
+            }
+            .pickerStyle(.navigationLink)
+
+            NavigationLink {
+                NetworkLogScreen(network: state.privacy.network, onClear: actions.clearNetworkLog)
+            } label: {
+                RowLabel(
+                    title: "What left this iPhone",
+                    subtitle: state.privacy.network.sent == 0
+                        ? "Nothing has ever left."
+                        : "\(state.privacy.network.sent) sent · \(state.privacy.network.refused) refused · \(state.privacy.network.bytesText)"
+                )
+            }
+        } header: {
+            SettingsHeader("Internet")
+        } footer: {
+            Text("Everything else — your voice, your world, your documents — is processed here and never sent, whatever this is set to.")
+                .textStyle(.footnote)
+                .foregroundStyle(Palette.inkSecondary)
+        }
+        .id(SettingsSection.network)
     }
 
     private var retentionOptions: [Int] {

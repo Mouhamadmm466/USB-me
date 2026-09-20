@@ -29,6 +29,9 @@ public struct CapabilityID: RawRepresentable, Hashable, Sendable, Codable, Custo
     public static let remember = CapabilityID("remember")
     /// Stopping to ask the user a question the job cannot answer for itself.
     public static let askUser = CapabilityID("ask_user")
+    /// Looking something up in the world. Leaves the device, so it is gated, logged and refusable.
+    public static let searchWeb = CapabilityID("search_web")
+    public static let readWebPage = CapabilityID("read_web_page")
 }
 
 /// What kind of thing a capability touches. Used for scoping and for what the user is told.
@@ -177,6 +180,25 @@ public struct CapabilityRegistry: Sendable {
                                  "what to remember, in one sentence"),
             ],
             risk: .reversibleLocalWrite
+        ),
+        CapabilitySpec(
+            id: .searchWeb,
+            domain: .network,
+            summary: "Look something up on Wikipedia. Only the words you are given leave the phone.",
+            arguments: [
+                ToolArgumentSpec("query", .text(maxLength: 120), required: true,
+                                 "what to look up, in the user's own words"),
+            ],
+            requiresNetwork: true
+        ),
+        CapabilitySpec(
+            id: .readWebPage,
+            domain: .network,
+            summary: "Read a page that a search returned, or one the user gave by address.",
+            arguments: [
+                ToolArgumentSpec("url", .text(maxLength: 300), required: true, "the https address to read"),
+            ],
+            requiresNetwork: true
         ),
         CapabilitySpec(
             id: .askUser,

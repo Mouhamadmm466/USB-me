@@ -16,6 +16,9 @@ public final class AppSettingsRecord {
     public var learningEnabled: Bool = true
     /// Ask before keeping anything the model worked out rather than was told.
     public var confirmInferences: Bool = true
+    /// Whether anything may reach the internet: "off", "ask" or "approved" (V2). Off by default,
+    /// and stored as a string so the store does not need to know the vocabulary.
+    public var networkMode: String = "off"
 
     public init(
         hasCompletedOnboarding: Bool = false,
@@ -24,7 +27,8 @@ public final class AppSettingsRecord {
         continueListening: Bool = true,
         hapticsEnabled: Bool = true,
         learningEnabled: Bool = true,
-        confirmInferences: Bool = true
+        confirmInferences: Bool = true,
+        networkMode: String = "off"
     ) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.retainHistory = retainHistory
@@ -33,6 +37,7 @@ public final class AppSettingsRecord {
         self.hapticsEnabled = hapticsEnabled
         self.learningEnabled = learningEnabled
         self.confirmInferences = confirmInferences
+        self.networkMode = networkMode
     }
 }
 
@@ -45,6 +50,7 @@ public struct AppSettings: Sendable, Equatable, Codable {
     public var hapticsEnabled = true
     public var learningEnabled = true
     public var confirmInferences = true
+    public var networkMode = "off"
 
     public init() {}
 }
@@ -61,6 +67,7 @@ public actor SettingsStore {
         settings.hapticsEnabled = record.hapticsEnabled
         settings.learningEnabled = record.learningEnabled
         settings.confirmInferences = record.confirmInferences
+        settings.networkMode = record.networkMode
         return settings
     }
 
@@ -73,6 +80,7 @@ public actor SettingsStore {
         record.hapticsEnabled = settings.hapticsEnabled
         record.learningEnabled = settings.learningEnabled
         record.confirmInferences = settings.confirmInferences
+        record.networkMode = settings.networkMode
         try modelContext.save()
     }
 

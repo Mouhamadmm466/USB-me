@@ -18,6 +18,12 @@ public struct ParsedDocument: Sendable, Equatable {
 
     public var title: String?
     public var pages: [Page]
+
+    public init(title: String? = nil, pages: [Page]) {
+        self.title = title
+        self.pages = pages
+    }
+
     public var pageCount: Int? { pages.contains { $0.number != nil } ? pages.count : nil }
 
     public var isEmpty: Bool { pages.allSatisfy { $0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } }
@@ -152,7 +158,7 @@ public struct DocumentParser: DocumentParsing {
 // MARK: - HTML
 
 /// Pulls the readable text out of a page without a rendering engine.
-enum HTMLText {
+public enum HTMLText {
     static func extract(_ markup: String) -> (title: String?, text: String) {
         var title: String?
         if let range = markup.range(of: "(?s)<title[^>]*>.*?</title>", options: [.regularExpression, .caseInsensitive]) {
@@ -190,7 +196,7 @@ enum HTMLText {
         "&ldquo;": "\u{201C}", "&rdquo;": "\u{201D}",
     ]
 
-    static func decode(_ text: String) -> String {
+    public static func decode(_ text: String) -> String {
         var decoded = text
         for (entity, character) in entities {
             decoded = decoded.replacingOccurrences(of: entity, with: character, options: .caseInsensitive)

@@ -19,11 +19,23 @@ import Testing
         }
     }
 
-    @Test func v2CapabilitiesAreLocalAndOnlyWritesCarryRisk() {
+    @Test func onlyNetworkCapabilitiesLeaveThePhoneAndOnlyWritesCarryRisk() {
         for spec in CapabilityRegistry.intelligenceCapabilities {
-            #expect(!spec.requiresNetwork, "\(spec.id) should not need the network yet")
+            // Anything that leaves the device says so, and says so by being in the network domain —
+            // that is what the policy gate and the availability check key on.
+            #expect(
+                spec.requiresNetwork == (spec.domain == .network),
+                "\(spec.id) is in \(spec.domain) but requiresNetwork is \(spec.requiresNetwork)"
+            )
             let writes = [CapabilityID.writeArtifact, .remember].contains(spec.id)
             #expect(writes == (spec.risk > .readOnly), "\(spec.id) risk does not match what it does")
+        }
+        // Reading the world is read-only in risk terms; the *network policy*, not the risk level,
+        // is what stops it.
+        for id in [CapabilityID.searchWeb, .readWebPage] {
+            let spec = CapabilityRegistry.all.spec(for: id)
+            #expect(spec?.domain == .network)
+            #expect(spec?.risk == .readOnly)
         }
     }
 
@@ -37,7 +49,7 @@ import Testing
         availability.canSendText = true
         #expect(availability.isAvailable(message))
 
-        // Nothing in V2 needs the network yet, but the rule is enforced anyway.
+        // The same three refusals, in order: the mode, then connectivity.
         let networked = CapabilitySpec(id: CapabilityID("search_web"), domain: .network,
                                        summary: "Search the web.", requiresNetwork: true)
         #expect(availability.unavailability(of: networked) == .networkOff)

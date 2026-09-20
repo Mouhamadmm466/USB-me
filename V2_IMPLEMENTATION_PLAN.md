@@ -207,8 +207,8 @@ text) and shows agent progress as a checklist of actions — never chain-of-thou
 | 6 | Goal planner: goals, plans, steps, dependencies, replanning | done — capability registry, playbooks, plan contract + store, 20 tests |
 | 7 | Agent runtime: loop, checkpoints, failure recovery, limits, cancellation | done — `Agent/Runtime`, 11 tests (device-tool executor with phase 9) |
 | 8 | Artifacts: documents, reports, briefs, versions, viewer/export | store + writer done; viewer/export next |
-| 9 | Network policy: modes, connectivity, per-capability requirements | |
-| 10 | First online capability: web research (keyless sources + optional search key) | |
+| 9 | Network policy: modes, connectivity, per-capability requirements | done — `Intelligence/Network`, the gate + the log + Settings, 18 tests |
+| 10 | First online capability: web research (keyless sources + optional search key) | done — Wikipedia (keyless), `WebStepExecutor`, pages become sources |
 | 11 | Connected services: Gmail, Drive, GitHub — one at a time, mocks where credentials are human steps | |
 | 12 | Share extension + App Group inbox | |
 | 13 | Attention engine and "what needs my attention?" | done — `Intelligence/Attention`, Home + turn context, 9 tests |
