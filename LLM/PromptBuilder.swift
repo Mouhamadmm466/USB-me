@@ -8,7 +8,7 @@ import Foundation
 /// examples) and a small per-turn suffix, so the runtime can evaluate the prefix once and reuse its
 /// state (PRD §8: compact context, no ever-growing transcript).
 public struct PromptBuilder: Sendable {
-    public static let promptVersion = "2026-09-19.6"
+    public static let promptVersion = "2026-09-20.1"
 
     public let contextManager: ContextManager
 
@@ -94,8 +94,8 @@ public struct PromptBuilder: Sendable {
     - proposed_action: the request matches a tool below. Fill "arguments" only with details the user actually gave. Set "requires_confirmation" to true when the tool sends, calls, creates or changes something.
     - clarification: a detail the tool needs is missing or the request is too vague to act on (for example "text Sam" with no message). Ask one short question in "speech".
     - answer: small talk, general knowledge, or a question answered by the context. One or two short spoken sentences in "speech", no lists, markdown or emoji.
-    - task: the request needs several steps and produces something — reading the user's own documents or projects and then writing a brief, a summary, a plan or a study plan ("prep me for the review", "what does the syllabus say about the midterm and make me a plan", "where are we on the beta"). Put what the user wants to end up with in "outcome", in their own words. Do not plan it here; the app plans it and asks them first.
-    - unsupported: anything the tools cannot do, such as money or payments, purchases, passwords or security codes, deleting data, device or security settings, alarms and timers, email, social media, websites, or running code. Say in one short sentence that you can't do that yet.
+    - task: the request needs more than one step, or needs information you do not have. Two kinds. (a) Reading the user's own documents or projects and then writing something — a brief, a summary, a plan, a study plan ("prep me for the review", "what does the syllabus say about the midterm and make me a plan", "where are we on the beta"). (b) Anything that needs current information from the world rather than from you: the weather, news, prices, scores, what something is or who someone is when you are not certain, looking something up, or researching a subject ("what's the weather tomorrow", "look up the new Nemotron benchmarks", "research whether we should switch models and write it up"). Put what the user wants to end up with in "outcome", in their own words. Do not plan it here and do not answer from memory; the app looks it up and tells them what it found.
+    - unsupported: anything the tools cannot do, such as money or payments, purchases, passwords or security codes, deleting data, device or security settings, alarms and timers, posting to social media, or running code. Say in one short sentence that you can't do that yet.
 
     Tools:
     \(toolLines)
@@ -112,6 +112,7 @@ public struct PromptBuilder: Sendable {
     8. Something the user calls an event, appointment, meeting, class, practice, lesson, lunch or dinner, or anything they want on their calendar at a time, is create_calendar_event. create_reminder is only for "remind me", a reminder or a to-do.
     9. "Open" or "show" followed by a name that is not one of the listed apps means open_file.
     10. One tool call answers the request, or it is a task. Never use task for something a single tool does ("text Sam", "what's on my calendar"), and never use a tool for something that needs reading and writing several things.
+    10a. Use answer only for what you are sure of and what does not change: small talk, definitions, arithmetic, and anything the context above already says. Anything that changes with the day or that you would have to guess at — weather, news, prices, current events, a fact you are not certain of — is a task, not an answer. Being out of date is worse than taking a moment to look.
     11. Reply with the JSON object only.
     """
 
@@ -128,6 +129,10 @@ public struct PromptBuilder: Sendable {
         Example(
             user: "\(exampleNow)\nUser: what does the syllabus say about the midterm, and make me a study plan",
             output: #"{"type":"task","outcome":"a study plan for the midterm, from what the syllabus says"}"#
+        ),
+        Example(
+            user: "\(exampleNow)\nUser: what's the weather tomorrow",
+            output: #"{"type":"task","outcome":"tomorrow's weather"}"#
         ),
         Example(
             user: "\(exampleNow)\nUser: Text Alex that I will be 20 minutes late",

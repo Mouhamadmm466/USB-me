@@ -1,7 +1,11 @@
+import AgentEval
 import Core
 import Foundation
 import Intelligence
+import LLM
+import Permissions
 import Testing
+import Tools
 @testable import Agent
 
 /// A stand-in for the network. Records every request so a test can assert not just what came back
@@ -260,11 +264,24 @@ private let summaryResponse = Data("""
         }
     }
 
-    @Test func theWebIsOutOfScopeUnlessTheUserAsksForIt() {
-        let quiet = PlaybookLibrary.match("summarize the syllabus")
-        #expect(!PlaybookLibrary.scope(for: "summarize the syllabus", playbook: quiet).contains("search_web"))
-        let asked = PlaybookLibrary.scope(for: "look up the exam format online", playbook: quiet)
-        #expect(asked.contains("search_web"))
+    @Test func lookingSomethingUpDoesNotNeedTheUserToSayTheWordInternet() {
+        // This used to be the opposite: the web was out of scope until the request contained
+        // "online", "google" or "on the web. That made the person work out which questions need the
+        // internet, which is the assistant's job — and it is why "look up what Nemotron is" did
+        // nothing. The gate is the network mode, the plan card and the request log, not a password.
+        let research = PlaybookLibrary.match("look up what Nemotron is")
+        #expect(PlaybookLibrary.scope(for: "look up what Nemotron is", playbook: research).contains("search_web"))
+        let open = PlaybookLibrary.match("who won the game last night")
+        #expect(PlaybookLibrary.scope(for: "who won the game last night", playbook: open).contains("search_web"))
+    }
+
+    @Test func aJobAboutTheUsersOwnThingsStillCannotReachTheWorld() {
+        // Scope is still scope: a plan of work is about what the user already has.
+        let study = PlaybookLibrary.match("study plan for the midterm")
+        #expect(!PlaybookLibrary.scope(for: "study plan for the midterm", playbook: study).contains("search_web"))
+        // Unless they ask for it by name, which is what the phrase list is still for.
+        #expect(PlaybookLibrary.scope(for: "study plan for the midterm, and check online what changed",
+                                      playbook: study).contains("search_web"))
     }
 
     @Test func aRefusedRequestIsStillCountedInWhatLeftThisPhone() async throws {
@@ -285,4 +302,89 @@ private let summaryResponse = Data("""
 actor PromptLog {
     private(set) var prompts: [String] = []
     func record(_ prompt: String) { prompts.append(prompt) }
+}
+
+/// The path the user actually takes: they ask a question that needs the world, and the app looks it
+/// up and tells them. Everything between — the turn contract, the planner, the scope, the card, the
+/// network gate, the runtime — is covered by other tests one layer at a time. This is the one that
+/// fails if any of them stop meeting.
+@MainActor
+@Suite struct WebRequestEndToEndTests {
+    private static let now = Date(timeIntervalSince1970: 1_790_000_000)
+
+    private func makeCoordinator(session: RecordingWebSession) async throws -> AgentCoordinator {
+        let moment = Self.now
+        let store = try IntelligenceStore()
+        let intelligence = PersonalIntelligence(store: store, dates: IntelligenceDateResolver())
+        let model = ScriptedLanguageModel { request in
+            // The planner's prompt is the one that lists capabilities; the turn's is not.
+            if request.suffix.contains("Capabilities:") {
+                return #"{"title":"What Nemotron is","steps":[{"do":"search_web","why":"Look it up","arguments":{"query":"Nemotron"}}]}"#
+            }
+            return #"{"type":"task","outcome":"a description of Nemotron"}"#
+        }
+        let clock = AgentClock.fixed(Self.now, timeZone: TimeZone(identifier: "America/New_York")!)
+        let runtime = AgentRuntime(
+            store: store,
+            executors: [
+                WebStepExecutor(
+                    store: store,
+                    provider: WikipediaProvider(session: session),
+                    policy: { NetworkPolicy(mode: .approved, isOnline: true, allowedHosts: ["en.wikipedia.org"]) }
+                ),
+            ],
+            clock: clock,
+            thermal: { .nominal }
+        )
+        let jobs = JobService(
+            intelligence: intelligence,
+            planner: Planner(model: model),
+            runtime: runtime,
+            availability: { CapabilityAvailability(networkAllowed: true, isOnline: true) }
+        )
+        return AgentCoordinator(dependencies: AgentDependencies(
+            languageModel: model,
+            resolver: StubResolver { _, _ in
+                .resolved(.getCalendarEvents(DateRange(
+                    start: moment, end: moment.addingTimeInterval(86_400), spokenDescription: "tomorrow"
+                )))
+            },
+            executor: RecordingExecutor(clock: clock),
+            permissions: PermissionManager(backend: FakePermissionBackend.allGranted()),
+            speech: RecordingSpeech(),
+            intelligence: intelligence,
+            jobs: jobs,
+            clock: clock
+        ))
+    }
+
+    @Test func aQuestionThatNeedsTheWorldIsLookedUpOnceTheUserSaysGoAhead() async throws {
+        let session = RecordingWebSession(responses: ["srsearch": searchResponse])
+        let coordinator = try await makeCoordinator(session: session)
+
+        // The model reads it as a job, and the plan is shown before anything leaves the phone.
+        let planned = await coordinator.handle(.typed("look up what Nemotron is"))
+        #expect(planned.outcome == .confirmationRequested)
+        let card = try #require(coordinator.presentation.jobCard)
+        #expect(card.isAwaitingApproval)
+        #expect(card.steps.contains { $0.summary == "Look it up" })
+        // Nothing has been sent: approving the card is what authorises the request inside it.
+        #expect(await session.requested.isEmpty)
+
+        let ran = await coordinator.approveJob(id: card.id)
+        #expect(ran.outcome == .executed)
+        #expect(await session.requested.contains { $0.absoluteString.contains("srsearch=Nemotron") })
+    }
+
+    @Test func nothingIsAskedOfTheWorldIfTheUserDeclines() async throws {
+        let session = RecordingWebSession(responses: ["srsearch": searchResponse])
+        let coordinator = try await makeCoordinator(session: session)
+
+        _ = await coordinator.handle(.typed("look up what Nemotron is"))
+        let card = try #require(coordinator.presentation.jobCard)
+        _ = await coordinator.cancelJob(id: card.id)
+
+        #expect(await session.requested.isEmpty)
+        #expect(coordinator.presentation.jobCard == nil)
+    }
 }

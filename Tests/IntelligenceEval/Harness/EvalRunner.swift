@@ -246,7 +246,19 @@ private final class World: @unchecked Sendable {
             }
             if let planner {
                 do {
-                    let plan = try await planner.plan(for: request, now: now)
+                    // The same way the app plans: names the request mentions are stripped before
+                    // scope is decided, and the plan is built from that scope. Planning without it
+                    // tested a path the app does not have — and reported the model reaching for a
+                    // capability the real grammar would never have let it generate.
+                    let plan = try await planner.plan(
+                        for: request,
+                        availability: CapabilityAvailability(
+                            grantedPermissions: Set(PermissionKind.allCases),
+                            networkAllowed: true, isOnline: true
+                        ),
+                        mentionedNames: mentioned,
+                        now: now
+                    )
                     for capability in step.expect.planForbids ?? []
                     where plan.steps.contains(where: { $0.capability == capability }) {
                         failures.append("\(label): the plan used \(capability)")

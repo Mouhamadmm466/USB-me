@@ -175,7 +175,13 @@ Built on branch `v2`, extending V1 rather than replacing it. See
 - [x] **Share extension** (second half of PRD 12) — a share sheet target that copies what the user
   sends into an App Group inbox and nothing else; the app reads it on launch and on coming forward,
   and each item leaves the inbox only once it is in. 10 tests.
-- [ ] **Not built yet**: connected services (PRD 11). Everything else V2 does is local.
+- [x] **Reaching the world, when the user asks for something that needs it** — the turn contract
+  routes anything needing current information to a job, research and open-ended jobs carry the web
+  capabilities, and two keyless sources answer (Wikipedia and DuckDuckGo's instant answers). A job
+  that only reads the user's own things runs without a card; anything that leaves the phone keeps
+  one, and approving it is what authorises the requests inside it.
+- [ ] **Not built yet**: connected services (PRD 11) — Gmail, Drive, GitHub and the OAuth, token
+  storage and per-capability permissions they need. Everything else V2 does is local.
 
 ## Not done (testing stopped at the owner's request)
 

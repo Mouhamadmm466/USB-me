@@ -583,8 +583,17 @@ public final class AgentCoordinator {
         let context = await personalContext(for: transcript)?.render()
         do {
             let plan = try await jobs.plan(request: transcript, outcome: outcome, context: context)
-            presentation.jobCard = JobCard(plan: plan)
             activePlanID = plan.id
+
+            // A job that only reads the user's own things is an answer that takes a few steps,
+            // not a decision to approve.
+            if jobs.runsWithoutAsking(plan) {
+                presentation.jobCard = JobCard(plan: plan, message: "Looking…")
+                report = await runJob(plan.id, report: report)
+                return
+            }
+
+            presentation.jobCard = JobCard(plan: plan)
             report.outcome = .confirmationRequested
             report.plan = plan
             let steps = plan.steps.count == 1 ? "one step" : "\(plan.steps.count) steps"
@@ -596,7 +605,15 @@ public final class AgentCoordinator {
         } catch {
             report.outcome = .unsupported
             dependencies.logger.log(.error(domain: "runtime", code: "planning_failed"))
-            await speak("I couldn't work out how to do that.", report: &report)
+            // Most of the time a plan that cannot be made is a plan that needed the internet. Say
+            // which it is: "I can't" and "you haven't let me" are different answers.
+            if await jobs.networkIsSwitchedOff() {
+                await speak("I'd need the internet for that, and it's switched off. You can change that in Settings, under Internet.", report: &report)
+            } else if await !jobs.canReachTheWeb() {
+                await speak("That needs the internet and I can't reach it right now.", report: &report)
+            } else {
+                await speak("I couldn't work out how to do that.", report: &report)
+            }
         }
     }
 
@@ -616,6 +633,19 @@ public final class AgentCoordinator {
             id: card.id, title: card.title, request: card.request, steps: card.steps,
             state: .running, message: "Starting…"
         )
+
+        return await runJob(id, report: report)
+    }
+
+    /// Runs a plan to its end and says what happened. Shared by the approval button and by the
+    /// read-only jobs that never needed one.
+    private func runJob(_ id: UUID, report: TurnReport) async -> TurnReport {
+        var report = report
+        guard let jobs = dependencies.jobs else {
+            report.outcome = .noAction
+            return report
+        }
+        transition(to: .executing, reason: .userApproved)
 
         let finished = await jobs.run(id) { [weak self] update in
             guard let self else { return }

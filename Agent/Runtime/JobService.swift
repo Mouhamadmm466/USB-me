@@ -50,6 +50,33 @@ public actor JobService {
         return try await store.save(proposal)
     }
 
+    /// Whether the outside world is reachable at all right now: the user's mode allows it and
+    /// there is a route. The difference between "I can't" and "I'm not allowed to" is the whole
+    /// difference between a broken assistant and one being careful, and the user should hear it.
+    public func canReachTheWeb() async -> Bool {
+        let now = await availability()
+        return now.networkAllowed && now.isOnline
+    }
+
+    public func networkIsSwitchedOff() async -> Bool {
+        await availability().networkAllowed == false
+    }
+
+    /// True when the job can simply run: every step only reads, and none of it leaves the phone.
+    ///
+    /// Reading the user's own documents and memory is not a decision — asking them to approve a
+    /// plan for it turns a question into paperwork. Leaving the device *is* a decision, even to
+    /// read, so anything with a network step keeps its card: approving that card is what authorises
+    /// the requests inside it, which is exactly what the network policy's "inside jobs I approve"
+    /// mode means.
+    public nonisolated func runsWithoutAsking(_ plan: Plan) -> Bool {
+        let registry = CapabilityRegistry.all
+        return !plan.steps.isEmpty && plan.steps.allSatisfy { step in
+            guard let spec = registry.spec(named: step.capability) else { return false }
+            return spec.risk == .readOnly && !spec.requiresNetwork
+        }
+    }
+
     /// Runs an approved job, reporting the plan after every step so the card stays honest.
     @discardableResult
     public func run(

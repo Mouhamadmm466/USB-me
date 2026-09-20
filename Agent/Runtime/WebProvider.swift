@@ -167,3 +167,115 @@ extension HTMLText {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
+
+/// DuckDuckGo's Instant Answer API: keyless, no account, no tracking cookie, and documented.
+///
+/// Wikipedia answers "what is X" well and everything else badly. This covers the rest of the
+/// lookups a person actually makes — a company, a product, a piece of jargon, a person in the news —
+/// without a search-engine key, and without sending anything but the words the user said.
+public struct DuckDuckGoProvider: WebProviding {
+    public let name = "DuckDuckGo"
+    public let hosts: Set<String> = ["api.duckduckgo.com"]
+    private let session: any WebSession
+    private let maximumBytes: Int
+
+    public init(session: any WebSession = URLSessionWeb(), maximumBytes: Int = 400_000) {
+        self.session = session
+        self.maximumBytes = maximumBytes
+    }
+
+    public func search(_ query: String) async throws -> [WebResult] {
+        var components = URLComponents(string: "https://api.duckduckgo.com/")!
+        components.queryItems = [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "format", value: "json"),
+            URLQueryItem(name: "no_html", value: "1"),
+            URLQueryItem(name: "no_redirect", value: "1"),
+            URLQueryItem(name: "skip_disambig", value: "1"),
+        ]
+        let (data, _) = try await session.get(components.url!, maximumBytes: maximumBytes)
+        struct Response: Decodable {
+            struct Topic: Decodable {
+                let Text: String?
+                let FirstURL: String?
+            }
+            let Heading: String?
+            let AbstractText: String?
+            let AbstractURL: String?
+            let RelatedTopics: [Topic]?
+        }
+        guard let response = try? JSONDecoder().decode(Response.self, from: data) else { throw WebError.noText }
+
+        var results: [WebResult] = []
+        if let abstract = response.AbstractText, !abstract.isEmpty,
+           let address = response.AbstractURL, let url = URL(string: address) {
+            results.append(WebResult(title: response.Heading ?? query, url: url, snippet: abstract))
+        }
+        for topic in response.RelatedTopics ?? [] {
+            guard results.count < 5, let text = topic.Text, !text.isEmpty,
+                  let address = topic.FirstURL, let url = URL(string: address) else { continue }
+            // The first clause of a related topic is its name; the rest is the description.
+            let title = text.split(separator: " - ", maxSplits: 1).first.map(String.init) ?? text
+            results.append(WebResult(title: title, url: url, snippet: text))
+        }
+        return results
+    }
+
+    /// Instant answers are summaries, not pages: there is nothing here to open. Reading the page a
+    /// result points at is the other provider's job, or nobody's.
+    public func read(_ url: URL) async throws -> WebPage {
+        throw WebError.notAllowed(url.host() ?? "that host")
+    }
+}
+
+/// Several providers as one.
+///
+/// The executor, the policy and the log all deal with a single provider; this is how more than one
+/// source gets to exist without any of them learning to. Searches go to all of them at once and the
+/// results are merged; a read goes to whichever one owns that host, which is also what keeps a page
+/// from redirecting the agent somewhere nobody allowed.
+public struct CompositeWebProvider: WebProviding {
+    public let name: String
+    public let hosts: Set<String>
+    private let providers: [any WebProviding]
+
+    public init(name: String = "the web", providers: [any WebProviding]) {
+        self.name = name
+        self.providers = providers
+        self.hosts = providers.reduce(into: Set<String>()) { $0.formUnion($1.hosts) }
+    }
+
+    public static var standard: CompositeWebProvider {
+        CompositeWebProvider(providers: [WikipediaProvider(), DuckDuckGoProvider()])
+    }
+
+    public func search(_ query: String) async throws -> [WebResult] {
+        // One slow or broken source must not cost the others their answer.
+        let found: [[WebResult]] = await withTaskGroup(of: [WebResult].self) { group in
+            for provider in providers {
+                group.addTask { (try? await provider.search(query)) ?? [] }
+            }
+            var all: [[WebResult]] = []
+            for await results in group { all.append(results) }
+            return all
+        }
+        // Interleave rather than concatenate: two sources' best answers beat one source's top five.
+        var merged: [WebResult] = []
+        var seen = Set<URL>()
+        for index in 0..<(found.map(\.count).max() ?? 0) {
+            for results in found where index < results.count {
+                let result = results[index]
+                if seen.insert(result.url).inserted { merged.append(result) }
+            }
+        }
+        guard !merged.isEmpty else { return [] }
+        return merged
+    }
+
+    public func read(_ url: URL) async throws -> WebPage {
+        guard let host = url.host(), let owner = providers.first(where: { $0.hosts.contains(host) }) else {
+            throw WebError.notAllowed(url.host() ?? "that host")
+        }
+        return try await owner.read(url)
+    }
+}

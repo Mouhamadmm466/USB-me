@@ -27,18 +27,29 @@ public enum PlaybookLibrary {
         CapabilityID(.getCalendarEvents), CapabilityID(.searchFiles), CapabilityID(.searchContacts),
     ]
 
+    /// Looking things up in the world.
+    ///
+    /// These used to need the user to say a magic word — "online", "google", "on the web" — before a
+    /// job could use them. That was the wrong gate in the wrong place: it made the person work out
+    /// which requests need the internet, which is the assistant's job, and it meant "look up what
+    /// Nemotron is" simply failed. The gate that matters is elsewhere and is stronger: the network
+    /// mode decides whether anything may leave at all, the plan card names the steps before they
+    /// run, and every request is checked for the user's own world and then logged.
+    static let worldReads: [CapabilityID] = [.searchWeb, .readWebPage]
+
     public static let all: [Playbook] = [
         Playbook(
             id: "research",
             title: "Look something up",
             triggers: ["look up", "research", "find out", "what does", "what do we know", "summarize", "summarise"],
-            scope: localReads + [.writeArtifact, .askUser],
+            scope: localReads + worldReads + [.writeArtifact, .askUser],
             guidance: """
-            Find what is already known before writing anything. Read the user's own documents first, \
-            then what is known about their projects and people. Write one artifact at the end only if \
-            the answer is worth keeping.
+            Find what is already known before looking outside. Read the user's own documents and what \
+            is known about their projects and people first, then search the web for what they do not \
+            already have — and search it more than once if the first results do not answer the \
+            question. Write one artifact at the end only if the answer is worth keeping.
             """,
-            maximumSteps: 5
+            maximumSteps: 8
         ),
         Playbook(
             id: "meeting_prep",
@@ -77,7 +88,7 @@ public enum PlaybookLibrary {
             id: "general",
             title: "Do something",
             triggers: [],
-            scope: localReads + [.writeArtifact, .askUser],
+            scope: localReads + worldReads + [.writeArtifact, .askUser],
             guidance: """
             Take the shortest route to the thing the user actually asked for. Prefer reading what is \
             already known over asking. Ask only when the job genuinely cannot continue without it.
@@ -129,8 +140,9 @@ public enum PlaybookLibrary {
         CapabilityID(.createReminder): ["remind me", "reminder", "don't let me forget"],
         CapabilityID(.openFile): ["open the", "show me the file"],
         CapabilityID(.openSupportedApp): ["open maps", "open music", "open settings"],
-        // Reaching the world is a thing the user asks for in words, like any other capability that
-        // has consequences. The network mode then decides whether it may actually go.
+        // Research and open-ended jobs already carry these (`worldReads`). Naming them explicitly
+        // adds them to the playbooks that do not — "give me a study plan, and check online what the
+        // exam board changed this year".
         .searchWeb: [" online", " internet", " wikipedia", " google", "on the web", "search the web"],
         .readWebPage: ["https://", "read this page", "read the page", "open this link",
                        "what does this link say", " this link"],

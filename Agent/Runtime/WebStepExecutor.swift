@@ -25,7 +25,7 @@ public struct WebStepExecutor: StepExecuting {
 
     public init(
         store: IntelligenceStore,
-        provider: any WebProviding = WikipediaProvider(),
+        provider: any WebProviding = CompositeWebProvider.standard,
         policy: @escaping @Sendable () async -> NetworkPolicy,
         approve: @escaping NetworkApproving = { _ in false },
         maximumObservation: Int = 600,

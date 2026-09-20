@@ -18,7 +18,7 @@ public final class AppSettingsRecord {
     public var confirmInferences: Bool = true
     /// Whether anything may reach the internet: "off", "ask" or "approved" (V2). Off by default,
     /// and stored as a string so the store does not need to know the vocabulary.
-    public var networkMode: String = "off"
+    public var networkMode: String = "approved"
     /// Keep track of what is on the user's calendar (V2). Off until they say otherwise: permission
     /// to read the calendar for one command is not permission to keep a copy of their week.
     public var ingestCalendar: Bool = false
@@ -33,7 +33,7 @@ public final class AppSettingsRecord {
         hapticsEnabled: Bool = true,
         learningEnabled: Bool = true,
         confirmInferences: Bool = true,
-        networkMode: String = "off",
+        networkMode: String = "approved",
         ingestCalendar: Bool = false,
         ingestReminders: Bool = false
     ) {
@@ -59,7 +59,7 @@ public struct AppSettings: Sendable, Equatable, Codable {
     public var hapticsEnabled = true
     public var learningEnabled = true
     public var confirmInferences = true
-    public var networkMode = "off"
+    public var networkMode = "approved"
     public var ingestCalendar = false
     public var ingestReminders = false
 

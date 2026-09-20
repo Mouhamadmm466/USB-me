@@ -98,6 +98,11 @@ request → playbook (research · meeting prep · project update · study plan �
 - **Scope is decided before the model runs** and is never widened by anything the job reads. A
   research job cannot reach `compose_message`. Names the request mentions are stripped before
   scope triggers are matched, so a project called "call Bob" cannot smuggle in a capability.
+- **Looking things up is in scope by default** for research and open-ended jobs. It used to need the
+  user to say "online" or "google", which made *them* work out which questions need the internet —
+  the assistant's job — and meant "look up what Nemotron is" silently did nothing. The gates that
+  matter are elsewhere and are stronger: the network mode, the plan card that names the steps, the
+  leak check, and the log of everything that left.
 - **Limits**: steps, attempts per step, wall clock, and a thermal ceiling. A hot phone pauses the
   job rather than pushing through.
 - **A question is a stopping point**, not a guess: `ask_user` blocks the job and hands it back.
