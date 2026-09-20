@@ -84,7 +84,7 @@ public enum FixtureEnvironment {
             resolver: ActionResolver(environment: suite.environment),
             executor: ToolExecutor(environment: suite.environment),
             permissions: suite.permissions,
-            capabilities: CapabilityRegistry(
+            capabilities: DeviceCapabilities(
                 canSendText: { await messages.canSendText() },
                 canPlaceCalls: { await calls.canPlaceCalls() }
             ),

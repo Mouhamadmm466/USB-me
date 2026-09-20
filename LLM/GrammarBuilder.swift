@@ -11,14 +11,17 @@ import Foundation
 ///   {"type":"proposed_action","tool":"<tool>","arguments":{…},"requires_confirmation":true|false}
 ///
 /// Consequential actions carry no model-authored speech: Swift renders the confirmation from the
-/// resolved action (see Docs/SECURITY.md).
+/// resolved action (see docs/notes/security_review.md).
 public enum GrammarBuilder {
     public static func agentOutputGrammar(tools: [ToolSpec] = ToolCatalog.all) -> String {
         var rules: [String] = []
-        rules.append(#"root ::= answer | clarification | unsupported | proposal"#)
+        rules.append(#"root ::= answer | clarification | unsupported | task | proposal"#)
         rules.append(#"answer ::= "{\"type\":\"answer\",\"speech\":" speech "}""#)
         rules.append(#"clarification ::= "{\"type\":\"clarification\",\"speech\":" speech "}""#)
         rules.append(#"unsupported ::= "{\"type\":\"unsupported\",\"speech\":" speech "}""#)
+        // A job, not a command: the outcome the user wants, in their words. Planning is a separate,
+        // scoped pass — nothing here decides what will actually be done.
+        rules.append(#"task ::= "{\"type\":\"task\",\"outcome\":" speech "}""#)
         rules.append(#"proposal ::= "{\"type\":\"proposed_action\"," call "}""#)
         rules.append("call ::= " + tools.map { "call-\(ruleName($0.id))" }.joined(separator: " | "))
 
@@ -50,13 +53,23 @@ public enum GrammarBuilder {
     /// Rule `<prefix>-<i>-<e>-<s>`: arguments from index i, where e = something already emitted
     /// (next argument needs a comma) and s = the group is already satisfied.
     static func argumentRules(for tool: ToolSpec, prefix: String) -> [String] {
-        let name = ruleName(tool.id)
-        let plan = ArgumentPlan(tool: tool)
+        argumentRules(
+            arguments: tool.arguments, atLeastOneOf: tool.atLeastOneOf,
+            prefix: prefix, elementPrefix: "arg-\(ruleName(tool.id))"
+        )
+    }
+
+    /// The same ordered-argument machinery for any contract, not just V1 tools: `elementPrefix`
+    /// names the per-argument rules the caller has emitted.
+    public static func argumentRules(
+        arguments: [ToolArgumentSpec], atLeastOneOf: [[String]], prefix: String, elementPrefix: String
+    ) -> [String] {
+        let plan = ArgumentPlan(arguments: arguments, atLeastOneOf: atLeastOneOf)
         var rules: [String] = ["\(prefix)-h0 ::= \(prefix)-0-0-\(plan.initiallySatisfied ? 1 : 0)"]
         for state in plan.reachableStates() {
             let alternatives = plan.transitions(from: state).map { transition -> String in
                 guard let argument = transition.emitted else { return transition.next.map { "\(prefix)-\($0.key)" } ?? "\"\"" }
-                let element = "arg-\(name)-\(ruleName(argument.name))"
+                let element = "\(elementPrefix)-\(ruleName(argument.name))"
                 let comma = state.emitted ? "\",\" " : ""
                 let rest = transition.next.map { " \(prefix)-\($0.key)" } ?? ""
                 return comma + element + rest
@@ -83,7 +96,7 @@ public enum GrammarBuilder {
 
     static func ruleName(_ id: ToolID) -> String { ruleName(id.rawValue) }
 
-    static func ruleName(_ raw: String) -> String {
+    public static func ruleName(_ raw: String) -> String {
         raw.replacingOccurrences(of: "_", with: "-")
     }
 }
@@ -108,9 +121,13 @@ struct ArgumentPlan {
     let arguments: [ToolArgumentSpec]
     let group: Set<String>
 
+    init(arguments: [ToolArgumentSpec], atLeastOneOf: [[String]] = []) {
+        self.arguments = arguments
+        group = Set(atLeastOneOf.first ?? [])
+    }
+
     init(tool: ToolSpec) {
-        arguments = tool.arguments
-        group = Set(tool.atLeastOneOf.first ?? [])
+        self.init(arguments: tool.arguments, atLeastOneOf: tool.atLeastOneOf)
     }
 
     var initiallySatisfied: Bool { group.isEmpty }

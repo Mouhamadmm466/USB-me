@@ -116,4 +116,19 @@ public actor FakeReminderStore: ReminderStore {
         await recorder.record(.reminderCreated(draft))
         return identifier
     }
+
+    /// Reminders that already exist in this fake world, for reading paths (ingestion).
+    public func seed(_ existing: [String: ReminderDraft]) {
+        for (identifier, draft) in existing { reminders[identifier] = draft }
+    }
+
+    public func reminders(completedSince: Date?) async throws -> [ReminderReference] {
+        if let failure { throw failure }
+        return reminders.map { identifier, draft in
+            ReminderReference(
+                identifier: identifier, title: draft.title, dueDate: draft.dueDate,
+                isCompleted: false, listName: nil
+            )
+        }
+    }
 }

@@ -70,7 +70,7 @@ struct PromiseRow: View {
     let systemImage: String
     let title: String
     let detail: String
-    var tone: Tone = .jade
+    var tone: Tone = .clay
 
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.m + 2) {

@@ -4,6 +4,7 @@ import Audio
 import Core
 import DeviceBenchmark
 import Foundation
+import Intelligence
 import LLM
 import Models
 import Observation
@@ -51,9 +52,79 @@ final class AppModel {
     private(set) var warmUpMessage: String?
     let isDemoMode: Bool
 
+    // MARK: V2 — the personal intelligence
+
+    /// Everything the main screen's standby list and the Settings screens draw.
+    var intelligenceState = IntelligenceViewState()
+    /// The accounts the user has connected, and what each is allowed to do. Refreshed whenever
+    /// Settings is opened or a connection changes; read synchronously by the network policy, which
+    /// is why the hosts are cached here rather than awaited.
+    var connectors = ConnectorsViewState()
+    var connectorHosts: Set<String> = []
+    /// The entity the person opened from the main screen; the sheet's root.
+    var openedEntityID: UUID?
+    /// Entities pushed on top of it, when one detail leads to another.
+    var entityPath: [UUID] = []
+    /// Loaded detail screens, keyed by entity. Cleared whenever the store changes underneath them.
+    var entityDetails: [UUID: EntityDetailViewState] = [:]
+    /// Set when an export is ready; the share sheet is presented from it.
+    var exportedFile: URL?
+    /// Presents the Files picker for importing a document.
+    var isDocumentPickerPresented = false
+    /// What the internet section shows: the mode, and the record of what left.
+    var networkState = SettingsViewState.Network()
+    /// A request waiting on the user's yes or no, with the continuation that carries their answer.
+    var pendingNetworkRequest: PendingNetworkRequest?
+    /// The artifact being read, with the sources it was built from.
+    var openedArtifact: ArtifactViewState?
+    @ObservationIgnored private(set) var intelligence: PersonalIntelligence?
+    @ObservationIgnored let presenter = IntelligencePresenter()
+
+    /// Whether anything may reach the internet right now, from the settings row the user edits.
+    var networkMode: NetworkMode {
+        NetworkMode(rawValue: settings.networkMode) ?? .off
+    }
+
+    /// The two switches the intelligence reads, taken from the settings row the user edits.
+    var memoryPolicy: MemoryPolicySettings {
+        MemoryPolicySettings(
+            learningEnabled: settings.learningEnabled,
+            confirmInferences: settings.confirmInferences
+        )
+    }
+
+    func applyIngestion(calendar: Bool, reminders: Bool) {
+        settings.ingestCalendar = calendar
+        settings.ingestReminders = reminders
+        persistSettings()
+    }
+
+    /// The EventKit adapters the ingestion sources read through — the same ones the tools use, so
+    /// what the assistant sees and what the world model keeps can never disagree.
+    func toolEnvironmentForIngestion() -> (calendar: any CalendarStore, reminders: any ReminderStore)? {
+        let environment = isDemoMode ? demoEnvironment : systemToolEnvironment()
+        guard let environment else { return nil }
+        return (environment.calendar, environment.reminders)
+    }
+
+    func applyNetworkMode(_ mode: NetworkMode) {
+        settings.networkMode = mode.rawValue
+        persistSettings()
+    }
+
+    func applyMemoryPolicy(_ policy: MemoryPolicySettings) {
+        settings.learningEnabled = policy.learningEnabled
+        settings.confirmInferences = policy.confirmInferences
+        persistSettings()
+    }
+
+    func setIntelligence(_ intelligence: PersonalIntelligence?) {
+        self.intelligence = intelligence
+    }
+
     @ObservationIgnored private let modelManager: ModelManager
     @ObservationIgnored private let fileScopes: BookmarkFileScopeStore
-    @ObservationIgnored private let permissions: PermissionManager
+    @ObservationIgnored let permissions: PermissionManager
     @ObservationIgnored private var container: ModelContainer?
     @ObservationIgnored private var sessionStore: SessionStore?
     @ObservationIgnored private var settingsStore: SettingsStore?
@@ -62,6 +133,8 @@ final class AppModel {
     @ObservationIgnored private var tasks: [Task<Void, Never>] = []
     @ObservationIgnored private var benchmarkTask: Task<Void, Never>?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    /// Demo mode's fake tool world, so the ingestion switches do something visible there too.
+    @ObservationIgnored private var demoEnvironment: ToolEnvironment?
 
     struct Runtimes {
         var whisper: WhisperRuntime?
@@ -105,6 +178,9 @@ final class AppModel {
         openStores()
         if let settingsStore { settings = (try? await settingsStore.load()) ?? AppSettings() }
         observeSystem()
+        // The network policy reads the allowed hosts synchronously, so what is connected has to be
+        // known before the first job can run — not the first time Settings is opened.
+        await refreshConnectors()
         if isDemoMode {
             startDemoMode()
             return
@@ -191,6 +267,9 @@ final class AppModel {
         let calls = environment.calls
         var configuration = AgentConfiguration.default
         configuration.continueListeningAfterResponse = settings.continueListening
+        let intelligence = makeIntelligence(languageModel: languageModel)
+        setIntelligence(intelligence)
+        let jobs = makeJobService(languageModel: languageModel, intelligence: intelligence)
         let coordinator = AgentCoordinator(
             dependencies: AgentDependencies(
                 languageModel: languageModel,
@@ -198,15 +277,28 @@ final class AppModel {
                 executor: ToolExecutor(environment: environment),
                 permissions: permissions,
                 speech: speech,
-                capabilities: CapabilityRegistry(canSendText: { await messages.canSendText() },
+                capabilities: DeviceCapabilities(canSendText: { await messages.canSendText() },
                                                  canPlaceCalls: { await calls.canPlaceCalls() }),
+                intelligence: intelligence,
+                jobs: jobs,
                 clock: AgentClock(),
                 metrics: .shared
             ),
             configuration: configuration
         )
         coordinator.onTurnRecorded = { [weak self] turn in self?.persist(turn) }
+        // A turn that learned something changes what the other tabs show.
+        coordinator.onMemoryLearned = { [weak self] report in
+            guard let self, !report.isEmpty else { return }
+            self.entityDetails.removeAll()
+            Task { @MainActor in await self.refreshIntelligence() }
+        }
         self.coordinator = coordinator
+        Task { @MainActor in
+            await drainShareInbox()
+            await syncIngestion()
+            await refreshIntelligence()
+        }
         if let whisper = runtimes.whisper, let vad = runtimes.vad {
             let contacts = environment.contacts
             let permissions = permissions
@@ -245,12 +337,23 @@ final class AppModel {
                 ContactRecord(identifier: "demo-priya", givenName: "Priya", familyName: "Patel",
                               phones: [LabeledPhone(label: "mobile", number: "+1 (555) 010-2002")]),
             ],
-            events: [EventReference(eventIdentifier: "demo-sync", title: "Team sync",
-                                    startDate: now.addingTimeInterval(86_400), endDate: now.addingTimeInterval(88_200))],
+            events: [
+                EventReference(eventIdentifier: "demo-sync", title: "Team sync",
+                               startDate: now.addingTimeInterval(86_400), endDate: now.addingTimeInterval(88_200)),
+                EventReference(eventIdentifier: "demo-review", title: "Beta review with Sarah",
+                               startDate: now.addingTimeInterval(3 * 86_400),
+                               endDate: now.addingTimeInterval(3 * 86_400 + 3_600), location: "Room 3"),
+            ],
             clock: AgentClock()
         )
+        demoEnvironment = suite.environment
+        Task { await suite.reminders.seed([
+            "demo-deck": ReminderDraft(title: "Send Sarah the deck", dueDate: now.addingTimeInterval(-86_400), dueHasTime: false),
+            "demo-notes": ReminderDraft(title: "Write the release note", dueDate: now.addingTimeInterval(7_200), dueHasTime: true),
+        ]) }
         buildAgent(languageModel: DemoLanguageModel(), environment: suite.environment)
         route = .assistant
+        Task { @MainActor in await seedDemoIntelligence() }
     }
 
     // MARK: - Assistant intents
@@ -274,16 +377,31 @@ final class AppModel {
             openSettings: { [weak self] in
                 guard let self else { return }
                 // From a shared-folder card, land on Files (the spoken reply says "under Files").
-                self.settingsInitialSection = self.coordinator?.presentation.permissionPrompt?.kind == .fileScope ? .files : nil
+                self.settingsInitialSection = self.coordinator?.presentation.permissionPrompt?.kind == .fileScope ? .permissions : nil
                 self.isSettingsPresented = true
                 Task { await self.refreshSettingsState() }
             },
             openSystemSettings: { _ in AppModel.openSystemSettings() },
-            dismissPermission: { [weak self] in self?.coordinator?.dismissPermissionPrompt() }
+            dismissPermission: { [weak self] in self?.coordinator?.dismissPermissionPrompt() },
+            approveJob: { [weak self] id in
+                guard let self, let coordinator else { return }
+                Task { @MainActor in
+                    await coordinator.approveJob(id: id)
+                    await self.refreshIntelligence()
+                }
+            },
+            cancelJob: { [weak self] id in
+                guard let self, let coordinator else { return }
+                Task { @MainActor in
+                    await coordinator.cancelJob(id: id)
+                    await self.refreshIntelligence()
+                }
+            },
+            openArtifact: { [weak self] id in self?.openArtifact(id) }
         )
     }
 
-    private func toggleSession() {
+    func toggleSession() {
         guard let voice else { return }
         Task {
             if voice.isActive {
@@ -295,6 +413,18 @@ final class AppModel {
                 await voice.start()
             }
         }
+    }
+
+    /// Honours a pending "start listening" from the Action button, Siri or a shortcut.
+    ///
+    /// Called whenever the app reaches a state where it could: after launch, once the models are
+    /// ready, and when the app comes forward. A request made while the models were still warming is
+    /// not dropped — it waits here until there is something to listen with.
+    func startListeningIfAsked() {
+        guard LaunchRequest.shared.wantsListening else { return }
+        guard route == .assistant, let voice, !voice.isActive else { return }
+        LaunchRequest.shared.wantsListening = false
+        toggleSession()
     }
 
     /// "Continue" on the microphone explainer: iOS asks, then the session starts if allowed.
@@ -320,7 +450,8 @@ final class AppModel {
             storage: storage,
             permissions: permissionRows,
             sharedFolders: sharedFolders,
-            privacy: .init(keepHistory: settings.retainHistory, retentionDays: settings.historyRetentionDays, storedTurnCount: storedTurnCount),
+            privacy: .init(keepHistory: settings.retainHistory, retentionDays: settings.historyRetentionDays,
+                           storedTurnCount: storedTurnCount, network: networkState),
             voice: .init(continueListening: settings.continueListening, hapticsEnabled: settings.hapticsEnabled,
                          speechOutputAvailable: Self.speechOutputAvailable),
             diagnostics: diagnostics,
@@ -397,7 +528,9 @@ final class AppModel {
             cancelBenchmark: { [weak self] in
                 self?.benchmarkTask?.cancel()
                 self?.diagnostics.phase = .idle
-            }
+            },
+            setNetworkMode: { [weak self] mode in self?.setNetworkMode(mode) },
+            clearNetworkLog: { [weak self] in self?.clearNetworkLog() }
         )
     }
 
@@ -417,6 +550,7 @@ final class AppModel {
         let usage = await modelManager.storageUsage()
         storage = SettingsViewState.Storage(modelBytes: usage.totalBytes, freeBytes: usage.availableBytes)
         storedTurnCount = try? await sessionStore?.count()
+        await refreshNetworkState()
     }
 
     // MARK: - Persistence
@@ -443,7 +577,7 @@ final class AppModel {
         }
     }
 
-    private func persistSettings() {
+    func persistSettings() {
         guard let settingsStore else { return }
         let snapshot = settings
         Task { try? await settingsStore.save(snapshot) }
@@ -458,6 +592,15 @@ final class AppModel {
         })
         observers.append(center.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in await self?.handleThermalChange() }
+        })
+        // Coming forward is when the user's week is most likely to have moved under us — and when
+        // whatever they shared while they were elsewhere is waiting to be read.
+        observers.append(center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                await self?.drainShareInbox()
+                await self?.syncIngestion()
+                await self?.refreshIntelligence()
+            }
         })
         observers.append(center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in

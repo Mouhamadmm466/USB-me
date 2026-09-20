@@ -36,7 +36,7 @@ extension AgentState {
 extension ResultBanner.Style {
     var tone: Tone {
         switch self {
-        case .success: .jade
+        case .success: .clay
         case .cancelled: .neutral
         case .failure: .danger
         }

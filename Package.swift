@@ -16,7 +16,7 @@ let missingVendor = ["Vendor/Frameworks/llama.xcframework", "Vendor/Frameworks/w
 if !missingVendor.isEmpty {
     fatalError("""
         Missing \(missingVendor.joined(separator: ", ")).
-        Run Scripts/bootstrap_dependencies.sh from the repository root, then reopen the project (Docs/BUILD.md).
+        Run Scripts/bootstrap_dependencies.sh from the repository root, then reopen the project (docs/setup/README.md).
         """)
 }
 
@@ -29,31 +29,43 @@ let package = Package(
             targets: [
                 "Telemetry", "Core", "Permissions", "Storage", "Models", "Tools",
                 "LLM", "ASR", "TTS", "Audio", "Agent", "VoiceLoop", "DeviceBenchmark",
+                "Intelligence", "ShareInbox", "Connectors",
             ]
         ),
+        // The share extension links this one alone: a handful of Foundation types, so the extension
+        // stays inside the memory limit the system gives it.
+        .library(name: "ShareInbox", targets: ["ShareInbox"]),
         // Kokoro/MLX is a separate product: MLX cannot link for (or run in) the iOS Simulator, so
         // only the device app target links it (see App/project.yml).
         .library(name: "KokoroTTS", targets: ["KokoroTTS"]),
         .library(name: "AgentEval", targets: ["AgentEval"]),
+        .library(name: "IntelligenceEval", targets: ["IntelligenceEval"]),
         .executable(name: "agent-eval", targets: ["AgentEvalRunner"]),
     ],
     dependencies: [
         // Kokoro 82M TTS on MLX Swift: mlalma/kokoro-ios 1.0.11 + MisakiSwift 1.0.6, checked out at
         // their exact tags by Scripts/bootstrap_dependencies.sh with a packaging-only patch
-        // (Vendor/Patches) so their resource bundles pass codesign. See Docs/THIRD_PARTY.md.
+        // (Vendor/Patches) so their resource bundles pass codesign. See docs/setup/dependencies.md.
         .package(path: "Vendor/Packages/kokoro-ios"),
     ],
     targets: [
-        // Pinned native runtimes (official release binaries; see Docs/MODEL_MANIFEST.md).
+        // Pinned native runtimes (official release binaries; see docs/setup/models.md).
         .binaryTarget(name: "llama", path: "Vendor/Frameworks/llama.xcframework"),
         .binaryTarget(name: "whisper", path: "Vendor/Frameworks/whisper.xcframework"),
 
         .target(name: "Telemetry", path: "Telemetry"),
+        // Deliberately depends on nothing: it is shared with the share extension.
+        .target(name: "ShareInbox", path: "ShareInbox"),
         .target(name: "Core", dependencies: ["Telemetry"], path: "Core"),
         .target(name: "Permissions", dependencies: ["Core", "Telemetry"], path: "Permissions"),
         .target(name: "Storage", dependencies: ["Core", "Telemetry"], path: "Storage"),
         .target(name: "Models", dependencies: ["Core", "Telemetry"], path: "Models"),
+        // The personal intelligence: entities, assertions, provenance — the V2 memory substrate.
+        .target(name: "Intelligence", dependencies: ["Core", "Telemetry"], path: "Intelligence"),
         .target(name: "Tools", dependencies: ["Core", "Permissions", "Telemetry"], path: "Tools"),
+        // Outside services. Depends on Core for the capability vocabulary and nothing else: an
+        // adapter must not be able to reach the store, the model or the network policy directly.
+        .target(name: "Connectors", dependencies: ["Core", "Telemetry"], path: "Connectors"),
         .target(name: "LLM", dependencies: ["Core", "Telemetry", "llama"], path: "LLM"),
         .target(name: "ASR", dependencies: ["Core", "Telemetry", "whisper"], path: "ASR"),
         .target(name: "TTS", dependencies: ["Core", "Telemetry"], path: "TTS", exclude: ["Kokoro"]),
@@ -68,7 +80,7 @@ let package = Package(
         .target(name: "Audio", dependencies: ["Core", "Telemetry"], path: "Audio"),
         .target(
             name: "Agent",
-            dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions"],
+            dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions", "Intelligence", "Connectors"],
             path: "Agent",
             exclude: ["VoiceLoop"]
         ),
@@ -92,16 +104,31 @@ let package = Package(
         ),
         .executableTarget(
             name: "AgentEvalRunner",
-            dependencies: ["AgentEval", "LLM", "Agent", "Core"],
+            dependencies: ["AgentEval", "IntelligenceEval", "Intelligence", "LLM", "Agent", "Core"],
             path: "Tests/AgentEval/Runner"
         ),
 
         // Tests (Swift Testing). None require private user data or network access.
+        .testTarget(name: "ConnectorTests", dependencies: ["Connectors", "Core"], path: "Tests/Unit/Connectors"),
+        .testTarget(name: "ShareInboxTests", dependencies: ["ShareInbox"], path: "Tests/Unit/ShareInbox"),
         .testTarget(name: "CoreTests", dependencies: ["Core", "Telemetry"], path: "Tests/Unit/Core"),
         .testTarget(name: "PermissionsTests", dependencies: ["Permissions", "Core"], path: "Tests/Unit/Permissions"),
         .testTarget(name: "StorageTests", dependencies: ["Storage", "Core"], path: "Tests/Unit/Storage"),
         .testTarget(name: "ModelsTests", dependencies: ["Models", "Core", "Telemetry"], path: "Tests/Unit/Models"),
         .testTarget(name: "ToolsTests", dependencies: ["Tools", "Core", "Permissions"], path: "Tests/Unit/Tools"),
+        .testTarget(name: "IntelligenceTests", dependencies: ["Intelligence", "Core", "Telemetry"], path: "Tests/Unit/Intelligence"),
+        // V2 evaluation: memory, recall over time, retrieval, planning scope, attention.
+        .target(
+            name: "IntelligenceEval",
+            dependencies: ["Intelligence", "Agent", "Core", "LLM"],
+            path: "Tests/IntelligenceEval/Harness"
+        ),
+        .testTarget(
+            name: "IntelligenceEvalTests",
+            dependencies: ["IntelligenceEval", "Intelligence", "Agent", "AgentEval", "Core"],
+            path: "Tests/IntelligenceEval/Tests",
+            resources: [.copy("../Cases")]
+        ),
         .testTarget(name: "DateParsingTests", dependencies: ["Tools", "Core"], path: "Tests/Unit/Dates"),
         .testTarget(name: "LLMTests", dependencies: ["LLM", "Core"], path: "Tests/Unit/LLM"),
         .testTarget(

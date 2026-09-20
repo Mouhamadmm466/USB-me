@@ -1,5 +1,6 @@
 import Agent
 import Core
+import Intelligence
 import SwiftUI
 
 /// Everything the person can ask of the assistant screen. The screen never decides anything
@@ -22,8 +23,12 @@ struct AssistantIntents {
     var openSystemSettings: @MainActor (_ kind: PermissionKind) -> Void
     /// "Not now" on a permission card.
     var dismissPermission: @MainActor () -> Void
-    /// The history sheet opened (the screen presents it from `presentation.turns`).
-    var showHistory: @MainActor () -> Void
+    /// "Go ahead" on a job card.
+    var approveJob: @MainActor (_ id: UUID) -> Void
+    /// "Not now" or "Stop" on a job card.
+    var cancelJob: @MainActor (_ id: UUID) -> Void
+    /// "Read it" on a finished job.
+    var openArtifact: @MainActor (_ id: UUID) -> Void
 
     init(
         toggleSession: @escaping @MainActor () -> Void,
@@ -34,7 +39,9 @@ struct AssistantIntents {
         openSettings: @escaping @MainActor () -> Void,
         openSystemSettings: @escaping @MainActor (_ kind: PermissionKind) -> Void,
         dismissPermission: @escaping @MainActor () -> Void,
-        showHistory: @escaping @MainActor () -> Void = {}
+        approveJob: @escaping @MainActor (_ id: UUID) -> Void = { _ in },
+        cancelJob: @escaping @MainActor (_ id: UUID) -> Void = { _ in },
+        openArtifact: @escaping @MainActor (_ id: UUID) -> Void = { _ in }
     ) {
         self.toggleSession = toggleSession
         self.confirm = confirm
@@ -44,7 +51,9 @@ struct AssistantIntents {
         self.openSettings = openSettings
         self.openSystemSettings = openSystemSettings
         self.dismissPermission = dismissPermission
-        self.showHistory = showHistory
+        self.approveJob = approveJob
+        self.cancelJob = cancelJob
+        self.openArtifact = openArtifact
     }
 
     /// Does nothing (previews and the design gallery).
@@ -65,27 +74,23 @@ struct AssistantScreen: View {
     private let bannerDuration: Duration
     @State private var inputMode: AssistantInputMode
     @State private var draft = ""
-    @State private var isHistoryPresented: Bool
     @State private var visibleBanner: ResultBanner?
     @FocusState private var isFieldFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// - Parameters:
     ///   - inputMode: Starting input mode (UI state; the gallery uses `.keyboard`).
-    ///   - showsHistory: Starts with the history sheet open (gallery).
     ///   - bannerDuration: How long a result banner stays before it fades.
     init(
         presentation: AssistantPresentation,
         intents: AssistantIntents,
         inputMode: AssistantInputMode = .voice,
-        showsHistory: Bool = false,
         bannerDuration: Duration = .seconds(4)
     ) {
         self.presentation = presentation
         self.intents = intents
         self.bannerDuration = bannerDuration
         _inputMode = State(initialValue: inputMode)
-        _isHistoryPresented = State(initialValue: showsHistory)
         DesignSystemAppearance.install()
     }
 
@@ -93,7 +98,8 @@ struct AssistantScreen: View {
 
     /// A card needs the person: the orb steps back to make room.
     private var needsAttention: Bool {
-        presentation.actionCard != nil || !presentation.clarificationChoices.isEmpty || presentation.permissionPrompt != nil
+        presentation.actionCard != nil || presentation.jobCard != nil
+            || !presentation.clarificationChoices.isEmpty || presentation.permissionPrompt != nil
     }
 
     private var layoutAnimation: Animation { Motion.adaptive(Motion.smooth, reduceMotion: reduceMotion) }
@@ -156,10 +162,6 @@ struct AssistantScreen: View {
                     isFieldFocused = false
                     intents.submitText(text)
                 },
-                onShowHistory: {
-                    isHistoryPresented = true
-                    intents.showHistory()
-                }
             )
         }
         .background {
@@ -168,13 +170,11 @@ struct AssistantScreen: View {
         }
         .animation(layoutAnimation, value: needsAttention)
         .animation(layoutAnimation, value: presentation.actionCard)
+        .animation(layoutAnimation, value: presentation.jobCard)
         .animation(layoutAnimation, value: presentation.clarificationChoices)
         .animation(layoutAnimation, value: presentation.permissionPrompt)
         .animation(layoutAnimation, value: presentation.partialTranscript == nil)
         .animation(layoutAnimation, value: presentation.assistantText)
-        .sheet(isPresented: $isHistoryPresented) {
-            HistorySheet(turns: presentation.turns)
-        }
         .task(id: presentation.resultBanner) { await showBanner(presentation.resultBanner) }
         .onChange(of: state) { _, newState in
             if newState.announcesToVoiceOver {
@@ -197,6 +197,8 @@ struct AssistantScreen: View {
     // MARK: Stage
 
     private func stage(width: CGFloat) -> some View {
+        // The orb is the whole screen when there is nothing else to say, and steps back when a
+        // card needs an answer.
         let heroSize = min(248, max(160, width * 0.6))
         let size = needsAttention ? 104 : heroSize
         return VStack(spacing: needsAttention ? Spacing.s : Spacing.l) {
@@ -217,6 +219,16 @@ struct AssistantScreen: View {
     @ViewBuilder
     private var cards: some View {
         VStack(spacing: Spacing.l) {
+            if let job = presentation.jobCard {
+                JobCardView(
+                    card: job,
+                    onApprove: { intents.approveJob(job.id) },
+                    onCancel: { intents.cancelJob(job.id) },
+                    onOpenArtifact: intents.openArtifact
+                )
+                .id(job.id)
+                .transition(.rise(reduceMotion: reduceMotion))
+            }
             if let card = presentation.actionCard {
                 ActionCardView(
                     card: card,

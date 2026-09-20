@@ -1,6 +1,9 @@
+import Agent
 import AgentEval
 import Core
 import Foundation
+import Intelligence
+import IntelligenceEval
 import LLM
 
 // agent-eval — evaluation CLI for the on-device agent (real Nemotron via llama.cpp).
@@ -219,7 +222,35 @@ func scoreCommand() async throws {
     print(markdown.split(separator: "\n").prefix(60).joined(separator: "\n"))
 }
 
+/// Runs the V2 suites (memory, recall, retrieval, planning, safety, attention) against the real
+/// model, so what is measured is what the model actually proposes — not a scripted stand-in.
+@MainActor
+func intelligenceCommand() async throws {
+    let suites = value("--suite").map { [$0] } ?? IntelligenceEvalCases.suites
+    let cases = try IntelligenceEvalCases.load(suites: suites)
+    guard !cases.isEmpty else { fail("no cases found; run from the repository root") }
+
+    var extractor: (any MemoryExtracting)?
+    var planner: Planner?
+    if !arguments.contains("--deterministic") {
+        let runtime = makeRuntime()
+        try await runtime.prepare(cacheablePrefix: LanguageModelMemoryExtractor.prefix())
+        extractor = LanguageModelMemoryExtractor(model: runtime)
+        planner = Planner(model: runtime)
+        print("model ready: \(runtime.modelIdentifier)")
+    } else {
+        print("deterministic run: the cases' own proposals stand in for the model")
+    }
+
+    print("\(cases.count) cases across \(suites.joined(separator: ", "))")
+    let run = await IntelligenceEvalRunner(extractor: extractor, planner: planner).run(cases)
+    print(run.report)
+    if run.failed > 0 { exit(1) }
+}
+
 switch arguments.first {
+case "intelligence":
+    try await intelligenceCommand()
 case "run":
     try await runCommand()
 case "smoke":
@@ -227,5 +258,5 @@ case "smoke":
 case "score":
     try await scoreCommand()
 default:
-    print("usage: agent-eval run|score|smoke … (see Docs/EVALUATION.md)")
+    print("usage: agent-eval run|score|smoke|intelligence … (see docs/evaluation/agent_tests.md)")
 }

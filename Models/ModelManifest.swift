@@ -206,7 +206,7 @@ public enum ModelManifestError: Error, Sendable, Equatable {
 
 extension ModelManifest {
     /// Exact pins for V1. Every URL resolves at a fixed upstream commit; sizes and SHA-256 values
-    /// were verified against the downloaded files (see Docs/MODEL_MANIFEST.md).
+    /// were verified against the downloaded files (see docs/setup/models.md).
     public static let v1 = ModelManifest(
         manifestVersion: 1,
         packs: [

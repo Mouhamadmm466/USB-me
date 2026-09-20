@@ -28,7 +28,7 @@ log() { printf '\033[1m==> %s\033[0m\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 for tool in curl shasum unzip git cmake xcrun xcodebuild; do
-  command -v "$tool" >/dev/null || die "$tool is required (see Docs/BUILD.md)"
+  command -v "$tool" >/dev/null || die "$tool is required (see docs/setup/README.md)"
 done
 
 mkdir -p "$VENDOR/Downloads" "$VENDOR/Frameworks" "$VENDOR/Packages" "$VENDOR/src"

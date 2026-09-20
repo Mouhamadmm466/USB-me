@@ -1,53 +1,77 @@
+import Connectors
 import Core
+import Intelligence
 import SwiftUI
 
-/// Sections of Settings, for deep links (for example the shared-folder permission card
-/// opens Settings at `.permissions`).
+/// Everywhere Settings can go. Also the deep-link vocabulary: a permission card that needs a
+/// folder opens Settings at `.permissions`.
 enum SettingsSection: String, CaseIterable, Hashable, Sendable {
-    case models, storage, permissions, files, privacy, voice, diagnostics, about
+    case memory, documents, projects, sources, connectors, permissions, internet, models, history, about
 }
 
-/// Settings: models, storage, permissions, privacy, voice, diagnostics and about. Present it
-/// in a sheet; "Done" calls `actions.done`.
+/// Everything that is not the conversation.
+///
+/// The app has one screen; this is the drawer behind it. It is organised by the question the
+/// person is actually asking when they open it, in the order they ask it:
+///
+/// 1. **Your world** — what do you know about me, and where did you get it?
+/// 2. **What I can reach** — what are you allowed to touch?
+/// 3. **How I behave** — what do you do without asking?
+/// 4. and the housekeeping: models, history, about.
+///
+/// Nothing is more than one push deep. A settings screen you have to explore is a settings screen
+/// that hides things, and everything hidden here is something the user has a right to see.
 struct SettingsScreen: View {
     let state: SettingsViewState
     let actions: SettingsActions
+    /// The world model's own state, so its screens can live here rather than in tabs of their own.
+    var world: IntelligenceViewState = .empty
+    var worldIntents: IntelligenceIntents = .inert
+    var connectors: ConnectorsViewState = ConnectorsViewState()
+    var connectorIntents: ConnectorsIntents = .inert
+    var turns: [ConversationTurn] = []
     var initialSection: SettingsSection?
 
-    @State private var confirmsClearHistory = false
+    @State private var path: [SettingsSection] = []
 
-    init(state: SettingsViewState, actions: SettingsActions, initialSection: SettingsSection? = nil) {
+    init(
+        state: SettingsViewState,
+        actions: SettingsActions,
+        world: IntelligenceViewState = .empty,
+        worldIntents: IntelligenceIntents = .inert,
+        connectors: ConnectorsViewState = ConnectorsViewState(),
+        connectorIntents: ConnectorsIntents = .inert,
+        turns: [ConversationTurn] = [],
+        initialSection: SettingsSection? = nil
+    ) {
         self.state = state
         self.actions = actions
+        self.world = world
+        self.worldIntents = worldIntents
+        self.connectors = connectors
+        self.connectorIntents = connectorIntents
+        self.turns = turns
         self.initialSection = initialSection
         DesignSystemAppearance.install()
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollViewReader { scroller in
-                List {
-                    modelsSection
-                    storageSection
-                    permissionsSection
-                    filesSection
-                    privacySection
-                    voiceSection
-                    diagnosticsSection
-                    aboutSection
-                }
-                .listStyle(.insetGrouped)
-                .listSectionSpacing(.compact)
-                .font(.dm(.body))
-                .tint(Palette.jade)
-                .task {
-                    guard let initialSection else { return }
-                    try? await Task.sleep(for: .milliseconds(80))
-                    scroller.scrollTo(initialSection, anchor: .top)
-                }
+        NavigationStack(path: $path) {
+            List {
+                worldGroup
+                reachGroup
+                behaviourGroup
+                systemGroup
             }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(.compact)
+            .scrollContentBackground(.hidden)
+            .background(Palette.groupedCanvas)
+            .font(.dm(.body))
+            .tint(Palette.clay)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .navigationDestination(for: SettingsSection.self, destination: screen(for:))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: actions.done) {
@@ -55,189 +79,60 @@ struct SettingsScreen: View {
                     }
                 }
             }
+            .task {
+                guard let initialSection else { return }
+                path = [initialSection]
+            }
         }
     }
 
-    // MARK: Models
+    // MARK: The four questions
 
-    private var modelsSection: some View {
+    private var worldGroup: some View {
         Section {
-            ModelDownloadsView(state: state.models, actions: actions.models)
-            if let bulk = bulkModelAction {
-                Button(action: bulk.action) {
-                    Label(bulk.title, systemImage: bulk.image)
-                        .textStyle(.body, weight: .medium)
-                        .foregroundStyle(Palette.ink)
-                }
-            }
+            SettingsLink(.memory, "What I know", systemImage: "brain.fill", tone: .clay,
+                         value: world.memory.facts > 0 ? "\(world.memory.facts)" : nil)
+            SettingsLink(.documents, "Documents", systemImage: "doc.fill", tone: .clay,
+                         value: world.memory.documents.isEmpty ? nil : "\(world.memory.documents.count)")
+            SettingsLink(.projects, "Projects", systemImage: "folder.fill", tone: .clay,
+                         value: world.projects.isEmpty ? nil : "\(world.projects.count)")
         } header: {
-            SettingsHeader("Models")
+            SettingsHeader("Your world")
         } footer: {
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                if !state.models.allInstalled {
-                    ModelDownloadHints(state: state.models)
-                }
-                SettingsFooter("The models run only on this iPhone. Each file is checked against a pinned checksum before it\u{2019}s used.")
-            }
+            SettingsFooter("Everything I hold about you, where each piece came from, and the way to take it back.")
         }
-        .id(SettingsSection.models)
     }
 
-    private var bulkModelAction: (title: String, image: String, action: @MainActor () -> Void)? {
-        let models = state.models
-        if models.allInstalled { return nil }
-        if models.isInProgress { return ("Pause downloads", "pause.circle", actions.models.pauseAll) }
-        if models.isPaused { return ("Resume downloads", "arrow.down.circle", actions.models.resumeAll) }
-        return ("Download all (\(Formatting.bytes(models.remainingBytes)))", "arrow.down.circle", actions.models.downloadAll)
-    }
-
-    // MARK: Storage
-
-    private var storageSection: some View {
+    private var reachGroup: some View {
         Section {
-            if let capacity = state.storage.capacityBytes, let free = state.storage.freeBytes {
-                StorageBar(modelBytes: state.storage.modelBytes, freeBytes: free, capacityBytes: capacity)
-                    .padding(.vertical, Spacing.s)
-            }
-            ValueRow(title: "Voice models", value: Formatting.bytes(state.storage.modelBytes), swatch: Palette.jade)
-            if let history = state.storage.historyBytes {
-                ValueRow(title: "Conversation history", value: Formatting.bytes(history))
-            }
-            if let free = state.storage.freeBytes {
-                ValueRow(title: "Available on iPhone", value: Formatting.bytes(free))
-            }
+            SettingsLink(.sources, "Calendar & reminders", systemImage: "calendar", tone: .neutral,
+                         value: sourcesValue)
+            SettingsLink(.connectors, "Connected services", systemImage: "link", tone: .neutral,
+                         value: connectorsValue)
+            SettingsLink(.permissions, "Permissions & folders", systemImage: "lock.fill", tone: .neutral,
+                         value: permissionsValue)
+            SettingsLink(.internet, "Internet", systemImage: "globe", tone: .neutral,
+                         value: state.privacy.network.mode.displayName)
         } header: {
-            SettingsHeader("Storage")
-        }
-        .id(SettingsSection.storage)
-    }
-
-    // MARK: Permissions
-
-    private var permissionsSection: some View {
-        Section {
-            ForEach(state.permissions) { row in
-                PermissionStatusRow(
-                    row: row,
-                    onAllow: { actions.requestPermission(row.kind) },
-                    onOpenSettings: { actions.openSystemSettings(row.kind) }
-                )
-            }
-        } header: {
-            SettingsHeader("Permissions")
+            SettingsHeader("What I can reach")
         } footer: {
-            SettingsFooter("Voice Agent asks for each permission the first time a request needs it.")
+            SettingsFooter("Off until you say otherwise. Whatever any of these is set to, your voice and your world stay on this iPhone.")
         }
-        .id(SettingsSection.permissions)
     }
 
-    // MARK: Files
-
-    private var filesSection: some View {
+    private var behaviourGroup: some View {
         Section {
-            ForEach(state.sharedFolders) { folder in
-                SharedFolderRow(folder: folder, onRemove: { actions.removeFolder(folder.id) })
+            Toggle(isOn: Binding(get: { world.memory.learningEnabled }, set: { worldIntents.setLearningEnabled($0) })) {
+                RowLabel(title: "Learn from our conversations",
+                         subtitle: "Off means I answer from what I already know and add nothing new.")
             }
-            Button(action: actions.chooseFolder) {
-                HStack(spacing: Spacing.m) {
-                    IconTile(systemImage: "folder.badge.plus", tone: .neutral, size: 30)
-                    Text(state.sharedFolders.isEmpty ? "Choose folder\u{2026}" : "Choose another folder\u{2026}")
-                        .textStyle(.body, weight: .medium)
-                        .foregroundStyle(Palette.ink)
-                }
+            Toggle(isOn: Binding(get: { world.memory.confirmInferences }, set: { worldIntents.setConfirmInferences($0) })) {
+                RowLabel(title: "Ask before keeping a guess",
+                         subtitle: "Anything I work out rather than am told waits for your yes.")
             }
-            .accessibilityHint("Opens Files so you can choose a folder Voice Agent may search.")
-        } header: {
-            SettingsHeader("Files")
-        } footer: {
-            SettingsFooter(state.sharedFolders.isEmpty
-                ? "Voice Agent can\u{2019}t see any of your files. Choose a folder to let it search and open the files inside."
-                : "Voice Agent can search and open files only in these folders.")
-        }
-        .id(SettingsSection.files)
-    }
-
-    // MARK: Privacy
-
-    private var privacySection: some View {
-        Section {
-            HStack(alignment: .top, spacing: Spacing.m) {
-                IconTile(systemImage: "lock.shield.fill", tone: .jade, size: 30)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Nothing leaves this iPhone")
-                        .textStyle(.headline)
-                    Text("Your voice, requests and history are processed and stored only here. There\u{2019}s no account and no server.")
-                        .textStyle(.subheadline)
-                        .foregroundStyle(Palette.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(.vertical, Spacing.xs)
-            .accessibilityElement(children: .combine)
-
-            Toggle(isOn: Binding(get: { state.privacy.keepHistory }, set: { actions.setKeepHistory($0) })) {
-                RowLabel(title: "Keep history", subtitle: "Save recent conversations on this iPhone.")
-            }
-
-            Picker(selection: Binding(get: { state.privacy.retentionDays }, set: { actions.setRetentionDays($0) })) {
-                ForEach(retentionOptions, id: \.self) { days in
-                    Text(retentionLabel(days)).tag(days)
-                }
-            } label: {
-                Text("Keep for").textStyle(.body)
-            }
-            .disabled(!state.privacy.keepHistory)
-
-            Button(role: .destructive) {
-                confirmsClearHistory = true
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Clear history\u{2026}")
-                        .textStyle(.body, weight: .medium)
-                        .foregroundStyle(Palette.danger)
-                    if let count = state.privacy.storedTurnCount {
-                        Text(count == 1 ? "1 saved turn" : "\(count) saved turns")
-                            .textStyle(.footnote)
-                            .foregroundStyle(Palette.inkSecondary)
-                    }
-                }
-            }
-            .confirmationDialog("Clear all history?", isPresented: $confirmsClearHistory, titleVisibility: .visible) {
-                Button("Clear history", role: .destructive, action: actions.clearHistory)
-            } message: {
-                Text("Every saved conversation is removed from this iPhone. This can\u{2019}t be undone.")
-            }
-        } header: {
-            SettingsHeader("Privacy")
-        }
-        .id(SettingsSection.privacy)
-    }
-
-    private var retentionOptions: [Int] {
-        var options = [7, 30, 90, 365]
-        if !options.contains(state.privacy.retentionDays) {
-            options.append(state.privacy.retentionDays)
-            options.sort()
-        }
-        return options
-    }
-
-    private func retentionLabel(_ days: Int) -> String {
-        switch days {
-        case 7: "1 week"
-        case 30: "30 days"
-        case 90: "90 days"
-        case 365: "1 year"
-        default: days == 1 ? "1 day" : "\(days) days"
-        }
-    }
-
-    // MARK: Voice
-
-    private var voiceSection: some View {
-        Section {
             Toggle(isOn: Binding(get: { state.voice.continueListening }, set: { actions.setContinueListening($0) })) {
-                RowLabel(title: "Keep listening after replies", subtitle: "Answer follow-up questions without tapping again.")
+                RowLabel(title: "Keep listening after replies",
+                         subtitle: "Answer follow-up questions without tapping again.")
             }
             Toggle(isOn: Binding(get: { state.voice.hapticsEnabled }, set: { actions.setHapticsEnabled($0) })) {
                 RowLabel(title: "Haptics", subtitle: nil)
@@ -256,52 +151,109 @@ struct SettingsScreen: View {
                 .accessibilityElement(children: .combine)
             }
         } header: {
-            SettingsHeader("Voice")
+            SettingsHeader("How I behave")
         }
-        .id(SettingsSection.voice)
     }
 
-    // MARK: Diagnostics
-
-    private var diagnosticsSection: some View {
+    private var systemGroup: some View {
         Section {
-            DiagnosticsControls(diagnostics: state.diagnostics, onRun: actions.runBenchmark, onCancel: actions.cancelBenchmark)
-            ForEach(state.diagnostics.results) { metric in
-                MetricRow(metric: metric)
-            }
-            if let url = state.diagnostics.reportURL, !state.diagnostics.isRunning {
-                ShareLink(item: url) {
-                    Label("Share results", systemImage: "square.and.arrow.up")
-                        .textStyle(.body, weight: .medium)
-                        .foregroundStyle(Palette.ink)
-                }
-            }
-        } header: {
-            SettingsHeader("Diagnostics")
-        } footer: {
-            SettingsFooter("The benchmark measures speech recognition, the language model and the voice on this iPhone. Results stay here unless you share them.")
+            SettingsLink(.models, "Models & storage", systemImage: "arrow.down.circle.fill", tone: .neutral,
+                         value: state.models.allInstalled ? Formatting.bytes(state.storage.modelBytes) : "Incomplete")
+            SettingsLink(.history, "Conversation history", systemImage: "clock.arrow.circlepath", tone: .neutral,
+                         value: state.privacy.keepHistory ? nil : "Off")
+            SettingsLink(.about, "About", systemImage: "info.circle.fill", tone: .neutral,
+                         value: state.about.version)
         }
-        .id(SettingsSection.diagnostics)
     }
 
-    // MARK: About
-
-    private var aboutSection: some View {
-        Section {
-            ValueRow(title: "Version", value: "\(state.about.version) (\(state.about.build))")
-            NavigationLink {
-                LicensesView(licenses: state.about.licenses)
-            } label: {
-                Text("Third-party licenses").textStyle(.body)
-            }
-        } header: {
-            SettingsHeader("About")
-        } footer: {
-            SettingsFooter("Speech recognition, the language model and the voice all run on this iPhone.")
+    private var sourcesValue: String? {
+        switch (world.memory.ingestion.calendar, world.memory.ingestion.reminders) {
+        case (false, false): "Off"
+        case (true, true): "On"
+        case (true, false): "Calendar"
+        case (false, true): "Reminders"
         }
-        .id(SettingsSection.about)
+    }
+
+    private var connectorsValue: String? {
+        let connected = connectors.services.count(where: \.isConnected)
+        return connected == 0 ? nil : "\(connected)"
+    }
+
+    private var permissionsValue: String? {
+        let waiting = state.permissions.count { $0.status != .granted && $0.status != .limited }
+        return waiting == 0 ? nil : "\(waiting) to allow"
+    }
+
+    // MARK: Where each row goes
+
+    @ViewBuilder
+    private func screen(for section: SettingsSection) -> some View {
+        switch section {
+        case .memory:
+            MemoryScreen(state: world, intents: worldIntents).navigationTitle("What I know")
+        case .documents:
+            DocumentsScreen(state: world, intents: worldIntents).navigationTitle("Documents")
+        case .projects:
+            ProjectsScreen(state: world, intents: worldIntents).navigationTitle("Projects")
+        case .connectors:
+            ConnectorsScreen(state: connectors, intents: connectorIntents).navigationTitle("Connected services")
+        case .sources:
+            SourcesScreen(state: world, intents: worldIntents, permissions: state.permissions,
+                          onAllow: actions.requestPermission, onOpenSystemSettings: actions.openSystemSettings)
+                .navigationTitle("Calendar & reminders")
+        case .permissions:
+            PermissionsScreen(state: state, actions: actions).navigationTitle("Permissions & folders")
+        case .internet:
+            InternetScreen(state: state, actions: actions).navigationTitle("Internet")
+        case .models:
+            ModelsScreen(state: state, actions: actions).navigationTitle("Models & storage")
+        case .history:
+            HistoryScreen(state: state, actions: actions, turns: turns).navigationTitle("Conversation history")
+        case .about:
+            AboutScreen(state: state, actions: actions).navigationTitle("About")
+        }
     }
 }
+
+/// One row that goes somewhere. A tinted glyph, a name, what it is currently set to.
+private struct SettingsLink: View {
+    let section: SettingsSection
+    let title: String
+    let systemImage: String
+    let tone: Tone
+    let value: String?
+
+    init(_ section: SettingsSection, _ title: String, systemImage: String, tone: Tone = .neutral, value: String? = nil) {
+        self.section = section
+        self.title = title
+        self.systemImage = systemImage
+        self.tone = tone
+        self.value = value
+    }
+
+    var body: some View {
+        NavigationLink(value: section) {
+            HStack(spacing: Spacing.m) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .medium))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(tone == .neutral ? Palette.inkSecondary : tone.color)
+                    .frame(width: 26)
+                Text(title).textStyle(.body).foregroundStyle(Palette.ink)
+                Spacer(minLength: Spacing.s)
+                if let value {
+                    Text(value)
+                        .textStyle(.subheadline)
+                        .foregroundStyle(Palette.inkTertiary)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .accessibilityLabel(value.map { "\(title), \($0)" } ?? title)
+    }
+}
+
 
 // MARK: - Rows
 
@@ -387,7 +339,7 @@ struct StorageBar: View {
                 .foregroundStyle(Palette.ink)
             GeometryReader { proxy in
                 HStack(spacing: 2) {
-                    Rectangle().fill(Palette.jade).frame(width: max(3, proxy.size.width * models))
+                    Rectangle().fill(Palette.clay).frame(width: max(3, proxy.size.width * models))
                     Rectangle().fill(Palette.mist.opacity(0.55)).frame(width: proxy.size.width * other)
                     Spacer(minLength: 0)
                 }
@@ -396,7 +348,7 @@ struct StorageBar: View {
             }
             .frame(height: 10)
             HStack(spacing: Spacing.l) {
-                legend("Voice models", color: Palette.jade)
+                legend("Voice models", color: Palette.clay)
                 legend("Everything else", color: Palette.mist.opacity(0.55))
             }
         }
@@ -426,7 +378,7 @@ struct PermissionStatusRow: View {
             : AnyLayout(HStackLayout(alignment: .center, spacing: Spacing.m))
         layout {
             HStack(spacing: Spacing.m) {
-                IconTile(systemImage: row.kind.systemImage, tone: row.status == .granted ? .jade : .neutral, size: 30)
+                IconTile(systemImage: row.kind.systemImage, tone: row.status == .granted ? .clay : .neutral, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(row.kind.displayName)
                         .textStyle(.body)
@@ -457,7 +409,7 @@ struct PermissionStatusRow: View {
     private var trailing: some View {
         switch row.status {
         case .granted:
-            StatusPill("Allowed", systemImage: "checkmark", tone: .jade)
+            StatusPill("Allowed", systemImage: "checkmark", tone: .clay)
         case .notDetermined:
             Button(action: onAllow) { Text("Allow") }
                 .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
@@ -472,13 +424,13 @@ struct PermissionStatusRow: View {
     }
 }
 
-private struct SharedFolderRow: View {
+struct SharedFolderRow: View {
     let folder: SettingsViewState.SharedFolder
     let onRemove: @MainActor () -> Void
 
     var body: some View {
         HStack(spacing: Spacing.m) {
-            IconTile(systemImage: "folder.fill", tone: .jade, size: 30)
+            IconTile(systemImage: "folder.fill", tone: .clay, size: 30)
             VStack(alignment: .leading, spacing: 1) {
                 Text(folder.name).textStyle(.body).foregroundStyle(Palette.ink)
                 if let location = folder.location {
@@ -502,7 +454,7 @@ private struct SharedFolderRow: View {
     }
 }
 
-private struct DiagnosticsControls: View {
+struct DiagnosticsControls: View {
     let diagnostics: SettingsViewState.Diagnostics
     let onRun: @MainActor () -> Void
     let onCancel: @MainActor () -> Void
@@ -556,7 +508,7 @@ private struct DiagnosticsControls: View {
     }
 }
 
-private struct MetricRow: View {
+struct MetricRow: View {
     let metric: SettingsViewState.Metric
 
     var body: some View {
@@ -586,7 +538,7 @@ private struct MetricRow: View {
 
     private var tone: Tone? {
         switch metric.assessment {
-        case .good: .jade
+        case .good: .clay
         case .fair: .amber
         case .poor: .danger
         case .info: nil

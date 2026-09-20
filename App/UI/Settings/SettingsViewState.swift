@@ -1,5 +1,6 @@
 import Core
 import Foundation
+import Intelligence
 
 /// Everything the Settings screen renders. A plain value; the app assembles it from
 /// `ModelManager`, `PermissionManager`, `SettingsStore`, the session store and the benchmark.
@@ -87,11 +88,38 @@ struct SettingsViewState: Equatable, Sendable {
         var retentionDays: Int
         /// Saved turns; shown under "Clear history" when known.
         var storedTurnCount: Int?
+        /// Whether anything may reach the internet, and what has so far.
+        var network: Network
 
-        init(keepHistory: Bool, retentionDays: Int, storedTurnCount: Int? = nil) {
+        init(keepHistory: Bool, retentionDays: Int, storedTurnCount: Int? = nil, network: Network = Network()) {
             self.keepHistory = keepHistory
             self.retentionDays = retentionDays
             self.storedTurnCount = storedTurnCount
+            self.network = network
+        }
+    }
+
+    /// The one place the app can reach outside the phone, and the record of when it did.
+    struct Network: Equatable, Sendable {
+        var mode: NetworkMode = .off
+        /// Requests that actually went, ever.
+        var sent = 0
+        /// Requests that were refused, or that the user said no to.
+        var refused = 0
+        /// "12 KB", for the one-line answer to "has anything left this phone?".
+        var bytesText = "0 KB"
+        /// Newest first, for the "What left this iPhone" screen.
+        var log: [LogRow] = []
+
+        struct LogRow: Identifiable, Equatable, Sendable {
+            let id: UUID
+            var provider: String
+            var payload: String
+            var categories: String
+            var reason: String
+            var outcome: NetworkOutcome
+            var detail: String?
+            var timeText: String
         }
     }
 
@@ -244,6 +272,10 @@ struct SettingsActions {
     var setHapticsEnabled: @MainActor (_ enabled: Bool) -> Void
     var runBenchmark: @MainActor () -> Void
     var cancelBenchmark: @MainActor () -> Void
+    /// Change what may reach the internet.
+    var setNetworkMode: @MainActor (_ mode: NetworkMode) -> Void = { _ in }
+    /// Erase the record of what left (the requests themselves are already gone).
+    var clearNetworkLog: @MainActor () -> Void = {}
 
     init(
         done: @escaping @MainActor () -> Void,
@@ -258,7 +290,9 @@ struct SettingsActions {
         setContinueListening: @escaping @MainActor (_ enabled: Bool) -> Void,
         setHapticsEnabled: @escaping @MainActor (_ enabled: Bool) -> Void,
         runBenchmark: @escaping @MainActor () -> Void,
-        cancelBenchmark: @escaping @MainActor () -> Void
+        cancelBenchmark: @escaping @MainActor () -> Void,
+        setNetworkMode: @escaping @MainActor (_ mode: NetworkMode) -> Void = { _ in },
+        clearNetworkLog: @escaping @MainActor () -> Void = {}
     ) {
         self.done = done
         self.models = models
@@ -273,6 +307,8 @@ struct SettingsActions {
         self.setHapticsEnabled = setHapticsEnabled
         self.runBenchmark = runBenchmark
         self.cancelBenchmark = cancelBenchmark
+        self.setNetworkMode = setNetworkMode
+        self.clearNetworkLog = clearNetworkLog
     }
 
     static var inert: SettingsActions {

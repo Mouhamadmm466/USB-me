@@ -42,7 +42,7 @@ struct AssistantTopBar: View {
 /// "On-device": everything runs on this iPhone.
 struct PrivacyPill: View {
     var body: some View {
-        StatusPill("On-device", systemImage: "lock.fill", tone: .jade)
+        StatusPill("On-device", systemImage: "lock.fill", tone: .clay)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("On-device. Everything runs on this iPhone.")
     }
@@ -60,13 +60,12 @@ struct AssistantBottomBar: View {
     let isSessionActive: Bool
     let canStartSession: Bool
     /// State colour for the mic halo.
-    var tint: Color = Palette.jade
+    var tint: Color = Palette.clay
     @Binding var mode: AssistantInputMode
     @Binding var draft: String
     var isFieldFocused: FocusState<Bool>.Binding
     let onToggleSession: @MainActor () -> Void
     let onSubmit: @MainActor (String) -> Void
-    let onShowHistory: @MainActor () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -105,12 +104,11 @@ struct AssistantBottomBar: View {
                 .disabled(!canStartSession && !isSessionActive)
             Spacer(minLength: Spacing.l)
 
-            Button(action: onShowHistory) {
-                Image(systemName: "clock.arrow.circlepath")
-            }
-            .buttonStyle(.glassCircle(diameter: 50))
-            .accessibilityLabel("History")
-            .accessibilityShowsLargeContentViewer()
+            // Balances the keyboard button so the microphone sits in the middle of the screen
+            // rather than in the middle of what is left of it.
+            Color.clear
+                .frame(width: 50, height: 50)
+                .accessibilityHidden(true)
         }
         .padding(.horizontal, Spacing.s)
         .transition(.opacity)
@@ -172,7 +170,7 @@ struct AssistantBottomBar: View {
 struct MicButton: View {
     let isActive: Bool
     /// The halo shown while a conversation is active takes the assistant's state colour.
-    var tint: Color = Palette.jade
+    var tint: Color = Palette.clay
     let action: @MainActor () -> Void
 
     @Environment(\.isEnabled) private var isEnabled

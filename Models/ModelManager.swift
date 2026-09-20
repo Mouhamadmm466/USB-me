@@ -342,7 +342,7 @@ public actor ModelManager {
 
     /// Where developers and provisioning tools drop model files for `importPendingFiles(from:)`:
     /// `Documents/ModelImport/` (e.g. `xcrun devicectl device copy to … --destination
-    /// Documents/ModelImport/<file>`; see Docs/MODEL_MANIFEST.md, "Offline import").
+    /// Documents/ModelImport/<file>`; see docs/setup/models.md, "Offline import").
     public static var defaultImportDirectory: URL {
         URL.documentsDirectory.appending(path: "ModelImport", directoryHint: .isDirectory)
     }

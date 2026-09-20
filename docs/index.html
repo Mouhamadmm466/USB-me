@@ -1,0 +1,562 @@
+<title>TokeIT Project Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+
+<style>
+  /* The app's own palette: paper cream, warm greys, and one clay accent.
+     --accent paints shapes; --accent-text is the darker value that stays legible as text. */
+  :root {
+    --ground: #FAF9F5;
+    --panel: #FFFFFF;
+    --panel2: #F0EEE6;
+    --line: rgba(61, 58, 50, 0.16);
+    --ink: #1F1E1D;
+    --ink2: #6E6B62;
+    --ink3: #96938A;
+    --accent: #D97757;
+    --accent-text: #A6472A;
+    --accent-soft: rgba(217, 119, 87, 0.12);
+    --good: #3F7A57;
+    --warn: #8A6018;
+    --shadow: 0 1px 2px rgba(31, 30, 29, 0.05), 0 8px 24px rgba(31, 30, 29, 0.06);
+    --sans: "DM Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1B1B19;
+      --panel: #262624;
+      --panel2: #30302D;
+      --line: rgba(255, 255, 255, 0.13);
+      --ink: #F2F0E9;
+      --ink2: #B4B1A6;
+      --ink3: #85827A;
+      --accent: #E08A6B;
+      --accent-text: #EDA98E;
+      --accent-soft: rgba(224, 138, 107, 0.16);
+      --good: #6FBF92;
+      --warn: #E0BC72;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1B1B19;
+    --panel: #262624;
+    --panel2: #30302D;
+    --line: rgba(255, 255, 255, 0.13);
+    --ink: #F2F0E9;
+    --ink2: #B4B1A6;
+    --ink3: #85827A;
+    --accent: #E08A6B;
+    --accent-text: #EDA98E;
+    --accent-soft: rgba(224, 138, 107, 0.16);
+    --good: #6FBF92;
+    --warn: #E0BC72;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 0;
+  }
+  .grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; gap: 0; } nav.rail { display: none; } }
+
+  /* Rail */
+  nav.rail {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 28px);
+    padding-block: 28px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  nav.rail a {
+    display: block;
+    padding: 6px 0;
+    color: var(--ink3);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 12px;
+    transition: color .15s, border-color .15s;
+  }
+  nav.rail a:hover { color: var(--ink); }
+  nav.rail a.on { color: var(--accent-text); border-left-color: var(--accent); }
+  nav.rail .railtitle { color: var(--ink); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; padding-left: 12px; font-size: 11px; }
+
+  /* Hero */
+  header.hero { padding-block: 64px 40px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent-text); margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(38px, 6vw, 64px); line-height: 1.02; letter-spacing: -0.035em;
+    font-weight: 700; margin: 0 0 20px; text-wrap: balance; max-width: 16ch;
+  }
+  .lede { font-size: clamp(17px, 2.2vw, 21px); color: var(--ink2); max-width: 60ch; margin: 0 0 28px; }
+  .herolinks { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .04em;
+    padding: 10px 16px; border-radius: 4px; text-decoration: none;
+    border: 1px solid var(--line); color: var(--ink); background: var(--panel);
+    transition: border-color .15s, color .15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent-text); }
+  .btn.primary { background: var(--accent-text); color: #FAF9F5; border-color: var(--accent-text); }
+  .btn.primary:hover { color: #FAF9F5; filter: brightness(1.1); }
+
+  section { padding-block: 56px; border-bottom: 1px solid var(--line); scroll-margin-top: 20px; }
+  section:last-of-type { border-bottom: 0; }
+  h2 {
+    font-size: clamp(24px, 3.2vw, 32px); letter-spacing: -0.02em; font-weight: 600;
+    margin: 0 0 8px; text-wrap: balance;
+  }
+  .sub { color: var(--ink2); max-width: 62ch; margin: 0 0 28px; }
+  h3 { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+  p { max-width: 68ch; }
+
+  /* Stat strip */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .stat { background: var(--panel); padding: 18px 16px; }
+  .stat b { display: block; font-family: var(--mono); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; font-size: 12px; color: var(--ink3); margin-top: 4px; line-height: 1.4; }
+
+  /* Pipeline */
+  .pipe { display: grid; grid-template-columns: 220px minmax(0,1fr); gap: 24px; }
+  @media (max-width: 720px) { .pipe { grid-template-columns: 1fr; } }
+  .steps { display: flex; flex-direction: column; gap: 2px; }
+  .step {
+    text-align: left; font-family: var(--mono); font-size: 12px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--ink2);
+    padding: 9px 12px; cursor: pointer; border-radius: 4px;
+    display: flex; gap: 10px; align-items: baseline; transition: border-color .15s, color .15s;
+  }
+  .step:hover { border-color: var(--accent); }
+  .step .n { color: var(--ink3); font-size: 11px; }
+  .step[aria-selected="true"] { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+  .step[aria-selected="true"] .n { color: var(--accent-text); }
+  .panelbox { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 22px; box-shadow: var(--shadow); min-height: 210px; }
+  .panelbox .tag { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-text); }
+  .panelbox h3 { margin: 8px 0 8px; font-size: 19px; }
+  .panelbox p { margin: 0 0 12px; color: var(--ink2); }
+  .where { font-family: var(--mono); font-size: 11px; color: var(--ink3); border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px; }
+
+  /* Chart */
+  .bars { display: flex; flex-direction: column; gap: 14px; margin-bottom: 8px; }
+  .bar { display: grid; grid-template-columns: 170px minmax(0,1fr) 62px; gap: 14px; align-items: center; }
+  @media (max-width: 620px) { .bar { grid-template-columns: 110px minmax(0,1fr) 52px; gap: 8px; } }
+  .bar .name { font-size: 13px; font-weight: 500; }
+  .bar .name small { display: block; font-family: var(--mono); font-size: 10px; color: var(--ink3); font-weight: 400; }
+  .track { background: var(--panel2); border-radius: 3px; height: 26px; overflow: hidden; }
+  .fill { height: 100%; background: var(--ink3); border-radius: 3px; width: 0; transition: width 1.1s cubic-bezier(.22,1,.36,1); }
+  .fill.pick { background: var(--accent); }
+  .bar .val { font-family: var(--mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+  .chosen { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
+
+  /* Tabs */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+  .tab {
+    font-family: var(--mono); font-size: 12px; padding: 8px 13px; border-radius: 4px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink2); cursor: pointer;
+  }
+  .tab[aria-selected="true"] { border-color: var(--accent); color: var(--accent-text); background: var(--accent-soft); }
+  .say { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .turn { display: grid; grid-template-columns: 58px minmax(0,1fr); gap: 14px; padding: 9px 0; }
+  .turn .who { font-family: var(--mono); font-size: 11px; color: var(--ink3); padding-top: 3px; letter-spacing: .06em; }
+  .turn.app .what { color: var(--accent-text); }
+  .turn .what { margin: 0; }
+  .note { font-size: 13px; color: var(--ink3); border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+
+  /* Ladder */
+  .ladder { display: flex; flex-direction: column; gap: 4px; }
+  .rung { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 11px 14px; }
+  .rung .lvl { font-family: var(--mono); font-weight: 600; font-size: 15px; color: var(--ink3); font-variant-numeric: tabular-nums; }
+  .rung.top { border-color: var(--accent); }
+  .rung.top .lvl { color: var(--accent-text); }
+  .rung small { display: block; color: var(--ink3); font-size: 12px; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; }
+  .card .k { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--ink2); margin: 0; }
+
+  /* Screens */
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+  .shot { border: 1px dashed var(--line); border-radius: 22px; aspect-ratio: 9 / 19.5; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; background: var(--panel2); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; border-radius: 21px; display: block; }
+  .shot span { font-family: var(--mono); font-size: 11px; color: var(--ink3); line-height: 1.5; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .scroller { overflow-x: auto; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); font-weight: 500; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .ok { color: var(--good); font-weight: 600; }
+  .miss { color: var(--warn); font-weight: 600; }
+
+  ul.plain { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  ul.plain li { padding-left: 18px; position: relative; color: var(--ink2); max-width: 68ch; }
+  ul.plain li::before { content: ""; position: absolute; left: 0; top: 11px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  footer { padding-block: 40px 60px; color: var(--ink3); font-size: 13px; }
+  a { color: var(--accent-text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Project record</p>
+    <h1>An assistant that keeps your life to itself</h1>
+    <p class="lede">
+      TokeIT listens, understands and acts entirely on your iPhone. It also builds a structured
+      picture of your world, and that picture is a file you own, can read, can correct and can
+      delete.
+    </p>
+    <div class="herolinks">
+      <a class="btn primary" href="https://tokeit.dev">tokeit.dev</a>
+      <a class="btn" href="overview.md">What it is</a>
+      <a class="btn" href="use_cases.md">What you can do</a>
+      <a class="btn" href="how_it_works.md">How it works</a>
+      <a class="btn" href="evaluation/README.md">Results</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <nav class="rail" aria-label="Sections">
+      <div class="railtitle">Contents</div>
+      <a href="#numbers">Numbers</a>
+      <a href="#problem">The problem</a>
+      <a href="#path">One sentence</a>
+      <a href="#model">Choosing a model</a>
+      <a href="#memory">The memory</a>
+      <a href="#doing">What you can do</a>
+      <a href="#screens">The app</a>
+      <a href="#testing">Testing</a>
+      <a href="#honest">Where it falls short</a>
+    </nav>
+
+    <main>
+      <section id="numbers">
+        <h2>Where it stands</h2>
+        <p class="sub">Measured, not estimated. Every figure here has a method behind it in the
+          repository.</p>
+        <div class="stats">
+          <div class="stat"><b>870</b><span>automated tests passing</span></div>
+          <div class="stat"><b>28/28</b><span>memory cases, real model</span></div>
+          <div class="stat"><b>0</b><span>wrong actions taken, ever</span></div>
+          <div class="stat"><b>1.27 GB</b><span>peak memory on iPhone</span></div>
+          <div class="stat"><b>196 ms</b><span>speech to text, median</span></div>
+          <div class="stat"><b>150</b><span>tests per model compared</span></div>
+        </div>
+      </section>
+
+      <section id="problem">
+        <h2>The hole in the middle</h2>
+        <p class="sub">Every assistant today makes you pick one of two things. We wanted both.</p>
+        <div class="cards">
+          <div class="card">
+            <div class="k">Cloud assistants</div>
+            <p>They can remember you, but the memory sits on someone else's computer. It has no
+              structure, it cannot say where a fact came from, and you cannot correct it. You can
+              only delete everything and start again.</p>
+          </div>
+          <div class="card">
+            <div class="k">Phone assistants</div>
+            <p>They are private, but they do not know you. Every request starts from nothing. Ask
+              about a project you have worked on for a month and it has never heard of it.</p>
+          </div>
+          <div class="card" style="border-color: var(--accent)">
+            <div class="k">What we built</div>
+            <p>A structured model of your world that builds itself from what you allow, explains
+              where every fact came from, takes your correction as final, and never leaves the
+              phone unless you send it somewhere yourself.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="path">
+        <h2>What happens when you speak</h2>
+        <p class="sub">Click a stage. Every one of them runs on the phone, with no internet.</p>
+        <div class="pipe">
+          <div class="steps" role="tablist" aria-label="Pipeline stages" id="steps"></div>
+          <div class="panelbox" id="stagebox" role="tabpanel" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="model">
+        <h2>Choosing the brain</h2>
+        <p class="sub">Three open models, the same 150 tests, the same settings, the same runtime.
+          Only the model changed.</p>
+        <div class="bars" id="bars"></div>
+        <p style="margin-top: 22px">
+          Qwen3 14B scored highest. We did not choose it. A 14 billion parameter model does not fit
+          in an iPhone's memory next to a speech model and a voice model, so it was never a real
+          option. The question that mattered was which model small enough for a phone does best, and
+          Nemotron 4B beat Phi 4 Mini at almost the same size.
+        </p>
+        <p>
+          The Qwen run is still useful. It measures the gap between what fits in your pocket today
+          and what a bigger machine can do.
+        </p>
+        <p style="color: var(--ink3); font-size: 14px">
+          These are automatic checks, not human judgement, and one run per model. Enough to see a
+          clear difference. Not enough to argue about small gaps. Full method and raw files:
+          <a href="evaluation/model_comparison/README.md">model comparison</a>.
+        </p>
+      </section>
+
+      <section id="memory">
+        <h2>Why the memory can be trusted</h2>
+        <p class="sub">Most apps store facts in a table. A table cannot tell you who said so, or
+          when, or what the old answer was. So we store statements, and every statement carries how
+          much authority it has.</p>
+        <div class="ladder">
+          <div class="rung top"><span class="lvl">5</span><span><b>You corrected me</b><small>Beats everything. The old version is kept, marked as ended.</small></span></div>
+          <div class="rung"><span class="lvl">4</span><span><b>You told me</b><small>Your own words, in conversation.</small></span></div>
+          <div class="rung"><span class="lvl">3</span><span><b>A trusted source said it</b><small>A document you shared.</small></span></div>
+          <div class="rung"><span class="lvl">2</span><span><b>I observed it</b><small>Your calendar, your reminders. Never outranks your own words.</small></span></div>
+          <div class="rung"><span class="lvl">1</span><span><b>I worked it out</b><small>A guess. Stored as a question, not a fact, until you say yes.</small></span></div>
+        </div>
+        <p style="margin-top: 22px">A lower number never overwrites a higher one. So your calendar
+          cannot quietly move a meeting you told it about, and a guess never becomes a fact on its
+          own. Nothing is destroyed by a correction, which is why the app can always answer the
+          question <em>why do you think that?</em></p>
+      </section>
+
+      <section id="doing">
+        <h2>What you can actually do</h2>
+        <p class="sub">Four things, in the order a new user meets them.</p>
+        <div class="tabs" role="tablist" aria-label="Examples" id="tabs"></div>
+        <div class="say" id="saybox" role="tabpanel" aria-live="polite"></div>
+      </section>
+
+      <section id="screens">
+        <h2>The app</h2>
+        <p class="sub">One screen. Everything that is not the conversation lives behind the settings
+          button, organised by the question you are actually asking when you open it.</p>
+        <div class="shots">
+          <div class="shot"><span>Screenshot 1<br>the main screen</span></div>
+          <div class="shot"><span>Screenshot 2<br>a plan waiting for approval</span></div>
+          <div class="shot"><span>Screenshot 3<br>what I know</span></div>
+          <div class="shot"><span>Screenshot 4<br>what left this iPhone</span></div>
+        </div>
+        <p class="note" style="border: 0; padding: 0; margin-top: 14px">
+          To add a picture, drop the file into this folder and replace the placeholder with
+          <code>&lt;img src="your_file.png" alt=""&gt;</code> inside the frame.
+        </p>
+      </section>
+
+      <section id="testing">
+        <h2>How we know it works</h2>
+        <p class="sub">Four kinds of testing, because four different things can go wrong.</p>
+        <div class="scroller">
+          <table>
+            <tr><th>What it checks</th><th>Size</th><th>Result</th></tr>
+            <tr><td>Unit tests, the code itself</td><td class="num">870 tests</td><td class="ok">all passing</td></tr>
+            <tr><td>Command dataset, understanding people</td><td class="num">3,249 cases</td><td class="ok">87.5 percent on a 40 case sample</td></tr>
+            <tr><td>Memory suite, real model</td><td class="num">28 cases</td><td class="ok">28 of 28</td></tr>
+            <tr><td>Wrong actions taken</td><td class="num">every run</td><td class="ok">zero</td></tr>
+            <tr><td>Thinking speed on the phone</td><td class="num">target 750 ms</td><td class="miss">1285 ms, hardware bound</td></tr>
+          </table>
+        </div>
+        <h3 style="margin-top: 30px">Real bugs that only testing found</h3>
+        <ul class="plain">
+          <li><b>It could agree with itself.</b> The app asked "should I send it?", the microphone heard its own voice, and the words could count as a yes.</li>
+          <li><b>Silence sounded like a word.</b> The speech model invents words in silence, and one of them is "okay", which is an agreement.</li>
+          <li><b>Email was impossible because of one example.</b> An old line in the prompt taught the model to say it cannot send email. No new instruction could beat it.</li>
+          <li><b>The prompt grew too large and broke every request.</b> Caught only because we ran the real model before shipping.</li>
+        </ul>
+      </section>
+
+      <section id="honest">
+        <h2>Where it falls short</h2>
+        <p class="sub">Written down because a project record that only lists wins is not a record.</p>
+        <ul class="plain">
+          <li>The thinking step takes about 1.3 seconds on an iPhone 15 Pro against a target of 0.75. The chip produces about 77 tokens a second for this model, so this is the hardware, not the code.</li>
+          <li>The full 3,249 case run has not been completed on the phone. Samples have.</li>
+          <li>The connected services have never been tested against a live account. They are tested against recorded responses, which is not the same thing.</li>
+          <li>Speech recognition struggles when the assistant is talking and there is no echo cancellation. One test is marked as a known failure for this.</li>
+          <li>The model comparison is one run per model, scored automatically, on cases that were visible during development.</li>
+        </ul>
+      </section>
+
+      <footer>
+        Built on device with Whisper, Silero, Nemotron 3 Nano 4B and Kokoro.
+        Full documentation in this folder. Website at <a href="https://tokeit.dev">tokeit.dev</a>.
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+  var stages = [
+    { tag: "Hearing", title: "The microphone, minus the app's own voice",
+      body: "Audio comes in with echo cancellation, so the assistant does not hear itself speaking and treat that as you.",
+      where: "Audio" },
+    { tag: "Words", title: "Whisper turns sound into text",
+      body: "Speech recognition runs on the phone. A partial guess appears quickly, then a final pass corrects it.",
+      where: "ASR, Whisper base.en, about 148 MB" },
+    { tag: "Silence", title: "Silero decides when you stopped",
+      body: "A separate small model detects real speech. This is also what stops the assistant acting on silence, which the speech model can turn into words like okay.",
+      where: "ASR, Silero VAD" },
+    { tag: "Meaning", title: "Nemotron proposes one action",
+      body: "The language model reads your sentence and writes a small piece of JSON. Its output is forced into a legal shape while it is being written, so it cannot invent a tool or produce something broken.",
+      where: "LLM, Nemotron 3 Nano 4B, about 2.8 GB" },
+    { tag: "Checking", title: "Swift decides whether it is allowed",
+      body: "The app checks the shape, looks up the real person in Contacts itself, and asks you which one if there are two. The model never sees your contacts and never gets a phone number.",
+      where: "Agent and Tools" },
+    { tag: "Consent", title: "You hear exactly what will happen",
+      body: "It reads back the real message and the real recipient, then waits. Nothing with a consequence happens without this step.",
+      where: "Agent, confirmation" },
+    { tag: "Doing", title: "The action runs",
+      body: "Messages opens with the text ready for you to send. The result is spoken back, and what was learned is written into your world model with its source.",
+      where: "Tools and Intelligence" }
+  ];
+
+  var stepsEl = document.getElementById("steps");
+  var stageBox = document.getElementById("stagebox");
+
+  stages.forEach(function (s, i) {
+    var b = document.createElement("button");
+    b.className = "step";
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", i === 0 ? "true" : "false");
+    b.innerHTML = '<span class="n">' + (i + 1) + '</span><span>' + s.tag + '</span>';
+    b.addEventListener("click", function () { pickStage(i); });
+    stepsEl.appendChild(b);
+  });
+
+  function pickStage(i) {
+    var s = stages[i];
+    stageBox.innerHTML =
+      '<div class="tag">' + s.tag + '</div>' +
+      '<h3>' + s.title + '</h3>' +
+      '<p>' + s.body + '</p>' +
+      '<div class="where">runs in: ' + s.where + '</div>';
+    var all = stepsEl.querySelectorAll(".step");
+    for (var k = 0; k < all.length; k++) {
+      all[k].setAttribute("aria-selected", k === i ? "true" : "false");
+    }
+  }
+  pickStage(0);
+
+  var models = [
+    { name: "Qwen3 14B", size: "14 billion, too big for a phone", score: 83, pick: false },
+    { name: "Nemotron 3 Nano 4B", size: "4 billion, the one we chose", score: 56, pick: true },
+    { name: "Phi 4 Mini Instruct", size: "3.8 billion", score: 51, pick: false }
+  ];
+  var barsEl = document.getElementById("bars");
+  models.forEach(function (m) {
+    var row = document.createElement("div");
+    row.className = "bar";
+    row.innerHTML =
+      '<div class="name">' + m.name + '<small>' + m.size + '</small>' +
+        (m.pick ? '<span class="chosen">chosen</span>' : '') + '</div>' +
+      '<div class="track"><div class="fill' + (m.pick ? ' pick' : '') + '"></div></div>' +
+      '<div class="val">' + m.score + '/150</div>';
+    barsEl.appendChild(row);
+  });
+
+  function drawBars() {
+    var fills = barsEl.querySelectorAll(".fill");
+    for (var i = 0; i < fills.length; i++) {
+      fills[i].style.width = (models[i].score / 150 * 100) + "%";
+    }
+  }
+  if (window.requestAnimationFrame) {
+    requestAnimationFrame(function () { requestAnimationFrame(drawBars); });
+  } else { drawBars(); }
+
+  var examples = [
+    { label: "A command", turns: [
+        ["You", "Text Alex that I will be 20 minutes late."],
+        ["It", "Text Alex Kim: I will be 20 minutes late. Should I send it?"],
+        ["You", "Yes."],
+        ["It", "Messages opens with the text ready. You tap send."]
+      ], note: "It found the real Alex in your contacts, read back the exact words, and sent nothing until you agreed." },
+    { label: "It learns you", turns: [
+        ["Mon", "I am building Guard with Sarah."],
+        ["Tue", "We decided to keep Nemotron 3 Nano."],
+        ["Wed", "I told Sarah I would finish the benchmark tomorrow."],
+        ["Fri", "What is still open on Guard?"],
+        ["It", "Answers from what you told it, and can say which day it learned each part."]
+      ], note: "Five ordinary sentences became a project, a person, a decision and a promise with a date. You never explain Guard twice." },
+    { label: "A job", turns: [
+        ["You", "What does the syllabus say about the midterm, and make me a study plan."],
+        ["It", "Midterm study plan, in two steps. Want me to go ahead?"],
+        ["You", "Go ahead."],
+        ["It", "Reads your syllabus, writes the plan, and saves it for you to read later."]
+      ], note: "You see every step before anything happens. Approving the plan approves those steps and nothing else." },
+    { label: "Your email", turns: [
+        ["You", "I got an email from Laverana last week and I do not think she followed up. Check, and send her a follow up if she did not."],
+        ["It", "Searches your mail, finds no reply, writes a follow up, and shows it to you."],
+        ["You", "Send it."],
+        ["It", "Sends, and records that you did."]
+      ], note: "One sentence, four steps. Reading your mail and sending mail as you are two separate permissions." }
+  ];
+
+  var tabsEl = document.getElementById("tabs");
+  var sayBox = document.getElementById("saybox");
+
+  examples.forEach(function (e, i) {
+    var b = document.createElement("button");
+    b.className = "tab";
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", i === 0 ? "true" : "false");
+    b.textContent = e.label;
+    b.addEventListener("click", function () { pickExample(i); });
+    tabsEl.appendChild(b);
+  });
+
+  function pickExample(i) {
+    var e = examples[i];
+    var html = "";
+    e.turns.forEach(function (t) {
+      var isApp = t[0] === "It";
+      html += '<div class="turn' + (isApp ? ' app' : '') + '">' +
+        '<div class="who">' + t[0] + '</div>' +
+        '<p class="what">' + t[1] + '</p></div>';
+    });
+    html += '<div class="note">' + e.note + '</div>';
+    sayBox.innerHTML = html;
+    var all = tabsEl.querySelectorAll(".tab");
+    for (var k = 0; k < all.length; k++) {
+      all[k].setAttribute("aria-selected", k === i ? "true" : "false");
+    }
+  }
+  pickExample(0);
+
+  var ids = ["numbers", "problem", "path", "model", "memory", "doing", "screens", "testing", "honest"];
+  var links = {};
+  ids.forEach(function (id) {
+    links[id] = document.querySelector('nav.rail a[href="#' + id + '"]');
+  });
+  if (window.IntersectionObserver) {
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        ids.forEach(function (id) { if (links[id]) links[id].classList.remove("on"); });
+        if (links[en.target.id]) links[en.target.id].classList.add("on");
+      });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+  }
+</script>

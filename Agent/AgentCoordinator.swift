@@ -1,5 +1,6 @@
 import Core
 import Foundation
+import Intelligence
 import LLM
 import Observation
 import Permissions
@@ -14,7 +15,12 @@ public struct AgentDependencies: Sendable {
     public var executor: any ToolExecuting
     public var permissions: any PermissionProviding
     public var speech: any SpeechOutput
-    public var capabilities: CapabilityRegistry
+    public var capabilities: DeviceCapabilities
+    /// The user's personal intelligence. Absent in V1-shaped deployments and in tests that only
+    /// exercise the action path; when absent, every turn behaves exactly as it did in V1.
+    public var intelligence: PersonalIntelligence?
+    /// Planning and running jobs. Absent means the assistant answers and acts, but takes no jobs.
+    public var jobs: JobService?
     public var clock: AgentClock
     public var logger: PrivacySafeLogger
     public var metrics: PerformanceMetrics?
@@ -25,7 +31,9 @@ public struct AgentDependencies: Sendable {
         executor: any ToolExecuting,
         permissions: any PermissionProviding,
         speech: any SpeechOutput = SilentSpeechOutput(),
-        capabilities: CapabilityRegistry = .allAvailable,
+        capabilities: DeviceCapabilities = .allAvailable,
+        intelligence: PersonalIntelligence? = nil,
+        jobs: JobService? = nil,
         clock: AgentClock = AgentClock(),
         logger: PrivacySafeLogger = .shared,
         metrics: PerformanceMetrics? = nil
@@ -36,6 +44,8 @@ public struct AgentDependencies: Sendable {
         self.permissions = permissions
         self.speech = speech
         self.capabilities = capabilities
+        self.intelligence = intelligence
+        self.jobs = jobs
         self.clock = clock
         self.logger = logger
         self.metrics = metrics
@@ -58,6 +68,11 @@ public final class AgentCoordinator {
 
     /// Called after every user or assistant turn (persistence hook; never logged).
     @ObservationIgnored public var onTurnRecorded: (@MainActor (ConversationTurn) -> Void)?
+    /// Called when a turn's background learning finishes, with what was learned or asked about.
+    /// Never on the path to an answer: by the time this fires, the user already has their reply.
+    @ObservationIgnored public var onMemoryLearned: (@MainActor (MemoryReport) -> Void)?
+    /// The in-flight learning task for the last turn, so callers can wait for it deterministically.
+    @ObservationIgnored public private(set) var learningTask: Task<MemoryReport, Never>?
 
     @ObservationIgnored private let dependencies: AgentDependencies
     @ObservationIgnored private let configuration: AgentConfiguration
@@ -69,6 +84,8 @@ public final class AgentCoordinator {
     @ObservationIgnored private var lastAssistantQuestion: String?
     @ObservationIgnored private var pinnedSelections: [String: ClarificationCandidate] = [:]
     @ObservationIgnored private var isHandlingTurn = false
+    /// The job the card on screen belongs to.
+    @ObservationIgnored private var activePlanID: UUID?
 
     public init(
         dependencies: AgentDependencies,
@@ -208,6 +225,7 @@ public final class AgentCoordinator {
             await runModel(text, modifying: nil, report: &report)
         }
         finish(&report)
+        learn(from: text, report: report)
         return report
     }
 
@@ -421,14 +439,49 @@ public final class AgentCoordinator {
         Task { await model.prime(cacheablePrefix: prefix, suffixHead: head) }
     }
 
+    /// What the intelligence knows about this utterance, or nil when there is no intelligence or
+    /// the utterance names nothing it holds. Bounded so a slow lookup can never hold up a turn.
+    private func personalContext(for text: String) async -> PersonalContext? {
+        guard let intelligence = dependencies.intelligence else { return nil }
+        let now = dependencies.clock.now()
+        let watch = Stopwatch()
+        let context = try? await intelligence.context(for: text, now: now)
+        await dependencies.metrics?.record(.personalContext, milliseconds: watch.elapsedMilliseconds)
+        guard let context, !context.isEmpty else { return nil }
+        return context
+    }
+
+    /// Learning happens after the user has their answer, never on the path to it.
+    ///
+    /// The task is kept so the UI can show what was learned when it finishes, and so tests can wait
+    /// for it instead of sleeping. Utility rather than background priority: it is not urgent, but
+    /// it must not be starved while the app is busy either.
+    private func learn(from text: String, report: TurnReport) {
+        guard let intelligence = dependencies.intelligence else { return }
+        let turn = MemoryTurn(
+            userText: text,
+            assistantText: report.spokenResponses.last,
+            turnID: report.id.uuidString,
+            now: dependencies.clock.now()
+        )
+        learningTask = Task(priority: .utility) { [weak self] in
+            let learned = await intelligence.observe(turn: turn)
+            await MainActor.run { self?.onMemoryLearned?(learned) }
+            return learned
+        }
+    }
+
     private func runModel(_ text: String, modifying pending: PendingAction?, report: inout TurnReport) async {
         transition(to: .thinking, reason: pending == nil ? .transcriptReady : .userModified)
+        let personal = await personalContext(for: text)
+        report.personalContextTokens = personal?.estimatedTokens ?? 0
         let request = promptBuilder.request(
             session: session.excludingCurrentUserTurn(),
             utterance: text,
             clock: dependencies.clock,
             lastAssistantQuestion: lastAssistantQuestion,
-            maxOutputTokens: configuration.llm.maxOutputTokens
+            maxOutputTokens: configuration.llm.maxOutputTokens,
+            personalContext: personal?.render()
         )
         var output = ""
         let watch = Stopwatch()
@@ -499,10 +552,144 @@ public final class AgentCoordinator {
                 await speak(speech, report: &report)
             }
 
+        case let .success(.task(outcome)):
+            if let pending {
+                // In the middle of confirming something: a job is not a change to that action.
+                report.outcome = .reprompted
+                await speak(repromptText(for: pending), report: &report)
+            } else {
+                await planJob(outcome: outcome, transcript: text, report: &report)
+            }
+
         case let .success(.proposedAction(call, _)):
             pinnedSelections = [:]
             await resolveAndAct(call, transcript: text, modifying: pending, report: &report)
         }
+    }
+
+    // MARK: - Jobs
+
+    /// Turns a request the model read as a job into a plan the user can look at.
+    ///
+    /// Nothing runs here. The plan is scoped from the request, validated against what can actually
+    /// run right now, and then shown — approving the card is approving exactly those steps.
+    private func planJob(outcome: String, transcript: String, report: inout TurnReport) async {
+        guard let jobs = dependencies.jobs else {
+            report.outcome = .unsupported
+            await speak("I can't take jobs on yet — ask me one thing at a time for now.", report: &report)
+            return
+        }
+        transition(to: .thinking, reason: .transcriptReady)
+        let context = await personalContext(for: transcript)?.render()
+        do {
+            let plan = try await jobs.plan(request: transcript, outcome: outcome, context: context)
+            activePlanID = plan.id
+
+            // A job that only reads the user's own things is an answer that takes a few steps,
+            // not a decision to approve.
+            if jobs.runsWithoutAsking(plan) {
+                presentation.jobCard = JobCard(plan: plan, message: "Looking…")
+                report = await runJob(plan.id, report: report)
+                return
+            }
+
+            presentation.jobCard = JobCard(plan: plan)
+            report.outcome = .confirmationRequested
+            report.plan = plan
+            let steps = plan.steps.count == 1 ? "one step" : "\(plan.steps.count) steps"
+            lastAssistantQuestion = "Want me to go ahead?"
+            if await speak("\(plan.title), in \(steps). Want me to go ahead?", report: &report) {
+                // The card stays on screen with the plan's own steps; nothing runs until it is approved.
+                transition(to: .waitingForConfirmation, reason: .confirmationRequested)
+            }
+        } catch {
+            report.outcome = .unsupported
+            dependencies.logger.log(.error(domain: "runtime", code: "planning_failed"))
+            // Most of the time a plan that cannot be made is a plan that needed the internet. Say
+            // which it is: "I can't" and "you haven't let me" are different answers.
+            if let service = await jobs.serviceTheRequestNeeds(transcript) {
+                await speak("I'd need your \(service) for that, and it isn't connected yet. You can connect it in Settings, under Connected services.", report: &report)
+            } else if await jobs.networkIsSwitchedOff() {
+                await speak("I'd need the internet for that, and it's switched off. You can change that in Settings, under Internet.", report: &report)
+            } else if await !jobs.canReachTheWeb() {
+                await speak("That needs the internet and I can't reach it right now.", report: &report)
+            } else {
+                await speak("I couldn't work out how to do that.", report: &report)
+            }
+        }
+    }
+
+    /// The user approved the job on its card. Runs it, keeping the card in step with each step.
+    @discardableResult
+    public func approveJob(id: UUID) async -> TurnReport {
+        var report = TurnReport()
+        guard let jobs = dependencies.jobs, let card = presentation.jobCard, card.id == id,
+              card.isAwaitingApproval else {
+            report.outcome = .noAction
+            return report
+        }
+        await dependencies.speech.stop()
+        leaveAudioPhase()
+        transition(to: .executing, reason: .userApproved)
+        presentation.jobCard = JobCard(
+            id: card.id, title: card.title, request: card.request, steps: card.steps,
+            state: .running, message: "Starting…"
+        )
+
+        return await runJob(id, report: report)
+    }
+
+    /// Runs a plan to its end and says what happened. Shared by the approval button and by the
+    /// read-only jobs that never needed one.
+    private func runJob(_ id: UUID, report: TurnReport) async -> TurnReport {
+        var report = report
+        guard let jobs = dependencies.jobs else {
+            report.outcome = .noAction
+            return report
+        }
+        transition(to: .executing, reason: .userApproved)
+
+        let finished = await jobs.run(id) { [weak self] update in
+            guard let self else { return }
+            presentation.jobCard = JobCard(plan: update, message: update.progressLine())
+        }
+        guard let finished else {
+            report.outcome = .noAction
+            transition(to: .idle, reason: .toolFinished)
+            return report
+        }
+
+        presentation.jobCard = JobCard(plan: finished, artifactID: await jobs.artifactID(of: finished))
+        report.plan = finished
+        switch finished.state {
+        case .completed:
+            report.outcome = .executed
+            await speak(finished.summary ?? "Done.", report: &report)
+        case .blocked where finished.blocker?.isWaitingOnUser == true:
+            report.outcome = .clarificationRequested
+            lastAssistantQuestion = finished.summary
+            await speak(finished.summary ?? "I need something from you to keep going.", report: &report)
+        case .blocked:
+            report.outcome = .deferred
+            await speak(finished.summary ?? "I stopped partway.", report: &report)
+        default:
+            report.outcome = .noAction
+            await speak(finished.summary ?? "That didn't work.", report: &report)
+        }
+        finish(&report)
+        return report
+    }
+
+    /// The user declined the job, or stopped one that was running.
+    @discardableResult
+    public func cancelJob(id: UUID) async -> TurnReport {
+        var report = TurnReport()
+        await dependencies.jobs?.cancel(id)
+        presentation.jobCard = nil
+        activePlanID = nil
+        report.outcome = .cancelled
+        transition(to: .idle, reason: .cancelled)
+        return report
     }
 
     /// Speaks the lead-in of the confirmation this message will get, if the recipient resolves

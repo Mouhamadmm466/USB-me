@@ -3,10 +3,12 @@ import SwiftUI
 
 /// The recent conversation as a transcript. Your words are ink; the assistant's sit on a
 /// quiet surface.
-struct HistorySheet: View {
+///
+/// Presented from Settings, next to the switch that decides whether history is kept at all — which
+/// is the only place it is reachable from. The talking screen has a microphone and a keyboard on
+/// it and nothing else; a transcript there invites reading back rather than saying the next thing.
+struct HistoryTranscript: View {
     let turns: [ConversationTurn]
-
-    @Environment(\.dismiss) private var dismiss
 
     init(turns: [ConversationTurn]) {
         self.turns = turns
@@ -14,8 +16,7 @@ struct HistorySheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
+        Group {
                 if turns.isEmpty {
                     emptyState
                 } else {
@@ -39,22 +40,8 @@ struct HistorySheet: View {
                     .defaultScrollAnchor(.bottom)
                     .hardTopScrollEdge()
                 }
-            }
-            .background(Palette.canvas)
-            .navigationTitle("History")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Done").textStyle(.body, weight: .semibold)
-                    }
-                }
-            }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .background(Palette.canvas)
     }
 
     private var emptyState: some View {
@@ -128,5 +115,20 @@ private extension View {
         } else {
             self
         }
+    }
+}
+
+/// The transcript as a sheet, for the design gallery.
+struct HistorySheet: View {
+    let turns: [ConversationTurn]
+
+    var body: some View {
+        NavigationStack {
+            HistoryTranscript(turns: turns)
+                .navigationTitle("History")
+                .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }

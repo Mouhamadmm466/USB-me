@@ -39,10 +39,14 @@ targets:
         product: KokoroTTS
       - package: VoiceAgentKit
         product: AgentEval
+      - target: VoiceAgentShare
+        embed: true
     entitlements:
       path: AppEntry/VoiceAgent.entitlements
       properties:
         com.apple.developer.kernel.increased-memory-limit: true
+        # The only thing the app and the share extension share.
+        com.apple.security.application-groups: [group.com.mouhamadmamane.voiceagent]
     info:
       path: AppEntry/Info.plist
       properties:
@@ -71,8 +75,8 @@ targets:
         SUPPORTS_MACCATALYST: NO
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS"
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "2.0.0"
+        CURRENT_PROJECT_VERSION: "7"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
@@ -83,6 +87,47 @@ targets:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS DEVELOPER_MODES"
         Profile:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS DEVELOPER_MODES"
+  # The share sheet. Links ShareInbox and nothing else: an app extension runs under a hard memory
+  # limit, so it copies bytes and leaves the reading to the app.
+  VoiceAgentShare:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Share
+        type: syncedFolder
+      # The app's typeface, so the one screen the extension owns is not in a different one.
+      - path: Resources/Fonts
+    dependencies:
+      - package: VoiceAgentKit
+        product: ShareInbox
+    entitlements:
+      path: Share/VoiceAgentShare.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.mouhamadmamane.voiceagent]
+    info:
+      path: Share/Info.plist
+      properties:
+        CFBundleDisplayName: Voice Agent
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UIAppFonts: [DMSans-Regular.ttf, DMSans-Medium.ttf, DMSans-SemiBold.ttf, DMSans-Bold.ttf]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 4
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent.share
+        PRODUCT_NAME: VoiceAgentShare
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "2.0.0"
+        CURRENT_PROJECT_VERSION: "7"
+        SKIP_INSTALL: YES
   # Simulator build for UI development and UI tests. Same sources; no Kokoro (MLX has no
   # simulator support), so speech output is disabled and the UI says so. Never shipped.
   VoiceAgentSim:
@@ -101,20 +146,31 @@ targets:
         product: VoiceAgentKit
       - package: VoiceAgentKit
         product: AgentEval
+      - target: VoiceAgentShare
+        embed: true
+    entitlements:
+      path: AppEntry/VoiceAgentSim.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.mouhamadmamane.voiceagent]
     settings:
       base:
         INFOPLIST_FILE: AppEntry/Info.plist
-        CODE_SIGN_ENTITLEMENTS: ""
         PRODUCT_BUNDLE_IDENTIFIER: com.mouhamadmamane.voiceagent
         PRODUCT_NAME: VoiceAgent
         SUPPORTED_PLATFORMS: iphonesimulator
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "2.0.0"
+        CURRENT_PROJECT_VERSION: "7"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
-        CODE_SIGNING_ALLOWED: NO
+        # Ad-hoc signed rather than unsigned. The App Group entitlement is the only thing that lets
+        # the share extension and the app see the same container, and an unsigned bundle carries no
+        # entitlements at all — so the share path could not be exercised in the simulator.
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
         # The simulator app is development-only: demo mode and the gallery are always available.
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEVELOPER_MODES"
   VoiceAgentUITests:

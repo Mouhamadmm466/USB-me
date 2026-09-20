@@ -1,75 +1,120 @@
-# Voice Agent — a private, on-device voice assistant for iPhone
+# TokeIT
 
-You speak; your iPhone understands, talks back to confirm, and does the task — without sending
-your voice or words to any server.
+A private voice assistant that runs on your iPhone.
 
-- **Speech recognition:** [whisper.cpp](https://github.com/ggml-org/whisper.cpp) with Whisper
-  `base.en`, plus Silero VAD for endpointing.
-- **Understanding:** [NVIDIA Nemotron 3 Nano 4B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF)
-  (Q4_K_M GGUF) on [llama.cpp](https://github.com/ggml-org/llama.cpp) + Metal, decoding under a
-  grammar generated from the tool catalog.
-- **Speech:** [Kokoro 82M](https://huggingface.co/mlx-community/Kokoro-82M-bf16) through
-  [KokoroSwift](https://github.com/mlalma/kokoro-ios) on MLX, one fixed voice (`af_heart`).
-- **Actions:** Contacts, EventKit (calendar and reminders), MessageUI, the system call flow,
-  user-selected folders, and a fixed list of apps. Public APIs only.
+You talk to it. It understands you, does the task, and tells you what it did. Your voice never
+leaves the phone. There is no account, no server, and no internet needed for most of what it does.
 
-The model only *proposes*. Swift validates every proposal, looks up people/events/files itself,
-reads back exactly what it will do, and acts only after you confirm that exact version.
+Website: [tokeit.dev](https://tokeit.dev)
 
-```
-"Text Alex that I'll be 20 minutes late."
-  → "Text Alex Kim: “I'll be 20 minutes late.” Should I send it?"   [card: To / Number / Message]
-"Yes."
-  → Messages opens with the text; you tap Send → "Sent to Alex Kim."
-```
+## What makes it different
 
-## Quick start
+Most voice assistants send your words to a company's servers. This one does not. The speech
+recognition, the language model, and the voice all run on the phone itself.
 
-> **Run `Scripts/bootstrap_dependencies.sh` once after cloning, before opening the Xcode project.**
-> The pinned llama.cpp / whisper.cpp XCFrameworks and the Kokoro packages are downloaded and
-> SHA-256-verified by that script, not stored in git (~7 minutes). Without them Xcode reports
-> "Missing package product 'VoiceAgentKit'"; `Package.swift` stops with the same instruction.
+But being private is not the whole idea. The bigger idea is this:
 
-```bash
-Scripts/bootstrap_dependencies.sh   # pinned runtimes (verified)
-Scripts/download_models.sh          # pinned models into ModelCache/ (verified)
-swift test                          # unit + integration + eval-dataset tests
-open App/VoiceAgent.xcodeproj       # scheme VoiceAgent (device) or VoiceAgentSim (Simulator)
-```
+> **It builds a model of your world, and that model belongs to you.**
 
-Full instructions: [Docs/BUILD.md](Docs/BUILD.md).
+It remembers your projects, the people in them, what you promised, and what is due. It can read the
+documents you give it. It can reach your calendar, your email, and your files when you allow it. And
+you can open the whole thing, see where every single fact came from, change it, or delete it.
 
-## Documentation
+## Three things you should try first
 
-| Doc | What it covers |
-|---|---|
-| [BUILD_STATUS.md](BUILD_STATUS.md) | Live status: phases, measured results, blockers, human-only steps |
-| [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) | Modules, state machine, turn pipeline, scheduling |
-| [Docs/MODEL_MANIFEST.md](Docs/MODEL_MANIFEST.md) | Exact model sources, revisions, sizes, SHA-256, integrity policy |
-| [Docs/SECURITY.md](Docs/SECURITY.md) | Threat model and controls |
-| [Docs/PRIVACY.md](Docs/PRIVACY.md) | What stays on device (everything) |
-| [Docs/EVALUATION.md](Docs/EVALUATION.md) | 2,500+ case agent evaluation, audio test plan, metrics, results |
-| [Docs/DEVICE_MATRIX.md](Docs/DEVICE_MATRIX.md) | Supported devices, memory budget, benchmarks |
-| [Docs/THIRD_PARTY.md](Docs/THIRD_PARTY.md) | Pinned dependencies and licenses |
-| [Docs/KNOWN_LIMITATIONS.md](Docs/KNOWN_LIMITATIONS.md) | What V1 does not do |
-| [Docs/DEMO.md](Docs/DEMO.md) | Five-minute demo script (Airplane Mode on) |
+**1. Ask it to do something.**
 
-## Repository layout
+> "Text Alex that I will be 20 minutes late."
 
-```
-App/            iOS app (SwiftUI): AppEntry/, UI/, Resources/, VoiceAgent.xcodeproj (XcodeGen: project.yml)
-Core/           state machine, session state, PendingAction, risk policy, tool catalog, protocols
-Audio/          AVAudioSession/AVAudioEngine, VAD, endpointing, echo/barge-in
-ASR/            whisper.cpp runtime, Silero VAD, transcript stability
-LLM/            Nemotron runtime, prompt, grammar, output validator, context manager
-TTS/            chunking, speech queue, playback tracking; TTS/Kokoro/ (device-only engine)
-Agent/          coordinator, confirmation, clarification, summaries, capabilities
-Tools/          resolver, executor, native adapters (Contacts, EventKit, MessageUI, calls, files, apps), fakes
-Models/         manifest, resumable downloads, SHA-256 integrity, lifecycle
-Permissions/    just-in-time permission manager
-Storage/        SwiftData session/settings stores
-Telemetry/      privacy-safe logger, performance metrics
-Tests/          Unit/, Integration/, Audio/, AgentEval/ (dataset, harness, runner), Benchmarks/, E2E/
-Scripts/        bootstrap, model download/verify, eval, device benchmark, CI
-Docs/           the documents above
-```
+It finds Alex in your contacts, writes the message, and shows it to you. Nothing is sent until you
+say yes.
+
+**2. Tell it about your life, then ask later.**
+
+> Monday: "I am building Guard with Sarah."
+> Tuesday: "We decided to keep Nemotron."
+> Friday: "What is still open on Guard?"
+
+It answers from what you told it. You never have to explain Guard twice.
+
+**3. Give it a job, not a command.**
+
+> "Look up the new benchmarks and write me a short report."
+
+It shows you a plan first. You approve it. Then it does the steps and writes the report, which you
+can read and keep.
+
+## Where to go next
+
+Start here if you want to understand the project:
+
+* [What it is and why](docs/overview.md)
+* [What you can actually do with it](docs/use_cases.md)
+* [How it works inside](docs/how_it_works.md)
+
+Then, for detail:
+
+* [The memory, and how it stays honest](docs/memory.md)
+* [Connecting Gmail, Drive and GitHub](docs/connected_services.md)
+* [Privacy and safety](docs/privacy.md)
+* [Testing and results](docs/evaluation/README.md)
+* [How to build and run it](docs/setup/README.md)
+* [What it still cannot do](docs/limitations.md)
+
+There is also an [interactive page](docs/index.html). Open it in a browser for a visual tour.
+
+## The state of it today
+
+The app is built and running on a real iPhone through TestFlight. Here are the honest numbers:
+
+* 870 automated tests pass
+* 28 out of 28 cases pass in the personal memory test suite, run against the real model
+* 87.5 percent case pass rate on a sample of the 3,249 case command dataset
+* Zero safety violations and zero wrong actions taken in every release check so far
+* Peak memory on the phone is 1.27 GB with all three models loaded
+
+Full numbers, including how we measured them, are in
+[docs/evaluation/README.md](docs/evaluation/README.md).
+
+## What is inside the repository
+
+The code is split into small Swift packages. Each one does one job.
+
+**The brain and the voice**
+
+* `LLM` runs the language model and forces its output into a shape we can check
+* `ASR` turns speech into text
+* `TTS` turns text into speech
+* `Audio` handles the microphone, the speaker, and talking over the assistant
+
+**The thinking**
+
+* `Agent` runs the conversation and the multi step jobs
+* `Intelligence` is the memory: people, projects, promises, documents
+* `Connectors` talks to Gmail, Drive and GitHub
+
+**The doing**
+
+* `Tools` reaches the phone: contacts, calendar, reminders, messages, calls, files
+* `Permissions` asks for access at the right moment
+* `Storage` saves settings and history
+* `Models` downloads and verifies the model files
+
+**The app**
+
+* `App` is the iPhone app itself, the screens and the share extension
+
+**The proof**
+
+* `Tests` holds every automated test and the evaluation harness
+* `docs` holds this documentation
+
+## A note on how this was built
+
+This project was built with an AI coding assistant as a working partner. The design decisions, the
+rules about safety and privacy, and the direction all came from real choices made along the way, and
+many of them were changed after testing showed the first idea was wrong.
+
+Where something did not work, the documentation says so. You will find a list of real bugs we found
+and fixed in [docs/notes/status.md](docs/notes/status.md), including a few that only showed up when
+we ran the real model on a real phone.

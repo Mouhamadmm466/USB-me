@@ -90,7 +90,7 @@ struct ModelPackRow: View {
 
     private var iconTone: Tone {
         switch pack.state {
-        case .installed: .jade
+        case .installed: .clay
         case .failed, .corrupt: .danger
         default: .neutral
         }
@@ -121,12 +121,12 @@ struct ModelPackRow: View {
             }
         case let .verifying(progress):
             VStack(alignment: .leading, spacing: 6) {
-                ProgressBar(value: progress, tint: Palette.jade.opacity(0.55))
+                ProgressBar(value: progress, tint: Palette.clay.opacity(0.55))
                 statusText("Checking files\u{2026} \(Formatting.percent(progress))")
             }
         case .installed:
             HStack(spacing: Spacing.s) {
-                StatusPill("Installed", systemImage: "checkmark.seal.fill", tone: .jade)
+                StatusPill("Installed", systemImage: "checkmark.seal.fill", tone: .clay)
                 statusText(Formatting.bytes(pack.totalBytes))
             }
         case let .failed(message):

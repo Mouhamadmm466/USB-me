@@ -1,4 +1,5 @@
 import Agent
+import Intelligence
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -45,14 +46,75 @@ struct RootView: View {
             case .onboarding:
                 OnboardingFlow(models: model.downloads, actions: OnboardingActions(models: model.modelActions, finish: { model.finishOnboarding() }))
             case .assistant:
+                // One screen, and it is the conversation. Everything else — what I know, what I
+                // can reach, what I have been allowed to do — lives behind the gear. What needs
+                // the person is something they ask for, not something the screen pushes at them.
                 AssistantScreen(
-                    presentation: model.coordinator?.presentation ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
+                    presentation: model.coordinator?.presentation
+                        ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
                     intents: model.assistantIntents
                 )
             }
         }
+        .sheet(item: $model.exportedFile) { file in
+            ShareSheet(items: [file])
+        }
+        .sheet(item: $model.pendingNetworkRequest) { request in
+            NetworkRequestSheet(descriptor: request.descriptor) { model.answerNetworkRequest($0) }
+                // Swiping it away is a no: nothing leaves on an ambiguity.
+                .onDisappear { model.answerNetworkRequest(false) }
+        }
+        .sheet(item: $model.openedArtifact) { opened in
+            NavigationStack {
+                ArtifactScreen(
+                    artifact: opened.artifact,
+                    sources: opened.sources,
+                    onShare: { model.shareArtifact(opened.artifact) },
+                    onForget: { model.forgetArtifact(opened.artifact.id) }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Done") { model.openedArtifact = nil }
+                    }
+                }
+            }
+        }
+        .fileImporter(
+            isPresented: $model.isDocumentPickerPresented,
+            allowedContentTypes: [.pdf, .plainText, .rtf, .html, .text, .data],
+            allowsMultipleSelection: true
+        ) { result in
+            if case let .success(urls) = result { model.importDocuments(urls) }
+        }
+        .sheet(isPresented: Binding(
+            get: { model.openedEntityID != nil },
+            set: { if !$0 { model.openedEntityID = nil; model.entityPath = [] } }
+        )) {
+            if let id = model.openedEntityID {
+                NavigationStack(path: $model.entityPath) {
+                    EntityDetailScreen(state: model.entityDetail(id), intents: model.entityDetailIntents)
+                        .navigationDestination(for: UUID.self) { pushed in
+                            EntityDetailScreen(state: model.entityDetail(pushed), intents: model.entityDetailIntents)
+                        }
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Done") { model.openedEntityID = nil }
+                            }
+                        }
+                }
+            }
+        }
         .sheet(isPresented: $model.isSettingsPresented) {
-            SettingsScreen(state: model.settingsState, actions: model.settingsActions, initialSection: model.settingsInitialSection)
+            SettingsScreen(
+                state: model.settingsState,
+                actions: model.settingsActions,
+                world: model.intelligenceState,
+                worldIntents: model.intelligenceIntents,
+                connectors: model.connectors,
+                connectorIntents: model.connectorIntents,
+                turns: model.coordinator?.presentation.turns ?? [],
+                initialSection: model.settingsInitialSection
+            )
                 .fileImporter(isPresented: $model.isFolderPickerPresented, allowedContentTypes: [.folder]) { result in
                     if case let .success(url) = result { model.addSharedFolder(url) }
                 }
@@ -65,5 +127,10 @@ struct RootView: View {
         }
         .environment(\.hapticsEnabled, model.settings.hapticsEnabled)
         .task { await model.start() }
+        // The Action button sets a flag and launches us; it may land before the app exists, while
+        // the models are warming, or with the app already in front. All three end up here.
+        .onChange(of: LaunchRequest.shared.wantsListening) { model.startListeningIfAsked() }
+        .onChange(of: model.route) { model.startListeningIfAsked() }
+        .onChange(of: model.coordinator?.presentation.state) { model.startListeningIfAsked() }
     }
 }

@@ -39,6 +39,15 @@ public struct OutputValidator: Sendable {
             default: return .success(.unsupported(speech: speech))
             }
 
+        case .task:
+            for key in fields.keys where key != "type" && key != "outcome" {
+                return .failure(.unexpectedField(key))
+            }
+            switch Self.text(fields["outcome"], field: "outcome", maxLength: Self.maxSpeechLength) {
+            case let .success(outcome): return .success(.task(outcome: outcome))
+            case let .failure(error): return .failure(error)
+            }
+
         case .proposedAction:
             let allowed: Set<String> = ["type", "tool", "arguments", "requires_confirmation", "speech"]
             for key in fields.keys where !allowed.contains(key) {

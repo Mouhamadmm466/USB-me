@@ -32,7 +32,7 @@ enum OrbMode: String, CaseIterable, Sendable, Identifiable {
         case .clarifying: .sky
         case .failed: .danger
         case .blocked, .preparing: .neutral
-        default: .jade
+        default: .clay
         }
     }
 

@@ -448,6 +448,7 @@ public actor DeviceBenchmarkRunner {
         guard case let .success(output) = result else { return "Sorry, could you say that again?" }
         switch output {
         case let .answer(speech), let .clarification(speech), let .unsupported(speech): return speech
+        case .task: return "I can do that. Here's what I'd do — want me to go ahead?"
         case let .proposedAction(call, _):
             switch call.tool {
             case .composeMessage: return "Text Alex Kim: \u{201C}I'll be 20 minutes late.\u{201D} Should I send it?"

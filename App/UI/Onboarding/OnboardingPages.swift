@@ -62,7 +62,7 @@ private struct CapabilityGrid: View {
                 VStack(spacing: Spacing.s) {
                     Image(systemName: image)
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(Palette.jade)
+                        .foregroundStyle(Palette.clay)
                         .frame(height: 24)
                         .accessibilityHidden(true)
                     Text(title)
@@ -165,7 +165,7 @@ private struct OverallProgress: View {
                     .textStyle(.headline)
                     .foregroundStyle(Palette.ink)
             }
-            ProgressBar(value: state.overallFraction, tint: state.isPaused ? Palette.mist : Palette.jade, height: 8)
+            ProgressBar(value: state.overallFraction, tint: state.isPaused ? Palette.mist : Palette.clay, height: 8)
             HStack {
                 Text.tabular(Formatting.bytes(state.downloadedBytes, of: state.totalBytes))
                 Spacer()

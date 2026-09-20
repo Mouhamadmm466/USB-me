@@ -1,0 +1,100 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "speech",
+    "tool",
+    "arguments",
+    "requires_confirmation"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "answer",
+        "clarification",
+        "proposed_action",
+        "unsupported"
+      ]
+    },
+    "speech": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    },
+    "tool": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "search_contacts",
+        "initiate_call",
+        "compose_message",
+        "get_calendar_events",
+        "create_calendar_event",
+        "update_calendar_event",
+        "create_reminder",
+        "search_files",
+        "open_file",
+        "open_supported_app",
+        null
+      ]
+    },
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "contact_query": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "starts_at": {
+          "type": "string"
+        },
+        "ends_at": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "contact_id": {
+          "type": "string"
+        },
+        "phone_number": {
+          "type": "string"
+        },
+        "file_id": {
+          "type": "string"
+        },
+        "app_id": {
+          "type": "string"
+        },
+        "scope_id": {
+          "type": "string"
+        },
+        "calendar_id": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "requires_confirmation": {
+      "type": "boolean"
+    }
+  }
+}
