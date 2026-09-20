@@ -1,3 +1,4 @@
+import Connectors
 import Core
 import Intelligence
 import SwiftUI
@@ -5,7 +6,7 @@ import SwiftUI
 /// Everywhere Settings can go. Also the deep-link vocabulary: a permission card that needs a
 /// folder opens Settings at `.permissions`.
 enum SettingsSection: String, CaseIterable, Hashable, Sendable {
-    case memory, documents, projects, sources, permissions, internet, models, history, about
+    case memory, documents, projects, sources, connectors, permissions, internet, models, history, about
 }
 
 /// Everything that is not the conversation.
@@ -26,6 +27,8 @@ struct SettingsScreen: View {
     /// The world model's own state, so its screens can live here rather than in tabs of their own.
     var world: IntelligenceViewState = .empty
     var worldIntents: IntelligenceIntents = .inert
+    var connectors: ConnectorsViewState = ConnectorsViewState()
+    var connectorIntents: ConnectorsIntents = .inert
     var initialSection: SettingsSection?
 
     @State private var path: [SettingsSection] = []
@@ -35,12 +38,16 @@ struct SettingsScreen: View {
         actions: SettingsActions,
         world: IntelligenceViewState = .empty,
         worldIntents: IntelligenceIntents = .inert,
+        connectors: ConnectorsViewState = ConnectorsViewState(),
+        connectorIntents: ConnectorsIntents = .inert,
         initialSection: SettingsSection? = nil
     ) {
         self.state = state
         self.actions = actions
         self.world = world
         self.worldIntents = worldIntents
+        self.connectors = connectors
+        self.connectorIntents = connectorIntents
         self.initialSection = initialSection
         DesignSystemAppearance.install()
     }
@@ -97,6 +104,8 @@ struct SettingsScreen: View {
         Section {
             SettingsLink(.sources, "Calendar & reminders", systemImage: "calendar", tone: .neutral,
                          value: sourcesValue)
+            SettingsLink(.connectors, "Connected services", systemImage: "link", tone: .neutral,
+                         value: connectorsValue)
             SettingsLink(.permissions, "Permissions & folders", systemImage: "lock.fill", tone: .neutral,
                          value: permissionsValue)
             SettingsLink(.internet, "Internet", systemImage: "globe", tone: .neutral,
@@ -163,6 +172,11 @@ struct SettingsScreen: View {
         }
     }
 
+    private var connectorsValue: String? {
+        let connected = connectors.services.count(where: \.isConnected)
+        return connected == 0 ? nil : "\(connected)"
+    }
+
     private var permissionsValue: String? {
         let waiting = state.permissions.count { $0.status != .granted && $0.status != .limited }
         return waiting == 0 ? nil : "\(waiting) to allow"
@@ -179,6 +193,8 @@ struct SettingsScreen: View {
             DocumentsScreen(state: world, intents: worldIntents).navigationTitle("Documents")
         case .projects:
             ProjectsScreen(state: world, intents: worldIntents).navigationTitle("Projects")
+        case .connectors:
+            ConnectorsScreen(state: connectors, intents: connectorIntents).navigationTitle("Connected services")
         case .sources:
             SourcesScreen(state: world, intents: worldIntents, permissions: state.permissions,
                           onAllow: actions.requestPermission, onOpenSystemSettings: actions.openSystemSettings)

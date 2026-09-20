@@ -38,12 +38,16 @@ public enum DataCategory: String, CaseIterable, Sendable, Codable, Hashable, Saf
     /// A file's contents. Nothing in V2 sends this; the case exists so a future capability that
     /// wants to cannot do it without saying so.
     case documentContents
+    /// Something written as the user: an email, a draft, an issue. The user reads it in full before
+    /// it goes, every time, however the network mode is set.
+    case messageContent
 
     public var displayName: String {
         switch self {
         case .searchTerms: "search terms"
         case .webAddress: "a web address"
         case .documentContents: "a document's contents"
+        case .messageContent: "something written as you"
         }
     }
 }
@@ -59,10 +63,19 @@ public struct NetworkRequestDescriptor: Sendable, Equatable {
     public var reason: String
     /// The payload itself — the query, the URL — shown to the user verbatim. Never a summary.
     public var payload: String
+    /// True when the destination is an account of the user's own — their mailbox, their drive.
+    ///
+    /// This turns the leak check off for this request, and only the leak check. That check exists
+    /// to stop the user's world being handed to a *stranger*: searching Wikipedia for a project
+    /// nobody outside the phone has heard of tells Wikipedia something. Searching the user's own
+    /// Gmail for the same project tells Gmail nothing it does not already hold. Applying it there
+    /// would make "what did Sarah send me about Guard?" impossible to answer — the mode, the host
+    /// allowlist, the approval and the log all still apply.
+    public var isPersonalAccount: Bool
 
     public init(
         capability: String, provider: String, host: String, categories: [DataCategory],
-        reason: String, payload: String
+        reason: String, payload: String, isPersonalAccount: Bool = false
     ) {
         self.capability = capability
         self.provider = provider
@@ -70,6 +83,7 @@ public struct NetworkRequestDescriptor: Sendable, Equatable {
         self.categories = categories
         self.reason = reason
         self.payload = payload
+        self.isPersonalAccount = isPersonalAccount
     }
 
     /// The single line the user is asked to approve.

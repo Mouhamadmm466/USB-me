@@ -112,6 +112,8 @@ struct RootView: View {
                 actions: model.settingsActions,
                 world: model.intelligenceState,
                 worldIntents: model.intelligenceIntents,
+                connectors: model.connectors,
+                connectorIntents: model.connectorIntents,
                 initialSection: model.settingsInitialSection
             )
                 .fileImporter(isPresented: $model.isFolderPickerPresented, allowedContentTypes: [.folder]) { result in

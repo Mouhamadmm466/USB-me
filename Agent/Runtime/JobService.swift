@@ -1,3 +1,4 @@
+import Connectors
 import Core
 import Foundation
 import Intelligence
@@ -14,6 +15,9 @@ public actor JobService {
     private let planner: Planner
     private let runtime: AgentRuntime
     private let availability: @Sendable () async -> CapabilityAvailability
+    /// The services the user has connected. Nil when the app was built without them, which keeps
+    /// every test and every offline path exactly as it was.
+    private let connectors: ConnectorRegistry?
     private let logger: PrivacySafeLogger?
 
     public init(
@@ -21,12 +25,14 @@ public actor JobService {
         planner: Planner,
         runtime: AgentRuntime,
         availability: @escaping @Sendable () async -> CapabilityAvailability = { .offline },
+        connectors: ConnectorRegistry? = nil,
         logger: PrivacySafeLogger? = nil
     ) {
         self.intelligence = intelligence
         self.planner = planner
         self.runtime = runtime
         self.availability = availability
+        self.connectors = connectors
         self.logger = logger
     }
 
@@ -42,7 +48,9 @@ public actor JobService {
         let mentioned = await intelligence.mentionedNames(in: request, now: now)
         let plan = try await planner.plan(
             for: hint, context: context, availability: await availability(), subjectID: subjectID,
-            mentionedNames: mentioned, now: now
+            mentionedNames: mentioned,
+            connectors: await connectors?.availableCapabilities() ?? [],
+            now: now
         )
         var proposal = plan
         proposal.request = request

@@ -128,11 +128,13 @@ above is real, and worth measuring rather than assuming.
    model under observation authority. The rule that makes it a world model rather than a
    second copy of the phone: it links to what the user already has — people *and* items — and only
    creates what is genuinely new. See [INTELLIGENCE.md](Docs/INTELLIGENCE.md#what-comes-in-on-its-own).
-3. **Proactivity with an interruption budget** *(next)* — notifications, the morning brief, Live
+3. **Connected services** *(done)* — Gmail, Drive and GitHub behind one connector architecture, so
+   the agent's reach is a matter of adapters rather than of the agent.
+4. **Proactivity with an interruption budget** *(next)* — notifications, the morning brief, Live
    Activity.
-4. **Adaptation from corrections** — visible parameters that the user's own behaviour tunes.
-5. **Portable encrypted archive** — the ownership claim, made true.
-6. **System surfaces** — App Intents, widget, Action button.
+5. **Adaptation from corrections** — visible parameters that the user's own behaviour tunes.
+6. **Portable encrypted archive** — the ownership claim, made true.
+7. **System surfaces** — App Intents *(the Action button is done)*, widget, Live Activity.
 
 Each one is shippable on its own, and each one is measured by the same evaluation harness, extended
 with the suites it needs (network routing matrix, ingestion authority, interruption budget,

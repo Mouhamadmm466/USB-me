@@ -1,3 +1,4 @@
+import Connectors
 import Core
 import Foundation
 import Intelligence
@@ -35,13 +36,24 @@ public struct Planner: Sendable {
         /// Names of things the request mentions. A project called "call Bob" must not put calling
         /// in scope just because the user said its name.
         mentionedNames: [String] = [],
+        /// What the user's connected services can do right now. Empty when nothing is connected,
+        /// which is the offline-first case and costs nothing.
+        connectors: [(connector: any Connector, capability: ConnectorCapability)] = [],
         now: Date = Date()
     ) async throws -> Plan {
         let playbook = PlaybookLibrary.match(request)
-        let scope = PlaybookLibrary.scope(for: request, playbook: playbook, excluding: mentionedNames)
+        let connectorSpecs = ConnectorCapabilities.specs(for: connectors)
+        let scope = PlaybookLibrary.scope(
+            for: request, playbook: playbook, excluding: mentionedNames,
+            registry: ConnectorCapabilities.registry(adding: connectorSpecs),
+            adding: ConnectorCapabilities.scope(
+                for: request, available: connectors, gathers: playbook.gathers, excluding: mentionedNames
+            )
+        )
         // The grammar is built from what this job may use *and* what can run right now, so an
         // unavailable capability cannot be planned and then fail at the last moment.
-        let usable = registry.scoped(to: scope).specs.filter(availability.isAvailable)
+        let usable = ConnectorCapabilities.registry(adding: connectorSpecs)
+            .scoped(to: scope).specs.filter(availability.isAvailable)
         guard !usable.isEmpty else { throw PlanValidationError.noSteps }
         let scoped = CapabilityRegistry(specs: usable)
 

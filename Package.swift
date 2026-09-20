@@ -29,7 +29,7 @@ let package = Package(
             targets: [
                 "Telemetry", "Core", "Permissions", "Storage", "Models", "Tools",
                 "LLM", "ASR", "TTS", "Audio", "Agent", "VoiceLoop", "DeviceBenchmark",
-                "Intelligence", "ShareInbox",
+                "Intelligence", "ShareInbox", "Connectors",
             ]
         ),
         // The share extension links this one alone: a handful of Foundation types, so the extension
@@ -63,6 +63,9 @@ let package = Package(
         // The personal intelligence: entities, assertions, provenance — the V2 memory substrate.
         .target(name: "Intelligence", dependencies: ["Core", "Telemetry"], path: "Intelligence"),
         .target(name: "Tools", dependencies: ["Core", "Permissions", "Telemetry"], path: "Tools"),
+        // Outside services. Depends on Core for the capability vocabulary and nothing else: an
+        // adapter must not be able to reach the store, the model or the network policy directly.
+        .target(name: "Connectors", dependencies: ["Core", "Telemetry"], path: "Connectors"),
         .target(name: "LLM", dependencies: ["Core", "Telemetry", "llama"], path: "LLM"),
         .target(name: "ASR", dependencies: ["Core", "Telemetry", "whisper"], path: "ASR"),
         .target(name: "TTS", dependencies: ["Core", "Telemetry"], path: "TTS", exclude: ["Kokoro"]),
@@ -77,7 +80,7 @@ let package = Package(
         .target(name: "Audio", dependencies: ["Core", "Telemetry"], path: "Audio"),
         .target(
             name: "Agent",
-            dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions", "Intelligence"],
+            dependencies: ["Core", "Telemetry", "LLM", "Tools", "Permissions", "Intelligence", "Connectors"],
             path: "Agent",
             exclude: ["VoiceLoop"]
         ),
@@ -106,6 +109,7 @@ let package = Package(
         ),
 
         // Tests (Swift Testing). None require private user data or network access.
+        .testTarget(name: "ConnectorTests", dependencies: ["Connectors", "Core"], path: "Tests/Unit/Connectors"),
         .testTarget(name: "ShareInboxTests", dependencies: ["ShareInbox"], path: "Tests/Unit/ShareInbox"),
         .testTarget(name: "CoreTests", dependencies: ["Core", "Telemetry"], path: "Tests/Unit/Core"),
         .testTarget(name: "PermissionsTests", dependencies: ["Permissions", "Core"], path: "Tests/Unit/Permissions"),

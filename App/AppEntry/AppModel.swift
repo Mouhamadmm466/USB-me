@@ -56,6 +56,11 @@ final class AppModel {
 
     /// Everything the main screen's standby list and the Settings screens draw.
     var intelligenceState = IntelligenceViewState()
+    /// The accounts the user has connected, and what each is allowed to do. Refreshed whenever
+    /// Settings is opened or a connection changes; read synchronously by the network policy, which
+    /// is why the hosts are cached here rather than awaited.
+    var connectors = ConnectorsViewState()
+    var connectorHosts: Set<String> = []
     /// The entity the person opened from the main screen; the sheet's root.
     var openedEntityID: UUID?
     /// Entities pushed on top of it, when one detail leads to another.
@@ -173,6 +178,9 @@ final class AppModel {
         openStores()
         if let settingsStore { settings = (try? await settingsStore.load()) ?? AppSettings() }
         observeSystem()
+        // The network policy reads the allowed hosts synchronously, so what is connected has to be
+        // known before the first job can run — not the first time Settings is opened.
+        await refreshConnectors()
         if isDemoMode {
             startDemoMode()
             return

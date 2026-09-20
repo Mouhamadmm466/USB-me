@@ -180,8 +180,15 @@ Built on branch `v2`, extending V1 rather than replacing it. See
   capabilities, and two keyless sources answer (Wikipedia and DuckDuckGo's instant answers). A job
   that only reads the user's own things runs without a card; anything that leaves the phone keeps
   one, and approving it is what authorises the requests inside it.
-- [ ] **Not built yet**: connected services (PRD 11) — Gmail, Drive, GitHub and the OAuth, token
-  storage and per-capability permissions they need. Everything else V2 does is local.
+- [x] **Connected services** (PRD 11) — a connector architecture the intelligence knows nothing
+  about, with Gmail, Google Drive and GitHub as its first three adapters. OAuth with PKCE and no
+  client secret, tokens in the Keychain only, and permission per *capability* (off / ask / on)
+  rather than per service: reading starts on, writing starts at asking, and anything off is never
+  described to the model at all. Every request goes through the same network gate and log as a web
+  search; the leak check is the one rule that differs, because searching the user's own mailbox for
+  their own project discloses nothing. See `Docs/CONNECTORS.md`. 45 tests.
+- [ ] **Not built yet**: nothing from the V2 plan. What is left is depth — more adapters, and the
+  proactivity, adaptation and portability in `PRODUCT_DIRECTION.md`.
 
 ## Not done (testing stopped at the owner's request)
 

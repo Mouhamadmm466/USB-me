@@ -18,6 +18,10 @@ public struct Playbook: Sendable, Equatable {
     public let maximumSteps: Int
 
     public func allows(_ id: CapabilityID) -> Bool { scope.contains(id) }
+
+    /// True for the playbooks whose job is to go and find things. They may read from a connected
+    /// service; the others have to be asked.
+    public var gathers: Bool { ["research", "meeting_prep", "project_update", "general"].contains(id) }
 }
 
 public enum PlaybookLibrary {
@@ -117,7 +121,12 @@ public enum PlaybookLibrary {
     /// - Parameter excluding: names of things the request mentions (a project called "call Bob",
     ///   a document titled "Text Sarah"). They are removed before triggers are matched, so quoting
     ///   the name of something can never widen what a job may do.
-    public static func scope(for request: String, playbook: Playbook, excluding names: [String] = []) -> [String] {
+    /// - Parameter registry: what exists at all. Defaults to the built-ins; a job with connected
+    ///   services passes a registry that includes them, so their capabilities survive the filter.
+    public static func scope(
+        for request: String, playbook: Playbook, excluding names: [String] = [],
+        registry: CapabilityRegistry = .all, adding extra: [String] = []
+    ) -> [String] {
         var scope = Set(playbook.scope.map(\.rawValue))
         var stripped = request.lowercased()
         for name in names.map({ $0.lowercased() }).sorted(by: { $0.count > $1.count }) where name.count > 2 {
@@ -127,8 +136,9 @@ public enum PlaybookLibrary {
         for (id, phrases) in requestedCapabilities where phrases.contains(where: { text.contains($0) }) {
             scope.insert(id.rawValue)
         }
+        scope.formUnion(extra)
         // Registry order, so the grammar and the prompt list capabilities the same way every time.
-        return CapabilityRegistry.all.specs.map(\.id.rawValue).filter(scope.contains)
+        return registry.specs.map(\.id.rawValue).filter(scope.contains)
     }
 
     /// Capabilities the user has to ask for by name before a job may use them at all.

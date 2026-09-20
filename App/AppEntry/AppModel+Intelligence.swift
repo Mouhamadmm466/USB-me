@@ -1,4 +1,5 @@
 import Agent
+import Connectors
 import Core
 import Foundation
 import LLM
@@ -37,8 +38,21 @@ extension AppModel {
         }
     }
 
-    /// Planning and running jobs. Everything stays local: the runtime's executors reach the user's
-    /// own documents and world, and nothing else exists yet.
+    /// Every outside service the app knows how to talk to, whether or not the user has connected
+    /// one. Built once: it owns the Keychain handle and the account file.
+    static let connectors: ConnectorRegistry = {
+        let accounts = (try? FileConnectorAccountStore.defaultURL())
+            .map { FileConnectorAccountStore(url: $0) }
+        return ConnectorRegistry(
+            connectors: [GmailConnector(), DriveConnector(), GitHubConnector()],
+            accounts: accounts ?? FileConnectorAccountStore(url: URL(fileURLWithPath: NSTemporaryDirectory())
+                .appending(path: "connector-accounts.json")),
+            tokens: KeychainTokenStore()
+        )
+    }()
+
+    /// Planning and running jobs. The runtime's executors reach the user's own documents and world,
+    /// the web, and any service they have connected — all through the same gate.
     func makeJobService(
         languageModel: any LanguageModel, intelligence: PersonalIntelligence?
     ) -> JobService? {
@@ -60,6 +74,18 @@ extension AppModel {
                     },
                     logger: .shared
                 ),
+                // The user's own accounts. Same gate, same log; the difference is that reading
+                // their own mailbox is not a disclosure, so the leak check does not apply.
+                ConnectorStepExecutor(
+                    registry: Self.connectors,
+                    store: intelligence.store,
+                    policy: { [weak self] in await self?.currentNetworkPolicy() ?? NetworkPolicy() },
+                    approve: { [weak self] descriptor in
+                        guard let self else { return false }
+                        return await self.askToSend(descriptor)
+                    },
+                    logger: .shared
+                ),
             ],
             logger: .shared
         )
@@ -71,9 +97,11 @@ extension AppModel {
                 let policy = await self?.currentNetworkPolicy() ?? NetworkPolicy()
                 return CapabilityAvailability(
                     networkAllowed: policy.mode != .off,
-                    isOnline: policy.isOnline
+                    isOnline: policy.isOnline,
+                    connectedServices: await AppModel.connectors.connected()
                 )
             },
+            connectors: Self.connectors,
             logger: .shared
         )
     }
@@ -537,7 +565,9 @@ extension AppModel {
         NetworkPolicy(
             mode: networkMode,
             isOnline: Reachability.isOnline,
-            allowedHosts: CompositeWebProvider.standard.hosts
+            // The public sources, plus the hosts of whatever the user has connected. A service that
+            // is not connected is not on this list, so a step naming it cannot reach anything.
+            allowedHosts: CompositeWebProvider.standard.hosts.union(connectorHosts)
         )
     }
 
