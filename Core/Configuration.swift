@@ -46,7 +46,7 @@ public struct LLMConfig: Codable, Sendable, Equatable {
     ///
     /// Off by default: on the A17 Pro, 2–8 token decode calls cost almost linearly more than one
     /// token and the snapshots add ~20% to every multi-token call, so with the short argument
-    /// values of real commands speculation was slower (1.73 s vs 1.51 s P50, Docs/DEVICE_MATRIX.md).
+    /// values of real commands speculation was slower (1.73 s vs 1.51 s P50, docs/evaluation/device_results.md).
     /// It halves decode calls on CPU hosts, where it can be enabled for evaluation runs.
     public var speculativeDraftTokens: Int = 0
     /// Drafts only fill a decode call up to this many tokens. On Metal, llama.cpp multiplies small

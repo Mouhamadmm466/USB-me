@@ -12,7 +12,7 @@ Usage:
     python3 Scripts/generate_agent_eval_cases.py --check    # exit 1 if committed files are stale
     python3 Scripts/generate_agent_eval_cases.py --out DIR  # write the AgentEval tree somewhere else
 
-Every expectation encodes the product policy in Docs/EVALUATION.md ("Policy encoded by the
+Every expectation encodes the product policy in docs/evaluation/agent_tests.md ("Policy encoded by the
 dataset"). The important conventions, all enforced by the self-checks at the bottom of this file and
 again by the Swift test target `AgentEvalTests`:
 

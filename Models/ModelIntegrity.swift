@@ -6,7 +6,7 @@ import Telemetry
 import Darwin
 #endif
 
-// Integrity policy (PRD §12, §18) — see also Docs/MODEL_MANIFEST.md.
+// Integrity policy (PRD §12, §18) — see also docs/setup/models.md.
 //
 // 1. Install: every file is streamed through SHA-256 and compared with its pin *before* it is
 //    moved into a revision directory. Nothing else can put a file there.

@@ -138,7 +138,7 @@ import Testing
         let residual = try await Self.bargeInOutcome(file: "echo_residual_overlap.wav", assistantText: assistantText)
         #expect(residual.confirmed, "echo_residual_overlap.wav: the user's interruption was missed (\(residual.transcripts))")
         // Without echo cancellation the user's words are masked by the assistant's voice at the
-        // same level (Docs/KNOWN_LIMITATIONS.md); the guard above still holds.
+        // same level (docs/limitations.md); the guard above still holds.
         let raw = try await Self.bargeInOutcome(file: "echo_overlap.wav", assistantText: assistantText)
         withKnownIssue("barge-in without echo cancellation", isIntermittent: true) {
             #expect(raw.confirmed, "echo_overlap.wav: \(raw.transcripts)")

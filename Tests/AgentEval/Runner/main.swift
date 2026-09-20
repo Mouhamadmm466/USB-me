@@ -258,5 +258,5 @@ case "smoke":
 case "score":
     try await scoreCommand()
 default:
-    print("usage: agent-eval run|score|smoke|intelligence … (see Docs/EVALUATION.md)")
+    print("usage: agent-eval run|score|smoke|intelligence … (see docs/evaluation/agent_tests.md)")
 }

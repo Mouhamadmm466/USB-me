@@ -11,7 +11,7 @@ import Foundation
 ///   {"type":"proposed_action","tool":"<tool>","arguments":{…},"requires_confirmation":true|false}
 ///
 /// Consequential actions carry no model-authored speech: Swift renders the confirmation from the
-/// resolved action (see Docs/SECURITY.md).
+/// resolved action (see docs/notes/security_review.md).
 public enum GrammarBuilder {
     public static func agentOutputGrammar(tools: [ToolSpec] = ToolCatalog.all) -> String {
         var rules: [String] = []

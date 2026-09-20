@@ -3,7 +3,7 @@ import Core
 import Foundation
 import Testing
 
-/// The dataset is internally consistent with the product policy (Docs/EVALUATION.md).
+/// The dataset is internally consistent with the product policy (docs/evaluation/agent_tests.md).
 @Suite("Dataset policy consistency")
 struct DatasetPolicyTests {
     static let consequential: Set<ToolID> = [.createCalendarEvent, .updateCalendarEvent, .createReminder, .composeMessage, .initiateCall]

@@ -153,7 +153,7 @@ public struct CaseScore: Codable, Sendable, Equatable {
 
 /// Compares a case's per-turn `TurnObservation`s with its `TurnExpectation`s.
 ///
-/// Semantics (see Docs/EVALUATION.md, "Scoring"):
+/// Semantics (see docs/evaluation/agent_tests.md, "Scoring"):
 /// * `outcome` must be one of the accepted outcomes.
 /// * `tool`, `args`, `pending_version` and `clarification_reason` constrain the observation *given
 ///   the outcome that was observed*: arguments are compared when the observed outcome carries a

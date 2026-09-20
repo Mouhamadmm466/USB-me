@@ -16,7 +16,7 @@ let missingVendor = ["Vendor/Frameworks/llama.xcframework", "Vendor/Frameworks/w
 if !missingVendor.isEmpty {
     fatalError("""
         Missing \(missingVendor.joined(separator: ", ")).
-        Run Scripts/bootstrap_dependencies.sh from the repository root, then reopen the project (Docs/BUILD.md).
+        Run Scripts/bootstrap_dependencies.sh from the repository root, then reopen the project (docs/setup/README.md).
         """)
 }
 
@@ -45,11 +45,11 @@ let package = Package(
     dependencies: [
         // Kokoro 82M TTS on MLX Swift: mlalma/kokoro-ios 1.0.11 + MisakiSwift 1.0.6, checked out at
         // their exact tags by Scripts/bootstrap_dependencies.sh with a packaging-only patch
-        // (Vendor/Patches) so their resource bundles pass codesign. See Docs/THIRD_PARTY.md.
+        // (Vendor/Patches) so their resource bundles pass codesign. See docs/setup/dependencies.md.
         .package(path: "Vendor/Packages/kokoro-ios"),
     ],
     targets: [
-        // Pinned native runtimes (official release binaries; see Docs/MODEL_MANIFEST.md).
+        // Pinned native runtimes (official release binaries; see docs/setup/models.md).
         .binaryTarget(name: "llama", path: "Vendor/Frameworks/llama.xcframework"),
         .binaryTarget(name: "whisper", path: "Vendor/Frameworks/whisper.xcframework"),
 
