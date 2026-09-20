@@ -189,8 +189,8 @@
 				B62F12D2061B2B2290A5674B /* AppEntry */,
 				AEC7332443C8ED2F40B7D429 /* OfflineVoiceAgent */,
 				664297E68DF03313655B11DA /* Packages */,
-				217FB9D79F749DF838E37376 /* Resources */,
 				976D462B5646EADEEF7221DC /* Resources */,
+				217FB9D79F749DF838E37376 /* Resources */,
 				7878D45A8A02D6881C52F596 /* Share */,
 				4E5AC4D63B8C6D9469837FF3 /* UI */,
 				416626B1F468ECB76467A190 /* Products */,
@@ -504,7 +504,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgent.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -592,7 +592,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgentSim.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
@@ -653,7 +653,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Share/VoiceAgentShare.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				INFOPLIST_FILE = Share/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -698,7 +698,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgentSim.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
@@ -724,7 +724,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgent.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -807,7 +807,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Share/VoiceAgentShare.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				INFOPLIST_FILE = Share/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -833,7 +833,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgentSim.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
@@ -923,7 +923,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Share/VoiceAgentShare.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				INFOPLIST_FILE = Share/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -947,7 +947,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgent.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
