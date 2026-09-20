@@ -60,7 +60,7 @@ case "$ACTION" in
     trap 'rm -f "$package_dir/workflow.tar.gz"; rmdir "$package_dir"' EXIT
     COPYFILE_DISABLE=1 tar --format ustar -czf "$package_dir/workflow.tar.gz" \
       pilot.py viewer.py cases.json system_prompt.txt start_model.sh workflow.sh \
-      README.md VALIDATION.md RESULTS.md COVERAGE.md TESTS.md tests.html checks datasets .gitignore
+      phi_test_instructions.md VALIDATION.md RESULTS.md COVERAGE.md TESTS.md tests.html checks datasets .gitignore
     # Hold the same lock as direct VM runs before changing any deployed source.
     run_status=0
     if [ "$ACTION" = deploy ]; then

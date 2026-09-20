@@ -31,7 +31,7 @@ class DeployChecks(unittest.TestCase):
   with tempfile.TemporaryDirectory() as td:
    root=pathlib.Path(td)
    shutil.copyfile(ROOT/'run-on-brev.sh',root/'run-on-brev.sh')
-   for name in ['pilot.py','viewer.py','cases.json','system_prompt.txt','start_model.sh','workflow.sh','README.md','VALIDATION.md','RESULTS.md','COVERAGE.md','TESTS.md','tests.html','.gitignore']:
+   for name in ['pilot.py','viewer.py','cases.json','system_prompt.txt','start_model.sh','workflow.sh','phi_test_instructions.md','VALIDATION.md','RESULTS.md','COVERAGE.md','TESTS.md','tests.html','.gitignore']:
     (root/name).write_text('fixture')
    (root/'checks').mkdir(); (root/'datasets').mkdir()
    binpath=root/'bin';binpath.mkdir()
