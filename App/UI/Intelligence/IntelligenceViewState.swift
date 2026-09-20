@@ -19,6 +19,17 @@ struct IntelligenceViewState: Equatable {
         var isOverdue = false
     }
 
+    /// Something that needs the user, with the reason it is being raised.
+    struct AttentionRow: Identifiable, Equatable {
+        let id: UUID
+        var title: String
+        var reason: String
+        var kind: AttentionKind
+        var tone: Tone
+        var systemImage: String
+        var entityID: UUID?
+    }
+
     /// Something the system wants to keep but has not been told it may.
     struct Question: Identifiable, Equatable {
         let id: UUID
@@ -87,6 +98,7 @@ struct IntelligenceViewState: Equatable {
         var importError: String?
     }
 
+    var attention: [AttentionRow] = []
     var overdue: [Item] = []
     var today: [Item] = []
     var soon: [Item] = []
@@ -98,8 +110,7 @@ struct IntelligenceViewState: Equatable {
     var isLoaded = false
 
     var hasAnything: Bool {
-        !overdue.isEmpty || !today.isEmpty || !soon.isEmpty || !questions.isEmpty
-            || !projects.isEmpty || !activity.isEmpty
+        !attention.isEmpty || !questions.isEmpty || !projects.isEmpty || !activity.isEmpty
     }
 
     static let empty = IntelligenceViewState()
@@ -166,6 +177,31 @@ extension EntityKind {
         case .plan: "Plans"
         case .planStep: "Steps"
         case .conversation: "Conversations"
+        }
+    }
+}
+
+extension AttentionKind {
+    var systemImage: String {
+        switch self {
+        case .overdue: "exclamationmark.circle"
+        case .today: "sun.max"
+        case .promise: "hand.raised"
+        case .unstarted: "circle.dashed"
+        case .approaching: "calendar"
+        case .question: "questionmark.circle"
+        case .stale: "moon.zzz"
+        }
+    }
+
+    var tone: Tone {
+        switch self {
+        case .overdue, .promise: .danger
+        case .today: .jade
+        case .unstarted: .amber
+        case .approaching: .neutral
+        case .question: .sky
+        case .stale: .neutral
         }
     }
 }

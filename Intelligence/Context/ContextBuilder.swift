@@ -46,10 +46,13 @@ public struct ContextBuilder: Sendable {
         // A question can be about a document without naming anything the store knows ("when is the
         // midterm?"), so the passages are looked up before deciding the turn has nothing to add.
         let passages = try await knowledge(for: utterance, linked: linked, now: now)
+        let attention = try await attention(for: utterance, now: now)
 
         // Nothing known is named, no day is mentioned and no document answers it: the turn keeps
         // V1's cost exactly.
-        guard !linked.isEmpty || time != nil || !activity.isEmpty || !passages.isEmpty else { return .empty }
+        guard !linked.isEmpty || time != nil || !activity.isEmpty || !passages.isEmpty || !attention.isEmpty else {
+            return .empty
+        }
 
         let formatter = ContextFormatter(now: now, calendar: calendar)
         var lines = activity.map { ContextLine($0, priority: .activity) }
@@ -83,6 +86,9 @@ public struct ContextBuilder: Sendable {
         }
 
         lines.append(contentsOf: passages)
+        for line in attention where !lines.contains(where: { $0.entityID == line.entityID && line.entityID != nil }) {
+            lines.append(line)
+        }
 
         return trim(lines)
     }
@@ -127,6 +133,31 @@ public struct ContextBuilder: Sendable {
             }
         }
         return lines
+    }
+
+    // MARK: - Attention
+
+    /// "What needs my attention?" is answered from the attention rules, not from the model's own
+    /// sense of importance — so the answer is the same one the Home screen shows, with the same
+    /// reasons attached.
+    private func attention(for utterance: String, now: Date) async throws -> [ContextLine] {
+        guard Self.asksWhatMatters(utterance) else { return [] }
+        let items = try await AttentionEngine(store: store, calendar: calendar).items(now: now, limit: 5)
+        return items.map {
+            ContextLine($0.spokenLine, priority: .temporal, entityID: $0.entityID)
+        }
+    }
+
+    /// The handful of ways people ask what they should be doing.
+    static func asksWhatMatters(_ utterance: String) -> Bool {
+        let text = " " + utterance.lowercased()
+            .replacingOccurrences(of: "[^a-z' ]", with: " ", options: .regularExpression) + " "
+        return [
+            "what needs my attention", "what should i work on", "what should i do",
+            "what's important", "what is important", "what am i forgetting", "what's on my plate",
+            "what do i need to do", "what's urgent", "what is urgent", "anything urgent",
+            "catch me up", "where do i stand", "what did i miss",
+        ].contains { text.contains($0) }
     }
 
     // MARK: - Documents

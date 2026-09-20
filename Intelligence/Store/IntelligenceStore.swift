@@ -310,9 +310,11 @@ public actor IntelligenceStore {
         return try create(kind: kind, title: title)
     }
 
-    public func update(_ entity: IntelligenceEntity) throws {
+    /// Writes an entity back. `at` is when the change happened: callers that are replaying history
+    /// (an import, a migration, a test) pass the real time rather than now.
+    public func update(_ entity: IntelligenceEntity, at date: Date = Date()) throws {
         var entity = entity
-        entity.updatedAt = Date()
+        entity.updatedAt = max(date, entity.updatedAt)
         try db.run(
             """
             UPDATE entities SET kind = ?2, title = ?3, title_folded = ?4, subtitle = ?5, status = ?6,

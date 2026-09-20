@@ -18,17 +18,11 @@ struct HomeScreen: View {
             LazyVStack(alignment: .leading, spacing: Spacing.xxl) {
                 greeting
 
-                if !state.overdue.isEmpty {
-                    ItemSection(title: "Late", tone: .danger, items: state.overdue, open: intents.openEntity)
-                }
-                if !state.today.isEmpty {
-                    ItemSection(title: "Today", tone: .jade, items: state.today, open: intents.openEntity)
+                if !state.attention.isEmpty {
+                    AttentionSection(rows: state.attention, open: intents.openEntity)
                 }
                 if !state.questions.isEmpty {
                     QuestionSection(questions: state.questions, intents: intents)
-                }
-                if !state.soon.isEmpty {
-                    ItemSection(title: "This week", tone: .neutral, items: state.soon, open: intents.openEntity)
                 }
                 if !state.projects.isEmpty {
                     projectStrip
@@ -70,14 +64,12 @@ struct HomeScreen: View {
 
     /// One honest sentence about the day, built from counts — never a generated pleasantry.
     private var headline: String {
-        if !state.overdue.isEmpty {
-            return state.overdue.count == 1 ? "One thing is late." : "\(state.overdue.count) things are late."
-        }
-        if !state.today.isEmpty {
-            return state.today.count == 1 ? "One thing today." : "\(state.today.count) things today."
-        }
+        let late = state.attention.count { $0.kind == .overdue || $0.kind == .promise }
+        let today = state.attention.count { $0.kind == .today }
+        if late > 0 { return late == 1 ? "One thing is late." : "\(late) things are late." }
+        if today > 0 { return today == 1 ? "One thing today." : "\(today) things today." }
+        if !state.attention.isEmpty { return "Nothing due today." }
         if !state.questions.isEmpty { return "A couple of things to check." }
-        if !state.soon.isEmpty { return "Nothing today. Something this week." }
         return state.isLoaded ? "Nothing on today." : "Catching up…"
     }
 
@@ -181,6 +173,55 @@ struct ItemRow: View {
         .padding(.vertical, Spacing.m)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// What needs the user, in the order it needs them — each row carrying the reason it is here.
+private struct AttentionSection: View {
+    let rows: [IntelligenceViewState.AttentionRow]
+    let open: @MainActor (UUID) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionHeader(title: "Needs you", tone: rows.first?.tone ?? .neutral, count: rows.count)
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                    if index > 0 { Hairline().padding(.leading, 56) }
+                    Button { if let id = row.entityID { open(id) } } label: {
+                        HStack(spacing: Spacing.m) {
+                            IconTile(systemImage: row.systemImage, tone: row.tone, size: 32)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(row.title)
+                                    .textStyle(.body, weight: .medium)
+                                    .foregroundStyle(Palette.ink)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                                Text(row.reason)
+                                    .textStyle(.footnote)
+                                    .foregroundStyle(row.tone == .danger ? Palette.danger : Palette.inkSecondary)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            Spacer(minLength: Spacing.s)
+                            if row.entityID != nil {
+                                Image(systemName: "chevron.right")
+                                    .textStyle(.footnote, weight: .semibold)
+                                    .foregroundStyle(Palette.inkTertiary)
+                            }
+                        }
+                        .padding(.horizontal, Spacing.l)
+                        .padding(.vertical, Spacing.m)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(RowButtonStyle())
+                    .disabled(row.entityID == nil)
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .background(Palette.surface, in: .rounded(Radius.large))
+            .overlay(RoundedRectangle(cornerRadius: Radius.large, style: .continuous)
+                .strokeBorder(Palette.hairline, lineWidth: 0.5))
+        }
     }
 }
 
@@ -312,19 +353,16 @@ extension IntelligenceViewState {
     static var preview: IntelligenceViewState {
         var state = IntelligenceViewState()
         state.isLoaded = true
-        state.overdue = [
-            Item(id: UUID(), title: "Send Sarah the deck", meta: "due yesterday", kind: .commitment,
-                 tone: .danger, systemImage: EntityKind.commitment.systemImage, isOverdue: true),
-        ]
-        state.today = [
-            Item(id: UUID(), title: "Standup", meta: "9:30 AM", kind: .event, tone: .jade,
-                 systemImage: EntityKind.event.systemImage),
-            Item(id: UUID(), title: "Write the release note", meta: "Beta launch", kind: .task, tone: .jade,
-                 systemImage: EntityKind.task.systemImage),
-        ]
-        state.soon = [
-            Item(id: UUID(), title: "Ship the beta", meta: "due Friday", kind: .goal, tone: .neutral,
-                 systemImage: EntityKind.goal.systemImage),
+        state.attention = [
+            AttentionRow(id: UUID(), title: "Send Sarah the deck", reason: "you promised this, yesterday",
+                         kind: .promise, tone: .danger, systemImage: AttentionKind.promise.systemImage,
+                         entityID: UUID()),
+            AttentionRow(id: UUID(), title: "Write the release note", reason: "due today",
+                         kind: .today, tone: .jade, systemImage: AttentionKind.today.systemImage,
+                         entityID: UUID()),
+            AttentionRow(id: UUID(), title: "Ship the beta", reason: "due Friday, nothing started",
+                         kind: .unstarted, tone: .amber, systemImage: AttentionKind.unstarted.systemImage,
+                         entityID: UUID()),
         ]
         state.questions = [
             Question(id: UUID(), sentence: "Sarah is responsible for design?",

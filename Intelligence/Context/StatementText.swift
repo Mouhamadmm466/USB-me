@@ -84,6 +84,8 @@ public struct ProjectSummary: Identifiable, Sendable, Equatable {
 
 /// Everything Home needs in one read, so the screen never issues queries of its own.
 public struct IntelligenceSnapshot: Sendable, Equatable {
+    /// What needs the user, in the order it needs them, each with its reason.
+    public var attention: [AttentionItem] = []
     public var overdue: [IntelligenceEntity] = []
     public var today: [IntelligenceEntity] = []
     public var soon: [IntelligenceEntity] = []
@@ -95,6 +97,7 @@ public struct IntelligenceSnapshot: Sendable, Equatable {
     )
 
     public var isEmpty: Bool {
-        overdue.isEmpty && today.isEmpty && soon.isEmpty && projects.isEmpty && questions.isEmpty && activity.isEmpty
+        attention.isEmpty && overdue.isEmpty && today.isEmpty && soon.isEmpty
+            && projects.isEmpty && questions.isEmpty && activity.isEmpty
     }
 }

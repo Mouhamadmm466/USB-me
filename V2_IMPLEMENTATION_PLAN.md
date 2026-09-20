@@ -211,7 +211,7 @@ text) and shows agent progress as a checklist of actions — never chain-of-thou
 | 10 | First online capability: web research (keyless sources + optional search key) | |
 | 11 | Connected services: Gmail, Drive, GitHub — one at a time, mocks where credentials are human steps | |
 | 12 | Share extension + App Group inbox | |
-| 13 | Attention engine and "what needs my attention?" | |
+| 13 | Attention engine and "what needs my attention?" | done — `Intelligence/Attention`, Home + turn context, 9 tests |
 | 14 | Full evaluation: memory, retrieval, planning, runtime, offline, network, safety, device benchmarks | |
 
 ## 10. Evaluation (built alongside, not at the end)

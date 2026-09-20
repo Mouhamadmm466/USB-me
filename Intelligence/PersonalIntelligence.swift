@@ -228,6 +228,19 @@ public actor PersonalIntelligence {
         try await store.documents(limit: limit)
     }
 
+    // MARK: - Attention
+
+    /// What needs the user, and why. Deterministic: rules over dates, statuses and promises.
+    public func attention(now: Date = Date(), limit: Int = 8) async throws -> [AttentionItem] {
+        try await AttentionEngine(store: store, calendar: calendar).items(now: now, limit: limit)
+    }
+
+    /// One sentence answering "what needs my attention?", built from the items themselves.
+    public func attentionSummary(now: Date = Date()) async throws -> String {
+        let engine = AttentionEngine(store: store, calendar: calendar)
+        return engine.summary(try await engine.items(now: now, limit: 5))
+    }
+
     // MARK: - Snapshots for the UI
 
     /// Everything Home shows, in one read.
@@ -243,6 +256,7 @@ public actor PersonalIntelligence {
             .filter(\.status.isOutstanding)
         snapshot.soon = try await store.entities(between: endOfDay, and: horizon, limit: 20)
             .filter(\.status.isOutstanding)
+        snapshot.attention = try await attention(now: now)
         snapshot.projects = try await projects(now: now)
         snapshot.questions = try await questions(limit: 5, now: now)
         snapshot.activity = try await store.activity(limit: 12)

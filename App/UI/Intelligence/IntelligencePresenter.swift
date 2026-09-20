@@ -19,6 +19,7 @@ struct IntelligencePresenter: Sendable {
     ) -> IntelligenceViewState {
         var state = IntelligenceViewState()
         state.isLoaded = true
+        state.attention = snapshot.attention.map(attentionRow)
         state.overdue = snapshot.overdue.map { item($0, now: now, overdue: true) }
         state.today = snapshot.today.map { item($0, now: now) }
         state.soon = snapshot.soon.map { item($0, now: now) }
@@ -38,6 +39,13 @@ struct IntelligencePresenter: Sendable {
             tone: tone(for: entity, overdue: overdue),
             systemImage: entity.kind.systemImage,
             isOverdue: overdue
+        )
+    }
+
+    func attentionRow(_ item: AttentionItem) -> IntelligenceViewState.AttentionRow {
+        IntelligenceViewState.AttentionRow(
+            id: item.id, title: item.title, reason: item.reason, kind: item.kind,
+            tone: item.kind.tone, systemImage: item.kind.systemImage, entityID: item.entityID
         )
     }
 
