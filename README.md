@@ -23,6 +23,18 @@ reads back exactly what it will do, and acts only after you confirm that exact v
   → Messages opens with the text; you tap Send → "Sent to Alex Kim."
 ```
 
+**V2 — a personal intelligence.** It also keeps what you tell it about your own world (projects,
+people, deadlines, promises), answers from your own documents, and can take a job on rather than a
+command — planning it, showing you every step, and writing up what it found. All of it in one local
+file you can read, undo, export or delete. See [Docs/INTELLIGENCE.md](Docs/INTELLIGENCE.md).
+
+```
+"Prep me for the beta review."
+  → "Beta review prep, in 3 steps. Want me to go ahead?"   [card: every step, before anything runs]
+"Yes."
+  → reads your own notes and what's open → writes a one-page brief, with its sources.
+```
+
 ## Quick start
 
 > **Run `Scripts/bootstrap_dependencies.sh` once after cloning, before opening the Xcode project.**
@@ -48,7 +60,8 @@ Full instructions: [Docs/BUILD.md](Docs/BUILD.md).
 | [Docs/MODEL_MANIFEST.md](Docs/MODEL_MANIFEST.md) | Exact model sources, revisions, sizes, SHA-256, integrity policy |
 | [Docs/SECURITY.md](Docs/SECURITY.md) | Threat model and controls |
 | [Docs/PRIVACY.md](Docs/PRIVACY.md) | What stays on device (everything) |
-| [Docs/EVALUATION.md](Docs/EVALUATION.md) | 2,500+ case agent evaluation, audio test plan, metrics, results |
+| [Docs/INTELLIGENCE.md](Docs/INTELLIGENCE.md) | V2: the assertion store, memory pipeline, context budget, jobs, artifacts, attention |
+| [Docs/EVALUATION.md](Docs/EVALUATION.md) | 2,500+ case agent evaluation, the V2 intelligence suites, audio test plan, metrics |
 | [Docs/DEVICE_MATRIX.md](Docs/DEVICE_MATRIX.md) | Supported devices, memory budget, benchmarks |
 | [Docs/THIRD_PARTY.md](Docs/THIRD_PARTY.md) | Pinned dependencies and licenses |
 | [Docs/KNOWN_LIMITATIONS.md](Docs/KNOWN_LIMITATIONS.md) | What V1 does not do |
@@ -63,13 +76,15 @@ Audio/          AVAudioSession/AVAudioEngine, VAD, endpointing, echo/barge-in
 ASR/            whisper.cpp runtime, Silero VAD, transcript stability
 LLM/            Nemotron runtime, prompt, grammar, output validator, context manager
 TTS/            chunking, speech queue, playback tracking; TTS/Kokoro/ (device-only engine)
-Agent/          coordinator, confirmation, clarification, summaries, capabilities
+Agent/          coordinator, confirmation, clarification, summaries; Runtime/ (capabilities, playbooks, plans, jobs, artifacts)
+Intelligence/   V2: Model/ Store/ Memory/ Context/ Knowledge/ Attention/ — the personal intelligence
 Tools/          resolver, executor, native adapters (Contacts, EventKit, MessageUI, calls, files, apps), fakes
 Models/         manifest, resumable downloads, SHA-256 integrity, lifecycle
 Permissions/    just-in-time permission manager
 Storage/        SwiftData session/settings stores
 Telemetry/      privacy-safe logger, performance metrics
-Tests/          Unit/, Integration/, Audio/, AgentEval/ (dataset, harness, runner), Benchmarks/, E2E/
+Tests/          Unit/, Integration/, Audio/, AgentEval/ (V1 dataset, harness, runner),
+                IntelligenceEval/ (V2 suites), Benchmarks/, E2E/
 Scripts/        bootstrap, model download/verify, eval, device benchmark, CI
 Docs/           the documents above
 ```

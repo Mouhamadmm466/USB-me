@@ -38,6 +38,7 @@ MLX Swift) all run on the device. Swift owns every decision that has a side effe
 | Storage | `Storage/` | SwiftData session/settings/model-metadata stores |
 | Models | `Models/` | Manifest, resumable download manager, SHA-256 integrity, atomic activation, lifecycle |
 | Tools | `Tools/` | Resolver + executor; Contacts, EventKit, MessageUI, calls, scoped files, allow-listed apps; fakes |
+| Intelligence | `Intelligence/` | V2: the personal intelligence — assertion store, memory pipeline, context builder, knowledge, plans, artifacts, attention (see [INTELLIGENCE.md](INTELLIGENCE.md)) |
 | LLM | `LLM/` | `NemotronRuntime` (llama.cpp), `PromptBuilder`, grammar, `AgentOutput`, `OutputValidator`, `ContextManager` |
 | ASR | `ASR/` | `WhisperRuntime` (whisper.cpp), Silero VAD via whisper.cpp, transcript buffer |
 | TTS | `TTS/` | `KokoroRuntime` (KokoroSwift/MLX), `SpeechChunker`, `SpeechQueue`, playback |

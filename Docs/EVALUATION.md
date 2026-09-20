@@ -1,12 +1,17 @@
 # Agent evaluation
 
-Two layers:
+Three layers (the third is V2's; see [INTELLIGENCE.md](INTELLIGENCE.md#evaluation)):
 
 1. **Text evaluation (automated, deterministic).** 3,249 checked-in cases (5,709 user turns) drive the
    *whole* agent — Nemotron + `OutputValidator` + `ActionResolver` + `ConfirmationManager` +
    `ClarificationManager` + executor — against fixture worlds with a fixed clock. Every turn has an
    expectation; the scorer turns runner observations into per-turn verdicts, metrics and a release gate.
-2. **Audio evaluation (manual / semi-automated).** Recorded utterances under controlled acoustic
+2. **Intelligence evaluation (V2).** Hand-written cases across memory, recall over time, retrieval,
+   planning scope, safety and attention. `swift test --filter IntelligenceEvalSuite` runs them
+   deterministically (the cases supply the proposals an extractor would have made, so everything
+   after extraction is scored); `swift run -c release agent-eval intelligence` runs the same cases
+   with the real model doing the extracting and planning.
+3. **Audio evaluation (manual / semi-automated).** Recorded utterances under controlled acoustic
    conditions measure ASR accuracy, contact-name accuracy and barge-in behaviour (see the last section).
 
 ## Quick start

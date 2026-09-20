@@ -96,7 +96,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "AgentEvalRunner",
-            dependencies: ["AgentEval", "LLM", "Agent", "Core"],
+            dependencies: ["AgentEval", "IntelligenceEval", "Intelligence", "LLM", "Agent", "Core"],
             path: "Tests/AgentEval/Runner"
         ),
 
