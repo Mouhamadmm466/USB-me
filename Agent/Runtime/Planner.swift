@@ -32,10 +32,13 @@ public struct Planner: Sendable {
         context: String? = nil,
         availability: CapabilityAvailability = .offline,
         subjectID: UUID? = nil,
+        /// Names of things the request mentions. A project called "call Bob" must not put calling
+        /// in scope just because the user said its name.
+        mentionedNames: [String] = [],
         now: Date = Date()
     ) async throws -> Plan {
         let playbook = PlaybookLibrary.match(request)
-        let scope = PlaybookLibrary.scope(for: request, playbook: playbook)
+        let scope = PlaybookLibrary.scope(for: request, playbook: playbook, excluding: mentionedNames)
         // The grammar is built from what this job may use *and* what can run right now, so an
         // unavailable capability cannot be planned and then fail at the last moment.
         let usable = registry.scoped(to: scope).specs.filter(availability.isAvailable)

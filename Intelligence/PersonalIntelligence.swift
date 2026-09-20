@@ -198,8 +198,12 @@ public actor PersonalIntelligence {
         let parsed = try parser.parse(data: data, fileName: fileName, mediaType: mediaType)
         let documentID = UUID()
         let chunks = chunker.chunks(of: parsed, documentID: documentID)
-        let title = parsed.title?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
-            ?? (fileName as NSString).deletingPathExtension
+        // The file's own name wins: the user chose it and will look for it under it. A parsed title
+        // only steps in when the name says nothing (a web page saved as "page.html", pasted text).
+        let named = (fileName as NSString).deletingPathExtension.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isGeneric = named.isEmpty || Self.genericFileNames.contains(named.lowercased())
+        let title = (isGeneric ? parsed.title?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty : nil)
+            ?? named.nilIfEmpty ?? parsed.title?.nilIfEmpty ?? "Document"
         let document = try await store.importDocument(
             parsed, chunks: chunks, title: title, origin: origin, sourceID: sourceID,
             mediaType: mediaType, bytes: Int64(data.count), projectID: projectID, now: now
@@ -214,6 +218,16 @@ public actor PersonalIntelligence {
         knownNamesLoadedAt = .distantPast
         logger?.log(.counter(name: "intelligence.document.imported", value: 1))
         return document
+    }
+
+    private static let genericFileNames: Set<String> = [
+        "untitled", "document", "documents", "shared", "pasted", "page", "index", "text", "file", "download",
+    ]
+
+    /// The things the user named in what they just said, by title. Used to decide scope without
+    /// letting the name of a project widen what a job may do.
+    public func mentionedNames(in utterance: String, now: Date = Date()) async -> [String] {
+        ((try? await builder.linker.link(utterance, now: now)) ?? []).map(\.entity.title)
     }
 
     /// Passages that answer a question, with the document and page they came from.

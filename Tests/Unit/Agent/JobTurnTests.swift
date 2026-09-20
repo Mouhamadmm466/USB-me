@@ -57,7 +57,7 @@ import Tools
             clock: clock,
             thermal: { .nominal }
         )
-        let jobs = JobService(store: store, planner: Planner(model: model), runtime: runtime)
+        let jobs = JobService(intelligence: intelligence, planner: Planner(model: model), runtime: runtime)
         let coordinator = AgentCoordinator(dependencies: AgentDependencies(
             languageModel: model,
             resolver: StubResolver { _, _ in .resolved(.getCalendarEvents(DateRange(

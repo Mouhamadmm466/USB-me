@@ -113,12 +113,17 @@ public struct DocumentParser: DocumentParsing {
         case unsupported(String)
     }
 
+    /// The document's own title: a single `#` heading at the top. A file whose first heading is one
+    /// of several is a document with sections, not a document called "Grading", so the file name
+    /// wins — the user knows what they shared.
     static func markdownTitle(in text: String) -> String? {
-        for line in text.split(separator: "\n", maxSplits: 12, omittingEmptySubsequences: true) {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("# ") { return String(trimmed.dropFirst(2)) }
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        let headings = lines.filter { $0.hasPrefix("# ") }
+        guard headings.count == 1, let first = lines.first(where: { !$0.isEmpty }), first.hasPrefix("# ") else {
+            return nil
         }
-        return nil
+        return String(first.dropFirst(2))
     }
 
     func format(fileName: String, mediaType: String?) -> Format {

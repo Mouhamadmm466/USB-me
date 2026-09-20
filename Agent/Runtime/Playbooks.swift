@@ -103,9 +103,16 @@ public enum PlaybookLibrary {
     /// Asking to "text Sarah the summary" is what puts `compose_message` in scope — and even then it
     /// is risk 2, so it still stops for confirmation at the moment of sending. Nothing the job reads
     /// can add to this list.
-    public static func scope(for request: String, playbook: Playbook) -> [String] {
+    /// - Parameter excluding: names of things the request mentions (a project called "call Bob",
+    ///   a document titled "Text Sarah"). They are removed before triggers are matched, so quoting
+    ///   the name of something can never widen what a job may do.
+    public static func scope(for request: String, playbook: Playbook, excluding names: [String] = []) -> [String] {
         var scope = Set(playbook.scope.map(\.rawValue))
-        let text = " " + request.lowercased() + " "
+        var stripped = request.lowercased()
+        for name in names.map({ $0.lowercased() }).sorted(by: { $0.count > $1.count }) where name.count > 2 {
+            stripped = stripped.replacingOccurrences(of: name, with: " ")
+        }
+        let text = " " + stripped + " "
         for (id, phrases) in requestedCapabilities where phrases.contains(where: { text.contains($0) }) {
             scope.insert(id.rawValue)
         }

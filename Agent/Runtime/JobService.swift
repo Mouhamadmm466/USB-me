@@ -9,20 +9,21 @@ import Telemetry
 /// conversation brain keeps its V1 shape: it decides *that* a job should be planned, and this
 /// decides how.
 public actor JobService {
-    public let store: IntelligenceStore
+    public let intelligence: PersonalIntelligence
+    public nonisolated var store: IntelligenceStore { intelligence.store }
     private let planner: Planner
     private let runtime: AgentRuntime
     private let availability: @Sendable () async -> CapabilityAvailability
     private let logger: PrivacySafeLogger?
 
     public init(
-        store: IntelligenceStore,
+        intelligence: PersonalIntelligence,
         planner: Planner,
         runtime: AgentRuntime,
         availability: @escaping @Sendable () async -> CapabilityAvailability = { .offline },
         logger: PrivacySafeLogger? = nil
     ) {
-        self.store = store
+        self.intelligence = intelligence
         self.planner = planner
         self.runtime = runtime
         self.availability = availability
@@ -36,8 +37,12 @@ public actor JobService {
         // The model's reading of the outcome is a hint for the planner; the request is the truth,
         // and is what the plan records and what the user sees.
         let hint = outcome.isEmpty || outcome == request ? request : "\(request)\nWhat they want: \(outcome)"
+        // Things the request names are stripped before scope is decided, so an entity called
+        // "call Bob" cannot smuggle a capability into a job by being mentioned.
+        let mentioned = await intelligence.mentionedNames(in: request, now: now)
         let plan = try await planner.plan(
-            for: hint, context: context, availability: await availability(), subjectID: subjectID, now: now
+            for: hint, context: context, availability: await availability(), subjectID: subjectID,
+            mentionedNames: mentioned, now: now
         )
         var proposal = plan
         proposal.request = request

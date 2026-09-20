@@ -53,7 +53,7 @@ extension AppModel {
             logger: .shared
         )
         return JobService(
-            store: intelligence.store,
+            intelligence: intelligence,
             planner: Planner(model: languageModel, logger: .shared),
             runtime: runtime,
             // Nothing in V2 reaches the network yet, so availability is the honest offline one.

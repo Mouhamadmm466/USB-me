@@ -36,6 +36,7 @@ let package = Package(
         // only the device app target links it (see App/project.yml).
         .library(name: "KokoroTTS", targets: ["KokoroTTS"]),
         .library(name: "AgentEval", targets: ["AgentEval"]),
+        .library(name: "IntelligenceEval", targets: ["IntelligenceEval"]),
         .executable(name: "agent-eval", targets: ["AgentEvalRunner"]),
     ],
     dependencies: [
@@ -106,6 +107,18 @@ let package = Package(
         .testTarget(name: "ModelsTests", dependencies: ["Models", "Core", "Telemetry"], path: "Tests/Unit/Models"),
         .testTarget(name: "ToolsTests", dependencies: ["Tools", "Core", "Permissions"], path: "Tests/Unit/Tools"),
         .testTarget(name: "IntelligenceTests", dependencies: ["Intelligence", "Core", "Telemetry"], path: "Tests/Unit/Intelligence"),
+        // V2 evaluation: memory, recall over time, retrieval, planning scope, attention.
+        .target(
+            name: "IntelligenceEval",
+            dependencies: ["Intelligence", "Agent", "Core", "LLM"],
+            path: "Tests/IntelligenceEval/Harness"
+        ),
+        .testTarget(
+            name: "IntelligenceEvalTests",
+            dependencies: ["IntelligenceEval", "Intelligence", "Agent", "AgentEval", "Core"],
+            path: "Tests/IntelligenceEval/Tests",
+            resources: [.copy("../Cases")]
+        ),
         .testTarget(name: "DateParsingTests", dependencies: ["Tools", "Core"], path: "Tests/Unit/Dates"),
         .testTarget(name: "LLMTests", dependencies: ["LLM", "Core"], path: "Tests/Unit/LLM"),
         .testTarget(
