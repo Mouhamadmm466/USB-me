@@ -42,7 +42,7 @@ struct AssistantTopBar: View {
 /// "On-device": everything runs on this iPhone.
 struct PrivacyPill: View {
     var body: some View {
-        StatusPill("On-device", systemImage: "lock.fill", tone: .jade)
+        StatusPill("On-device", systemImage: "lock.fill", tone: .clay)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("On-device. Everything runs on this iPhone.")
     }
@@ -60,7 +60,7 @@ struct AssistantBottomBar: View {
     let isSessionActive: Bool
     let canStartSession: Bool
     /// State colour for the mic halo.
-    var tint: Color = Palette.jade
+    var tint: Color = Palette.clay
     @Binding var mode: AssistantInputMode
     @Binding var draft: String
     var isFieldFocused: FocusState<Bool>.Binding
@@ -172,7 +172,7 @@ struct AssistantBottomBar: View {
 struct MicButton: View {
     let isActive: Bool
     /// The halo shown while a conversation is active takes the assistant's state colour.
-    var tint: Color = Palette.jade
+    var tint: Color = Palette.clay
     let action: @MainActor () -> Void
 
     @Environment(\.isEnabled) private var isEnabled

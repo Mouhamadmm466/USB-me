@@ -20,8 +20,6 @@ struct MemoryScreen: View {
                     results
                 } else {
                     summary
-                    sources
-                    documents
                     if !state.questions.isEmpty {
                         VStack(alignment: .leading, spacing: Spacing.m) {
                             Text("Waiting on you")
@@ -72,7 +70,7 @@ struct MemoryScreen: View {
                         Spacer(minLength: 0)
                     }
                     HStack(spacing: Spacing.s) {
-                        StatusPill("On this iPhone", systemImage: "iphone", tone: .jade)
+                        StatusPill("On this iPhone", systemImage: "iphone", tone: .clay)
                         StatusPill(state.memory.sizeText, systemImage: "internaldrive", tone: .neutral)
                         if state.memory.inferred > 0 {
                             StatusPill("\(state.memory.inferred) worked out", systemImage: "wand.and.stars", tone: .sky)
@@ -106,153 +104,6 @@ struct MemoryScreen: View {
             }
         }
     }
-
-    /// The sources the world model is allowed to read. Off until the user says otherwise, and
-    /// switching one off takes back everything it brought.
-    private var sources: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            Text("What I keep track of")
-                .textStyle(.title3)
-                .foregroundStyle(Palette.ink)
-                .accessibilityAddTraits(.isHeader)
-
-            Card(padding: Spacing.l) {
-                VStack(alignment: .leading, spacing: Spacing.l) {
-                    Toggle(isOn: Binding(
-                        get: { state.memory.ingestion.calendar },
-                        set: { intents.setCalendarIngestion($0) }
-                    )) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Your calendar")
-                                .textStyle(.body, weight: .medium)
-                                .foregroundStyle(Palette.ink)
-                            Text("What's on, when, and who's in it — so I can answer without asking you first.")
-                                .textStyle(.footnote)
-                                .foregroundStyle(Palette.inkSecondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .tint(Palette.jade)
-
-                    Hairline()
-
-                    Toggle(isOn: Binding(
-                        get: { state.memory.ingestion.reminders },
-                        set: { intents.setReminderIngestion($0) }
-                    )) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Your reminders")
-                                .textStyle(.body, weight: .medium)
-                                .foregroundStyle(Palette.ink)
-                            Text("What you've told yourself to do, and what you've already done.")
-                                .textStyle(.footnote)
-                                .foregroundStyle(Palette.inkSecondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .tint(Palette.jade)
-
-                    if let summary = state.memory.ingestion.summary {
-                        Hairline()
-                        HStack(spacing: Spacing.s) {
-                            if state.memory.ingestion.isSyncing { ProgressView().controlSize(.mini) }
-                            Text(summary)
-                                .textStyle(.footnote)
-                                .foregroundStyle(Palette.inkSecondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-
-                    Text("Anything from these is marked as coming from them, never outranks what you tell me, and goes when you switch it off.")
-                        .textStyle(.footnote)
-                        .foregroundStyle(Palette.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-
-    /// What the user has shared with the assistant, and the way to share more.
-    private var documents: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            HStack(spacing: Spacing.s) {
-                Text("Documents")
-                    .textStyle(.title3)
-                    .foregroundStyle(Palette.ink)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 0)
-                Button {
-                    intents.addDocument()
-                } label: {
-                    Label("Add", systemImage: "plus")
-                }
-                .buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
-                .disabled(state.memory.isImporting)
-            }
-
-            if let error = state.memory.importError {
-                Text(error)
-                    .textStyle(.footnote)
-                    .foregroundStyle(Palette.danger)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if state.memory.isImporting {
-                HStack(spacing: Spacing.s) {
-                    ProgressView()
-                    Text("Reading it…")
-                        .textStyle(.footnote)
-                        .foregroundStyle(Palette.inkSecondary)
-                }
-            }
-
-            if state.memory.documents.isEmpty, !state.memory.isImporting {
-                Text("Share a PDF, a Word file, a page or a note and I can answer from it — quoting the page it came from.")
-                    .textStyle(.footnote)
-                    .foregroundStyle(Palette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(state.memory.documents.enumerated()), id: \.element.id) { index, document in
-                        if index > 0 { Hairline().padding(.leading, 56) }
-                        Button { intents.openEntity(document.id) } label: {
-                            HStack(spacing: Spacing.m) {
-                                IconTile(systemImage: "doc.text", tone: .sky, size: 32)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(document.title)
-                                        .textStyle(.body, weight: .medium)
-                                        .foregroundStyle(Palette.ink)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
-                                    Text(document.meta)
-                                        .textStyle(.footnote)
-                                        .foregroundStyle(Palette.inkSecondary)
-                                }
-                                Spacer(minLength: Spacing.s)
-                                Image(systemName: "chevron.right")
-                                    .textStyle(.footnote, weight: .semibold)
-                                    .foregroundStyle(Palette.inkTertiary)
-                            }
-                            .padding(.horizontal, Spacing.l)
-                            .padding(.vertical, Spacing.m)
-                            .contentShape(.rect)
-                        }
-                        .buttonStyle(RowButtonStyle())
-                        .accessibilityElement(children: .combine)
-                        .contextMenu {
-                            Button("Forget this document", systemImage: "trash", role: .destructive) {
-                                intents.forgetDocument(document.id)
-                            }
-                        }
-                    }
-                }
-                .background(Palette.surface, in: .rounded(Radius.large))
-                .overlay(RoundedRectangle(cornerRadius: Radius.large, style: .continuous)
-                    .strokeBorder(Palette.hairline, lineWidth: 0.5))
-            }
-        }
-    }
-
     private var results: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             if state.memory.results.isEmpty {
@@ -299,7 +150,7 @@ struct MemoryScreen: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .tint(Palette.jade)
+                    .tint(Palette.clay)
 
                     Hairline()
 
@@ -317,7 +168,7 @@ struct MemoryScreen: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .tint(Palette.jade)
+                    .tint(Palette.clay)
                     .disabled(!state.memory.learningEnabled)
                 }
             }

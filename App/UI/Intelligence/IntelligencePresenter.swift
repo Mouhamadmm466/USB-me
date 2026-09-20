@@ -225,7 +225,7 @@ struct IntelligencePresenter: Sendable {
         case .commitment: return .amber
         case .person: return .sky
         case .decision: return .neutral
-        default: return entity.status.isOutstanding ? .jade : .neutral
+        default: return entity.status.isOutstanding ? .clay : .neutral
         }
     }
 

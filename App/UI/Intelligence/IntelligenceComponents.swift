@@ -1,106 +1,9 @@
 import Intelligence
 import SwiftUI
 
-/// Home: what today actually asks of you.
-///
-/// Ordered by what it would cost to miss: things already late, then today, then the questions the
-/// system has been holding, then what is coming, then the projects those things belong to. Nothing
-/// here is a feed to scroll — when there is nothing to show, the screen says so plainly instead of
-/// filling space.
-struct HomeScreen: View {
-    let state: IntelligenceViewState
-    let intents: IntelligenceIntents
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: Spacing.xxl) {
-                greeting
-
-                if !state.attention.isEmpty {
-                    AttentionSection(rows: state.attention, open: intents.openEntity)
-                }
-                if !state.questions.isEmpty {
-                    QuestionSection(questions: state.questions, intents: intents)
-                }
-                if !state.projects.isEmpty {
-                    projectStrip
-                }
-                if state.isLoaded, !state.hasAnything {
-                    EmptyStateCard(
-                        systemImage: "sparkles",
-                        title: "Nothing yet",
-                        message: "Tell me about your work — a project, a deadline, who's involved — and it will show up here.",
-                        actionTitle: "Talk to it",
-                        action: intents.ask
-                    )
-                }
-            }
-            .padding(.horizontal, Spacing.screenMargin)
-            .padding(.bottom, Spacing.huge)
-            .frame(maxWidth: Measure.content, alignment: .leading)
-            .frame(maxWidth: .infinity)
-            .animation(Motion.adaptive(Motion.smooth, reduceMotion: reduceMotion), value: state)
-        }
-        .background(Palette.canvas)
-        .refreshable { await intents.refresh() }
-    }
-
-    private var greeting: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text(Self.dayName())
-                .textStyle(.footnote, weight: .semibold)
-                .foregroundStyle(Palette.inkSecondary)
-                .textCase(.uppercase)
-            Text(headline)
-                .textStyle(.largeTitle)
-                .foregroundStyle(Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.top, Spacing.s)
-        .accessibilityElement(children: .combine)
-    }
-
-    /// One honest sentence about the day, built from counts — never a generated pleasantry.
-    private var headline: String {
-        let late = state.attention.count { $0.kind == .overdue || $0.kind == .promise }
-        let today = state.attention.count { $0.kind == .today }
-        if late > 0 { return late == 1 ? "One thing is late." : "\(late) things are late." }
-        if today > 0 { return today == 1 ? "One thing today." : "\(today) things today." }
-        if !state.attention.isEmpty { return "Nothing due today." }
-        if !state.questions.isEmpty { return "A couple of things to check." }
-        return state.isLoaded ? "Nothing on today." : "Catching up…"
-    }
-
-    private var projectStrip: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            SectionHeader(title: "Projects", tone: .neutral)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.m) {
-                    ForEach(state.projects.prefix(6)) { project in
-                        Button { intents.openEntity(project.id) } label: {
-                            ProjectTile(project: project)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, Spacing.screenMargin)
-            }
-            .scrollClipDisabled()
-            .padding(.horizontal, -Spacing.screenMargin)
-        }
-    }
-
-    private static func dayName(_ date: Date = Date()) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: date)
-    }
-}
-
-// MARK: - Sections
-
+/// The pieces the intelligence screens are built from: rows, cards, tiles and the sample state the
+/// previews and the design gallery draw. They outlived the Home tab they were written for — the
+/// main screen's standby list and the Settings screens use the same vocabulary.
 private struct SectionHeader: View {
     let title: String
     var tone: Tone = .neutral
@@ -313,7 +216,7 @@ struct EmptyStateCard: View {
 
     var body: some View {
         VStack(spacing: Spacing.m) {
-            IconTile(systemImage: systemImage, tone: .jade, size: 44)
+            IconTile(systemImage: systemImage, tone: .clay, size: 44)
             Text(title)
                 .textStyle(.title3)
                 .foregroundStyle(Palette.ink)
@@ -344,10 +247,6 @@ struct RowButtonStyle: ButtonStyle {
     }
 }
 
-#Preview("Home") {
-    HomeScreen(state: .preview, intents: .inert)
-}
-
 extension IntelligenceViewState {
     /// Sample state for previews and the design gallery.
     static var preview: IntelligenceViewState {
@@ -358,7 +257,7 @@ extension IntelligenceViewState {
                          kind: .promise, tone: .danger, systemImage: AttentionKind.promise.systemImage,
                          entityID: UUID()),
             AttentionRow(id: UUID(), title: "Write the release note", reason: "due today",
-                         kind: .today, tone: .jade, systemImage: AttentionKind.today.systemImage,
+                         kind: .today, tone: .clay, systemImage: AttentionKind.today.systemImage,
                          entityID: UUID()),
             AttentionRow(id: UUID(), title: "Ship the beta", reason: "due Friday, nothing started",
                          kind: .unstarted, tone: .amber, systemImage: AttentionKind.unstarted.systemImage,
@@ -370,7 +269,7 @@ extension IntelligenceViewState {
                      replaces: "Sarah is responsible for research"),
         ]
         state.projects = [
-            ProjectRow(id: UUID(), title: "Beta launch", status: "active", tone: .jade, openWork: 4,
+            ProjectRow(id: UUID(), title: "Beta launch", status: "active", tone: .clay, openWork: 4,
                        commitments: 1, people: ["Sarah", "Abdou"], nextDue: "Friday", nextDueTitle: "Ship the beta"),
             ProjectRow(id: UUID(), title: "Thesis", status: "paused", tone: .neutral, openWork: 2,
                        commitments: 0, people: ["Prof. Diallo"], nextDue: nil, nextDueTitle: nil),

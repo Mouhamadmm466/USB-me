@@ -54,10 +54,11 @@ final class AppModel {
 
     // MARK: V2 — the personal intelligence
 
-    /// Everything the Home, Projects, Memory and Activity tabs draw.
+    /// Everything the main screen's standby list and the Settings screens draw.
     var intelligenceState = IntelligenceViewState()
-    var selectedTab: AppTab = .home
-    /// The detail stack shared by every tab.
+    /// The entity the person opened from the main screen; the sheet's root.
+    var openedEntityID: UUID?
+    /// Entities pushed on top of it, when one detail leads to another.
     var entityPath: [UUID] = []
     /// Loaded detail screens, keyed by entity. Cleared whenever the store changes underneath them.
     var entityDetails: [UUID: EntityDetailViewState] = [:]
@@ -368,7 +369,7 @@ final class AppModel {
             openSettings: { [weak self] in
                 guard let self else { return }
                 // From a shared-folder card, land on Files (the spoken reply says "under Files").
-                self.settingsInitialSection = self.coordinator?.presentation.permissionPrompt?.kind == .fileScope ? .files : nil
+                self.settingsInitialSection = self.coordinator?.presentation.permissionPrompt?.kind == .fileScope ? .permissions : nil
                 self.isSettingsPresented = true
                 Task { await self.refreshSettingsState() }
             },
@@ -392,7 +393,7 @@ final class AppModel {
         )
     }
 
-    private func toggleSession() {
+    func toggleSession() {
         guard let voice else { return }
         Task {
             if voice.isActive {
@@ -404,6 +405,18 @@ final class AppModel {
                 await voice.start()
             }
         }
+    }
+
+    /// Honours a pending "start listening" from the Action button, Siri or a shortcut.
+    ///
+    /// Called whenever the app reaches a state where it could: after launch, once the models are
+    /// ready, and when the app comes forward. A request made while the models were still warming is
+    /// not dropped — it waits here until there is something to listen with.
+    func startListeningIfAsked() {
+        guard LaunchRequest.shared.wantsListening else { return }
+        guard route == .assistant, let voice, !voice.isActive else { return }
+        LaunchRequest.shared.wantsListening = false
+        toggleSession()
     }
 
     /// "Continue" on the microphone explainer: iOS asks, then the session starts if allowed.

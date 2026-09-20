@@ -16,9 +16,7 @@ struct ProjectsScreen: View {
                     EmptyStateCard(
                         systemImage: "folder",
                         title: "No projects yet",
-                        message: "Mention something you're working on and it becomes a project here, with its goals, people and deadlines.",
-                        actionTitle: "Talk to it",
-                        action: intents.ask
+                        message: "Mention something you're working on and it becomes a project here, with its goals, people and deadlines."
                     )
                 }
                 ForEach(state.projects) { project in

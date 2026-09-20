@@ -80,7 +80,7 @@ struct JobCardView: View {
         switch step.state {
         case .completed:
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(Palette.jade)
+                .foregroundStyle(Palette.clay)
                 .imageScale(.small)
         case .running:
             ProgressView().controlSize(.mini)
@@ -145,8 +145,8 @@ struct JobCardView: View {
     private var tone: Tone {
         switch card.state {
         case .proposed: .sky
-        case .running, .approved: .jade
-        case .completed: .jade
+        case .running, .approved: .clay
+        case .completed: .clay
         case .failed: .danger
         case .blocked: .amber
         case .cancelled: .neutral

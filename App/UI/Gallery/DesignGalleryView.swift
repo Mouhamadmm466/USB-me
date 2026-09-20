@@ -26,7 +26,7 @@ struct DesignGalleryView: View {
             }
         }
         .font(.dm(.body))
-        .tint(Palette.jade)
+        .tint(Palette.clay)
         .transformEnvironment(\._accessibilityReduceMotion) { value in
             if forcesReduceMotion { value = true }
         }
@@ -172,7 +172,7 @@ enum GalleryCatalog {
                 AnyView(SettingsScreen(state: GallerySamples.settings, actions: .inert, initialSection: .permissions))
             },
             GalleryItem(id: "settings.diagnostics", section: "Settings", title: "Scrolled to diagnostics") {
-                AnyView(SettingsScreen(state: GallerySamples.settings, actions: .inert, initialSection: .diagnostics))
+                AnyView(SettingsScreen(state: GallerySamples.settings, actions: .inert, initialSection: .about))
             },
             GalleryItem(id: "settings.licenses", section: "Settings", title: "Third-party licenses") {
                 AnyView(NavigationStack { LicensesView(licenses: SettingsViewState.License.bundled) })
@@ -470,7 +470,7 @@ private struct ControlsSpecimen: View {
                 Button {} label: { Text("Unavailable") }.buttonStyle(.prominent).disabled(true)
                 HStack {
                     Button {} label: { Text("Retry") }.buttonStyle(.capsule(.secondary, size: .small, fullWidth: false))
-                    Button {} label: { Text("Allow") }.buttonStyle(.capsule(.tinted(Palette.jade), size: .small, fullWidth: false))
+                    Button {} label: { Text("Allow") }.buttonStyle(.capsule(.tinted(Palette.clay), size: .small, fullWidth: false))
                     Button {} label: { Text("Not now") }.buttonStyle(.quiet)
                 }
                 HStack(spacing: Spacing.l) {
@@ -484,12 +484,12 @@ private struct ControlsSpecimen: View {
             group("Status") {
                 FlowLayout(spacing: 8, lineSpacing: 8) {
                     PrivacyPill()
-                    StatusPill("Installed", systemImage: "checkmark.seal.fill", tone: .jade)
+                    StatusPill("Installed", systemImage: "checkmark.seal.fill", tone: .clay)
                     StatusPill("Waiting", systemImage: "hand.raised.fill", tone: .amber)
                     StatusPill("Question", systemImage: "questionmark", tone: .sky)
                     StatusPill("Failed", systemImage: "exclamationmark.triangle.fill", tone: .danger)
                     StatusPill("Paused", tone: .neutral)
-                    StatusPill("Outline", tone: .jade, emphasis: .outline)
+                    StatusPill("Outline", tone: .clay, emphasis: .outline)
                 }
                 ProgressBar(value: 0.42)
                 ProgressBar(value: 0.7, tint: Palette.mist)

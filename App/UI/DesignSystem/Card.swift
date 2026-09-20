@@ -75,7 +75,7 @@ struct IconTile: View {
 /// A slim capsule progress bar.
 struct ProgressBar: View {
     var value: Double
-    var tint: Color = Palette.jade
+    var tint: Color = Palette.clay
     var height: CGFloat = 6
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

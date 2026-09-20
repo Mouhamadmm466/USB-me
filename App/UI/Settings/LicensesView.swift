@@ -30,7 +30,7 @@ struct LicensesView: View {
                             .foregroundStyle(Palette.inkSecondary)
                         Text(entry.license)
                             .textStyle(.footnote, weight: .medium)
-                            .foregroundStyle(Palette.jade)
+                            .foregroundStyle(Palette.clay)
                         if let notice = entry.notice {
                             Text(notice)
                                 .textStyle(.footnote)

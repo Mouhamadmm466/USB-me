@@ -46,20 +46,15 @@ struct RootView: View {
             case .onboarding:
                 OnboardingFlow(models: model.downloads, actions: OnboardingActions(models: model.modelActions, finish: { model.finishOnboarding() }))
             case .assistant:
-                IntelligenceTabs(
-                    selection: $model.selectedTab,
-                    state: model.intelligenceState,
-                    intents: model.intelligenceIntents,
-                    assistant: AssistantScreenProvider {
-                        AssistantScreen(
-                            presentation: model.coordinator?.presentation
-                                ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
-                            intents: model.assistantIntents
-                        )
-                    },
-                    path: $model.entityPath,
-                    detail: { model.entityDetail($0) },
-                    detailIntents: model.entityDetailIntents
+                // One screen. Everything that is not the conversation lives behind the gear, and
+                // everything the assistant wants to raise comes to this screen rather than waiting
+                // in a tab the person has to think to visit.
+                AssistantScreen(
+                    presentation: model.coordinator?.presentation
+                        ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
+                    intents: model.assistantIntents,
+                    standby: model.standby,
+                    standbyIntents: model.standbyIntents
                 )
             }
         }
@@ -93,8 +88,32 @@ struct RootView: View {
         ) { result in
             if case let .success(urls) = result { model.importDocuments(urls) }
         }
+        .sheet(isPresented: Binding(
+            get: { model.openedEntityID != nil },
+            set: { if !$0 { model.openedEntityID = nil; model.entityPath = [] } }
+        )) {
+            if let id = model.openedEntityID {
+                NavigationStack(path: $model.entityPath) {
+                    EntityDetailScreen(state: model.entityDetail(id), intents: model.entityDetailIntents)
+                        .navigationDestination(for: UUID.self) { pushed in
+                            EntityDetailScreen(state: model.entityDetail(pushed), intents: model.entityDetailIntents)
+                        }
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Done") { model.openedEntityID = nil }
+                            }
+                        }
+                }
+            }
+        }
         .sheet(isPresented: $model.isSettingsPresented) {
-            SettingsScreen(state: model.settingsState, actions: model.settingsActions, initialSection: model.settingsInitialSection)
+            SettingsScreen(
+                state: model.settingsState,
+                actions: model.settingsActions,
+                world: model.intelligenceState,
+                worldIntents: model.intelligenceIntents,
+                initialSection: model.settingsInitialSection
+            )
                 .fileImporter(isPresented: $model.isFolderPickerPresented, allowedContentTypes: [.folder]) { result in
                     if case let .success(url) = result { model.addSharedFolder(url) }
                 }
@@ -107,5 +126,10 @@ struct RootView: View {
         }
         .environment(\.hapticsEnabled, model.settings.hapticsEnabled)
         .task { await model.start() }
+        // The Action button sets a flag and launches us; it may land before the app exists, while
+        // the models are warming, or with the app already in front. All three end up here.
+        .onChange(of: LaunchRequest.shared.wantsListening) { model.startListeningIfAsked() }
+        .onChange(of: model.route) { model.startListeningIfAsked() }
+        .onChange(of: model.coordinator?.presentation.state) { model.startListeningIfAsked() }
     }
 }

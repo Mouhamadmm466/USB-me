@@ -17,7 +17,7 @@ struct NetworkLogScreen: View {
             Section {
                 HStack(alignment: .top, spacing: Spacing.m) {
                     IconTile(systemImage: network.sent == 0 ? "lock.shield.fill" : "globe",
-                             tone: network.sent == 0 ? .jade : .sky, size: 30)
+                             tone: network.sent == 0 ? .clay : .sky, size: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(network.sent == 0 ? "Nothing has left this iPhone" : "\(network.sent) requests have left")
                             .textStyle(.headline)

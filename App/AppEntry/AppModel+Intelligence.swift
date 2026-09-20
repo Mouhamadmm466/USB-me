@@ -270,7 +270,6 @@ extension AppModel {
             guard let artifact = try? await intelligence.store.artifact(id) else { return }
             let sources = (try? await intelligence.store.entities(artifact.sourceIDs))?.map(\.title) ?? []
             openedArtifact = ArtifactViewState(artifact: artifact, sources: sources)
-            selectedTab = .activity
         }
     }
 
@@ -310,11 +309,7 @@ extension AppModel {
                     await self.refreshIntelligence()
                 }
             },
-            openEntity: { [weak self] id in
-                guard let self else { return }
-                Task { @MainActor in await self.loadEntityDetail(id) }
-                entityPath.append(id)
-            },
+            openEntity: { [weak self] id in self?.showEntity(id) },
             search: { [weak self] text in self?.searchIntelligence(text) },
             setLearningEnabled: { [weak self] enabled in
                 self?.updateMemoryPolicy { $0.learningEnabled = enabled }
@@ -342,8 +337,24 @@ extension AppModel {
                     await self.refreshIntelligence()
                 }
             },
-            refresh: { [weak self] in await self?.refreshIntelligence() },
-            ask: { [weak self] in self?.selectedTab = .ask }
+            refresh: { [weak self] in await self?.refreshIntelligence() }
+        )
+    }
+
+    /// Opens an entity: as the sheet when nothing is open, pushed on top when something is.
+    func showEntity(_ id: UUID) {
+        Task { @MainActor in await self.loadEntityDetail(id) }
+        if openedEntityID == nil { openedEntityID = id } else { entityPath.append(id) }
+    }
+
+    /// What the main screen holds up when it is at rest, and what the person can do with it.
+    var standby: AssistantStandby { intelligenceState.standby }
+
+    var standbyIntents: StandbyIntents {
+        StandbyIntents(
+            open: { [weak self] id in self?.showEntity(id) },
+            confirm: { [weak self] id in self?.answerQuestion(id, yes: true) },
+            reject: { [weak self] id in self?.answerQuestion(id, yes: false) }
         )
     }
 
@@ -351,17 +362,14 @@ extension AppModel {
         EntityDetailIntents(
             confirmFact: { [weak self] id in self?.answerQuestion(id, yes: true) },
             forgetFact: { [weak self] id in self?.answerQuestion(id, yes: false) },
-            openEntity: { [weak self] id in
-                guard let self else { return }
-                Task { @MainActor in await self.loadEntityDetail(id) }
-                entityPath.append(id)
-            },
+            openEntity: { [weak self] id in self?.showEntity(id) },
             forgetEntity: { [weak self] id in
                 guard let self, let intelligence else { return }
                 Task { @MainActor in
                     try? await intelligence.store.forget(id)
                     self.entityDetails[id] = nil
                     self.entityPath.removeAll { $0 == id }
+                    if self.openedEntityID == id { self.openedEntityID = self.entityPath.popLast() }
                     await self.refreshIntelligence()
                 }
             }
@@ -529,7 +537,7 @@ extension AppModel {
         NetworkPolicy(
             mode: networkMode,
             isOnline: Reachability.isOnline,
-            allowedHosts: WikipediaProvider().hosts
+            allowedHosts: CompositeWebProvider.standard.hosts
         )
     }
 

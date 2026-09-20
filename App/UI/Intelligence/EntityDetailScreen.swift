@@ -209,7 +209,7 @@ private struct FactRow: View {
     NavigationStack {
         EntityDetailScreen(
             state: EntityDetailViewState(
-                id: UUID(), title: "Beta launch", kind: .project, status: "active", tone: .jade,
+                id: UUID(), title: "Beta launch", kind: .project, status: "active", tone: .clay,
                 meta: ["4 open", "next: Friday"],
                 facts: [
                     .init(id: UUID(), sentence: "Beta launch is due Friday",

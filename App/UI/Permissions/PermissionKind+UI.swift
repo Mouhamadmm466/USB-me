@@ -48,7 +48,7 @@ extension PermissionStatus {
 
     var tone: Tone {
         switch self {
-        case .granted: .jade
+        case .granted: .clay
         case .limited: .amber
         case .denied, .restricted: .danger
         case .notDetermined: .neutral

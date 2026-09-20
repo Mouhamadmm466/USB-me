@@ -146,8 +146,6 @@ struct IntelligenceIntents {
     var exportEverything: @MainActor () -> Void = {}
     var deleteEverything: @MainActor () -> Void = {}
     var refresh: @MainActor () async -> Void = {}
-    /// Jumps to the Ask tab with the voice session already running.
-    var ask: @MainActor () -> Void = {}
 
     /// Does nothing (previews and the design gallery).
     static let inert = IntelligenceIntents()
@@ -156,23 +154,24 @@ struct IntelligenceIntents {
 // MARK: - Display vocabulary
 
 extension EntityKind {
-    /// One SF Symbol per kind, used everywhere the kind is shown.
+    /// One SF Symbol per kind, used everywhere the kind is shown. Filled variants throughout:
+    /// at 17 pt an outline glyph next to text reads as noise, a filled one reads as a mark.
     var systemImage: String {
         switch self {
-        case .person: "person"
-        case .project: "folder"
+        case .person: "person.fill"
+        case .project: "folder.fill"
         case .goal: "target"
-        case .task: "checkmark.circle"
-        case .commitment: "hand.raised"
+        case .task: "checkmark.circle.fill"
+        case .commitment: "hand.raised.fill"
         case .decision: "arrow.triangle.branch"
         case .event: "calendar"
-        case .document: "doc.text"
-        case .artifact: "doc.richtext"
+        case .document: "doc.fill"
+        case .artifact: "doc.text.fill"
         case .source: "link"
         case .connection: "antenna.radiowaves.left.and.right"
-        case .plan: "list.bullet.rectangle"
-        case .planStep: "arrow.right.circle"
-        case .conversation: "bubble.left.and.bubble.right"
+        case .plan: "list.bullet.rectangle.fill"
+        case .planStep: "arrow.forward.circle.fill"
+        case .conversation: "bubble.left.and.bubble.right.fill"
         }
     }
 
@@ -197,22 +196,24 @@ extension EntityKind {
 }
 
 extension AttentionKind {
+    /// The symbol says *why* this is being raised, not what kind of thing it is — a late task and
+    /// a late promise are both, first, late.
     var systemImage: String {
         switch self {
-        case .overdue: "exclamationmark.circle"
-        case .today: "sun.max"
-        case .promise: "hand.raised"
+        case .overdue: "clock.badge.exclamationmark.fill"
+        case .today: "clock.fill"
+        case .promise: "hand.raised.fill"
         case .unstarted: "circle.dashed"
-        case .approaching: "calendar"
-        case .question: "questionmark.circle"
-        case .stale: "moon.zzz"
+        case .approaching: "calendar.badge.clock"
+        case .question: "questionmark.bubble.fill"
+        case .stale: "pause.circle.fill"
         }
     }
 
     var tone: Tone {
         switch self {
         case .overdue, .promise: .danger
-        case .today: .jade
+        case .today: .clay
         case .unstarted: .amber
         case .approaching: .neutral
         case .question: .sky
@@ -236,12 +237,52 @@ extension ActivityKind {
 
     var tone: Tone {
         switch self {
-        case .learned: .jade
+        case .learned: .clay
         case .asked: .sky
-        case .confirmed: .jade
+        case .confirmed: .clay
         case .corrected, .ended: .neutral
         case .imported: .sky
         case .acted: .amber
         }
+    }
+}
+
+// MARK: - What the main screen shows at rest
+
+extension IntelligenceViewState {
+    /// The day, reduced to what fits under the orb: one honest sentence, at most three things,
+    /// and one question.
+    ///
+    /// Everything left over is deliberately not shown. An assistant whose opening screen is a
+    /// scrollable list of everything it knows is a to-do app; the rest of the world model is
+    /// reached by asking for the part of it you care about.
+    var standby: AssistantStandby {
+        let shown = Array(attention.prefix(3))
+        return AssistantStandby(
+            headline: headline,
+            items: shown.map {
+                AssistantStandby.Item(
+                    id: $0.id, title: $0.title, reason: $0.reason,
+                    systemImage: $0.systemImage, tone: $0.tone, entityID: $0.entityID
+                )
+            },
+            moreCount: max(0, attention.count - shown.count),
+            question: questions.first.map {
+                AssistantStandby.Question(id: $0.id, sentence: $0.sentence, explanation: $0.explanation)
+            }
+        )
+    }
+
+    /// One sentence about the day, built from counts — never a generated pleasantry. Nil while the
+    /// first snapshot is still loading, so the screen says nothing rather than something wrong.
+    private var headline: String? {
+        guard isLoaded else { return nil }
+        let late = attention.count { $0.kind == .overdue || $0.kind == .promise }
+        let today = attention.count { $0.kind == .today }
+        if late > 0 { return late == 1 ? "One thing is late." : "\(late) things are late." }
+        if today > 0 { return today == 1 ? "One thing today." : "\(today) things today." }
+        if !attention.isEmpty { return "Nothing due today." }
+        if !questions.isEmpty { return "A couple of things to check." }
+        return nil
     }
 }
