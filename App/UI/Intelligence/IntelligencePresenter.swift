@@ -19,7 +19,9 @@ struct IntelligencePresenter: Sendable {
     ) -> IntelligenceViewState {
         var state = IntelligenceViewState()
         state.isLoaded = true
-        state.attention = snapshot.attention.map(attentionRow)
+        // Questions have their own section on Home, with Yes/No on them; listing them twice makes
+        // the screen look longer than the day actually is.
+        state.attention = snapshot.attention.filter { $0.kind != .question }.map(attentionRow)
         state.overdue = snapshot.overdue.map { item($0, now: now, overdue: true) }
         state.today = snapshot.today.map { item($0, now: now) }
         state.soon = snapshot.soon.map { item($0, now: now) }
