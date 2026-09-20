@@ -76,7 +76,7 @@ targets:
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) KOKORO_TTS"
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "5"
+        CURRENT_PROJECT_VERSION: "6"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
@@ -126,7 +126,7 @@ targets:
         PRODUCT_NAME: VoiceAgentShare
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "5"
+        CURRENT_PROJECT_VERSION: "6"
         SKIP_INSTALL: YES
   # Simulator build for UI development and UI tests. Same sources; no Kokoro (MLX has no
   # simulator support), so speech output is disabled and the UI says so. Never shipped.
@@ -160,7 +160,7 @@ targets:
         SUPPORTED_PLATFORMS: iphonesimulator
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "5"
+        CURRENT_PROJECT_VERSION: "6"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
