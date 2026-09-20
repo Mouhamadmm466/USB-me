@@ -40,6 +40,12 @@ swift test                      # unit + integration + eval-dataset tests (no ne
 
 Audio/ASR tests that need `ModelCache/ggml-base.en.bin` skip themselves when it is absent.
 
+**If `swift test` dies with `signal code 10` / `11`** (a bus or segmentation fault, no failing
+assertion, an unsymbolicated one-frame crash report), it is an incremental-build artifact, not a
+test failure: adding or removing a defaulted parameter changes a function's mangled name, and a
+dependent module that was not rebuilt calls the symbol that is no longer there. `swift package
+clean` and re-run — it reproduces deterministically until you do, and disappears completely after.
+
 ## 4. Agent evaluation (real Nemotron on this Mac)
 
 ```bash
@@ -60,7 +66,18 @@ open App/VoiceAgent.xcodeproj
   for the Simulator). Set your team in *Signing & Capabilities* (or `DEVELOPMENT_TEAM` in
   `App/project.yml` and re-run `xcodegen generate --spec App/project.yml`).
 - Scheme **VoiceAgentSim** — the same app for the Simulator, without TTS (speech is shown as
-  text), used for UI work and UI tests.
+  text), used for UI work and UI tests. Ad-hoc signed rather than unsigned, so that the App Group
+  entitlement is present and the share extension can be exercised there.
+- Target **VoiceAgentShare** — the share sheet extension, embedded in both apps. It links only the
+  `ShareInbox` library, and both it and the app carry the App Group
+  `group.com.mouhamadmamane.voiceagent`, which is the only thing they share.
+
+**One-time account step for device and TestFlight builds:** the App Group has to exist on the
+developer account. Xcode's automatic signing registers it the first time it signs the app (or
+`xcodebuild ... -allowProvisioningUpdates`). If an archive fails with a provisioning error naming
+the group, add it once in *Certificates, Identifiers & Profiles → Identifiers → App Groups* as
+`group.com.mouhamadmamane.voiceagent`, then enable it on both `com.mouhamadmamane.voiceagent` and
+`com.mouhamadmamane.voiceagent.share`.
 
 Command line:
 

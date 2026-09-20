@@ -124,11 +124,12 @@ above is real, and worth measuring rather than assuming.
    for anything that touches the world: modes, a per-capability gate, and a visible log of what left
    the device, why, and to whom. The novel part is not "it can search"; it is that the user can see
    every byte that left and the payload is built from tool arguments alone, never from their world.
-2. **Ingestion** — calendar/reminders observers *(done)* and the share extension *(next)*, feeding
-   the world model under observation authority. The rule that makes it a world model rather than a
+2. **Ingestion** *(done)* — calendar/reminders observers and the share extension, feeding the world
+   model under observation authority. The rule that makes it a world model rather than a
    second copy of the phone: it links to what the user already has — people *and* items — and only
    creates what is genuinely new. See [INTELLIGENCE.md](Docs/INTELLIGENCE.md#what-comes-in-on-its-own).
-3. **Proactivity with an interruption budget** — notifications, the morning brief, Live Activity.
+3. **Proactivity with an interruption budget** *(next)* — notifications, the morning brief, Live
+   Activity.
 4. **Adaptation from corrections** — visible parameters that the user's own behaviour tunes.
 5. **Portable encrypted archive** — the ownership claim, made true.
 6. **System surfaces** — App Intents, widget, Action button.

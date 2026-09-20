@@ -3,6 +3,7 @@ import Core
 import Foundation
 import LLM
 import Intelligence
+import ShareInbox
 import SwiftUI
 import Telemetry
 
@@ -136,6 +137,45 @@ extension AppModel {
     }
 
     // MARK: Reading
+
+    /// Collects whatever the user sent in from the share sheet.
+    ///
+    /// The extension only copied bytes; the reading happens here, where a parse failure can be
+    /// shown and a long document is not a memory limit away from being killed. Each item leaves the
+    /// inbox only once it is in — a crash halfway costs a retry, not the document. What cannot be
+    /// read is dropped with a message rather than retried forever.
+    func drainShareInbox() async {
+        guard let intelligence, let inbox = ShareInbox() else { return }
+        let waiting = inbox.pending()
+        guard !waiting.isEmpty else { return }
+
+        intelligenceState.memory.isImporting = true
+        defer { intelligenceState.memory.isImporting = false }
+
+        var kept = 0
+        for item in waiting {
+            do {
+                let document = try await intelligence.importDocument(
+                    data: try inbox.data(of: item),
+                    fileName: item.payloadName,
+                    mediaType: item.mediaType,
+                    origin: .share,
+                    sourceID: item.id.uuidString,
+                    named: item.title
+                )
+                inbox.remove(item)
+                kept += 1
+                PrivacySafeLogger.shared.log(.counter(name: "share.imported", value: document.chunkCount))
+            } catch let error as DocumentParseError {
+                inbox.remove(item)
+                intelligenceState.memory.importError = "\(item.title): \(error.description)"
+            } catch {
+                inbox.remove(item)
+                intelligenceState.memory.importError = "\(item.title) couldn't be read."
+            }
+        }
+        if kept > 0 { await refreshIntelligence() }
+    }
 
     /// Reads files the user picked and indexes them. Security-scoped access is opened and closed
     /// around the read, and the file itself is never copied into the app — only its text.

@@ -172,8 +172,10 @@ Built on branch `v2`, extending V1 rather than replacing it. See
   to the user's own words; they link to people and items the user already has and invent neither;
   they cannot create a commitment or a decision; and switching one off takes back what it created.
   17 tests.
-- [ ] **Not built yet**: connected services (PRD 11), the share extension and App Group inbox (the
-  second half of 12). Everything else V2 does is local.
+- [x] **Share extension** (second half of PRD 12) — a share sheet target that copies what the user
+  sends into an App Group inbox and nothing else; the app reads it on launch and on coming forward,
+  and each item leaves the inbox only once it is in. 10 tests.
+- [ ] **Not built yet**: connected services (PRD 11). Everything else V2 does is local.
 
 ## Not done (testing stopped at the owner's request)
 

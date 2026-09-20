@@ -7,11 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		418A4A308EBE0BB25E4ADC4E /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = AB709E0499CEA111D1ADCE93 /* OFL.txt */; };
+		5D7E3801C751654C22E4FB86 /* DMSans-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 373D518DAF029CC1A0597BB4 /* DMSans-Medium.ttf */; };
+		6F8E15097EE2F348F9668B0A /* DMSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E65DF0B6BFFC2ED3EC7F5D3B /* DMSans-Regular.ttf */; };
 		91620F670582B4E47B90B4E5 /* VoiceAgentKit in Frameworks */ = {isa = PBXBuildFile; productRef = 811DAC5686FB1F030E63B89C /* VoiceAgentKit */; };
+		A3309BF9AE91E6865903913D /* VoiceAgentShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 74C94F6FE2ADFFACE39E201A /* VoiceAgentShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A8A28E395145034EBEB0E3C7 /* AgentEval in Frameworks */ = {isa = PBXBuildFile; productRef = 68E8F6379874063383B65358 /* AgentEval */; };
 		B2A2A3212FB0181D51F2B549 /* VoiceAgentKit in Frameworks */ = {isa = PBXBuildFile; productRef = 59FC1C311AFD93265250A01A /* VoiceAgentKit */; };
+		BEED433B377985AC5895416E /* DMSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 252AAA97BD07F8124DAB857E /* DMSans-Bold.ttf */; };
+		D33B1559ED50A76AD2FB9DD4 /* VoiceAgentShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 74C94F6FE2ADFFACE39E201A /* VoiceAgentShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E885C6011D3117CBFC2EDE61 /* KokoroTTS in Frameworks */ = {isa = PBXBuildFile; productRef = 60FDDA5BB563E19F2B725025 /* KokoroTTS */; };
 		ED329947D201C31A892DF0CC /* AgentEval in Frameworks */ = {isa = PBXBuildFile; productRef = EC8BBAE1129EBA44359BA112 /* AgentEval */; };
+		F225A3A7ECB3D80F8AACBD33 /* DMSans-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 74ECB2E4387643650EC61D12 /* DMSans-SemiBold.ttf */; };
+		FFC934A2C8F4B502628B36BC /* ShareInbox in Frameworks */ = {isa = PBXBuildFile; productRef = BEE0EAAABA1FE72EB2C0193D /* ShareInbox */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -22,12 +30,57 @@
 			remoteGlobalIDString = 8F3EE36F93EDC02606A46DA9;
 			remoteInfo = VoiceAgentSim;
 		};
+		AFC5DF6311599FE11D235049 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7F12F4B8EE9106EBD74D244F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D3DED8E9C43429E88A31FAE;
+			remoteInfo = VoiceAgentShare;
+		};
+		F2092F2D8E0297AB4EAF0B31 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7F12F4B8EE9106EBD74D244F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D3DED8E9C43429E88A31FAE;
+			remoteInfo = VoiceAgentShare;
+		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		40DFC88C6FCF062FBC477A6B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A3309BF9AE91E6865903913D /* VoiceAgentShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EE3BC681A8B8E3E0C1BC46BC /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D33B1559ED50A76AD2FB9DD4 /* VoiceAgentShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		252AAA97BD07F8124DAB857E /* DMSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSans-Bold.ttf"; sourceTree = "<group>"; };
+		373D518DAF029CC1A0597BB4 /* DMSans-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSans-Medium.ttf"; sourceTree = "<group>"; };
 		56BB67146E59A0068CFF096D /* OfflineVoiceAgent */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OfflineVoiceAgent; path = ..; sourceTree = SOURCE_ROOT; };
+		74C94F6FE2ADFFACE39E201A /* VoiceAgentShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = VoiceAgentShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		74ECB2E4387643650EC61D12 /* DMSans-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSans-SemiBold.ttf"; sourceTree = "<group>"; };
 		82ED9B919D4FA40E757026AB /* VoiceAgentUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoiceAgentUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB709E0499CEA111D1ADCE93 /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		DA874247CE0042458BC4B95E /* VoiceAgent.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E65DF0B6BFFC2ED3EC7F5D3B /* DMSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSans-Regular.ttf"; sourceTree = "<group>"; };
 		EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceAgentSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -38,6 +91,13 @@
 				Info.plist,
 			);
 			target = 8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */;
+		};
+		2247251C662C44DBFFA05F2B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9D3DED8E9C43429E88A31FAE /* VoiceAgentShare */;
 		};
 		A102D58E3F73102238009A05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -67,6 +127,18 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		7878D45A8A02D6881C52F596 /* Share */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2247251C662C44DBFFA05F2B /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Share;
+			sourceTree = "<group>";
+		};
 		B62F12D2061B2B2290A5674B /* AppEntry */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A102D58E3F73102238009A05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 1995E3D2D0857B0BAE8CB3AB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = AppEntry; sourceTree = "<group>"; };
 		D523CA305E17F6C269F22DB1 /* E2E */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -90,6 +162,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B963CF8D012684F52F91390E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FFC934A2C8F4B502628B36BC /* ShareInbox in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F8FD6CECBBE442299B670ECA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -109,7 +189,9 @@
 				B62F12D2061B2B2290A5674B /* AppEntry */,
 				AEC7332443C8ED2F40B7D429 /* OfflineVoiceAgent */,
 				664297E68DF03313655B11DA /* Packages */,
+				976D462B5646EADEEF7221DC /* Resources */,
 				217FB9D79F749DF838E37376 /* Resources */,
+				7878D45A8A02D6881C52F596 /* Share */,
 				4E5AC4D63B8C6D9469837FF3 /* UI */,
 				416626B1F468ECB76467A190 /* Products */,
 			);
@@ -119,6 +201,7 @@
 			isa = PBXGroup;
 			children = (
 				DA874247CE0042458BC4B95E /* VoiceAgent.app */,
+				74C94F6FE2ADFFACE39E201A /* VoiceAgentShare.appex */,
 				EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */,
 				82ED9B919D4FA40E757026AB /* VoiceAgentUITests.xctest */,
 			);
@@ -131,6 +214,26 @@
 				56BB67146E59A0068CFF096D /* OfflineVoiceAgent */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		976D462B5646EADEEF7221DC /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9EBDD4DDBC93DFB663934555 /* Fonts */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		9EBDD4DDBC93DFB663934555 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				252AAA97BD07F8124DAB857E /* DMSans-Bold.ttf */,
+				373D518DAF029CC1A0597BB4 /* DMSans-Medium.ttf */,
+				E65DF0B6BFFC2ED3EC7F5D3B /* DMSans-Regular.ttf */,
+				74ECB2E4387643650EC61D12 /* DMSans-SemiBold.ttf */,
+				AB709E0499CEA111D1ADCE93 /* OFL.txt */,
+			);
+			path = Fonts;
 			sourceTree = "<group>";
 		};
 		AEC7332443C8ED2F40B7D429 /* OfflineVoiceAgent */ = {
@@ -160,10 +263,12 @@
 				D73557B38906FB074486BD0B /* Sources */,
 				DB54906C9518A1C958CE1F3F /* Resources */,
 				F8FD6CECBBE442299B670ECA /* Frameworks */,
+				40DFC88C6FCF062FBC477A6B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F5E163412FAE82B47C9A20E4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B62F12D2061B2B2290A5674B /* AppEntry */,
@@ -187,10 +292,12 @@
 				DCD0510EC043DC81DFEB001C /* Sources */,
 				DDEB5ABA41A49DA7BA56D4CA /* Resources */,
 				2A28347EAACC788F05546F74 /* Frameworks */,
+				EE3BC681A8B8E3E0C1BC46BC /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A9ACD827FEC027867C9D2090 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B62F12D2061B2B2290A5674B /* AppEntry */,
@@ -205,6 +312,29 @@
 			productName = VoiceAgentSim;
 			productReference = EAF277D7F2A45DBD37905C65 /* VoiceAgentSim.app */;
 			productType = "com.apple.product-type.application";
+		};
+		9D3DED8E9C43429E88A31FAE /* VoiceAgentShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DCFC31C11057FE75FBA46A3F /* Build configuration list for PBXNativeTarget "VoiceAgentShare" */;
+			buildPhases = (
+				F60AF19BD7447C47EBA08F76 /* Sources */,
+				66018F22EDBE9D7CF771EFF5 /* Resources */,
+				B963CF8D012684F52F91390E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7878D45A8A02D6881C52F596 /* Share */,
+			);
+			name = VoiceAgentShare;
+			packageProductDependencies = (
+				BEE0EAAABA1FE72EB2C0193D /* ShareInbox */,
+			);
+			productName = VoiceAgentShare;
+			productReference = 74C94F6FE2ADFFACE39E201A /* VoiceAgentShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		FAD3496F297B765CDF4EC9D7 /* VoiceAgentUITests */ = {
 			isa = PBXNativeTarget;
@@ -242,6 +372,10 @@
 						ProvisioningStyle = Automatic;
 					};
 					8F3EE36F93EDC02606A46DA9 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+					9D3DED8E9C43429E88A31FAE = {
 						DevelopmentTeam = 3MK9V84J42;
 						ProvisioningStyle = Automatic;
 					};
@@ -270,6 +404,7 @@
 			projectRoot = "";
 			targets = (
 				3701476F3043D36BC6752ABE /* VoiceAgent */,
+				9D3DED8E9C43429E88A31FAE /* VoiceAgentShare */,
 				8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */,
 				FAD3496F297B765CDF4EC9D7 /* VoiceAgentUITests */,
 			);
@@ -277,6 +412,18 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		66018F22EDBE9D7CF771EFF5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BEED433B377985AC5895416E /* DMSans-Bold.ttf in Resources */,
+				5D7E3801C751654C22E4FB86 /* DMSans-Medium.ttf in Resources */,
+				6F8E15097EE2F348F9668B0A /* DMSans-Regular.ttf in Resources */,
+				F225A3A7ECB3D80F8AACBD33 /* DMSans-SemiBold.ttf in Resources */,
+				418A4A308EBE0BB25E4ADC4E /* OFL.txt in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		87086010B087662F20DF47DD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -322,13 +469,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F60AF19BD7447C47EBA08F76 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A9ACD827FEC027867C9D2090 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D3DED8E9C43429E88A31FAE /* VoiceAgentShare */;
+			targetProxy = F2092F2D8E0297AB4EAF0B31 /* PBXContainerItemProxy */;
+		};
 		E7F3D074B353A8ECCA9519B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8F3EE36F93EDC02606A46DA9 /* VoiceAgentSim */;
 			targetProxy = 31E17E20A667258BD5C4116F /* PBXContainerItemProxy */;
+		};
+		F5E163412FAE82B47C9A20E4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D3DED8E9C43429E88A31FAE /* VoiceAgentShare */;
+			targetProxy = AFC5DF6311599FE11D235049 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -424,10 +588,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgentSim.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -483,6 +649,27 @@
 			};
 			name = Profile;
 		};
+		4E011A37DA6A74CB2673199D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Share/VoiceAgentShare.entitlements;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = Share/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent.share;
+				PRODUCT_NAME = VoiceAgentShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		89ECA6442BA4BFEFA5AB0F4D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -507,10 +694,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgentSim.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -614,15 +803,38 @@
 			};
 			name = Release;
 		};
+		C07F6A8037309325D3D0ADF8 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Share/VoiceAgentShare.entitlements;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = Share/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent.share;
+				PRODUCT_NAME = VoiceAgentShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Profile;
+		};
 		CA33382C225CFF469AE488BF /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_ENTITLEMENTS = AppEntry/VoiceAgentSim.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = AppEntry/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -707,6 +919,27 @@
 			};
 			name = Debug;
 		};
+		ED9B0DA59695A00B2C4E2629 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Share/VoiceAgentShare.entitlements;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = Share/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mouhamadmamane.voiceagent.share;
+				PRODUCT_NAME = VoiceAgentShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		F80DA22B47B9787D23284CA2 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -756,6 +989,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		DCFC31C11057FE75FBA46A3F /* Build configuration list for PBXNativeTarget "VoiceAgentShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ED9B0DA59695A00B2C4E2629 /* Debug */,
+				C07F6A8037309325D3D0ADF8 /* Profile */,
+				4E011A37DA6A74CB2673199D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		E56C5D9B2AE108986D6A355F /* Build configuration list for PBXNativeTarget "VoiceAgentUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -801,6 +1044,10 @@
 		811DAC5686FB1F030E63B89C /* VoiceAgentKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VoiceAgentKit;
+		};
+		BEE0EAAABA1FE72EB2C0193D /* ShareInbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ShareInbox;
 		};
 		EC8BBAE1129EBA44359BA112 /* AgentEval */ = {
 			isa = XCSwiftPackageProductDependency;

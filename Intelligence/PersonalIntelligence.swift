@@ -192,6 +192,9 @@ public actor PersonalIntelligence {
         mediaType: String? = nil,
         origin: DocumentOrigin = .share,
         sourceID: String? = nil,
+        /// What to call it, when the caller knows better than the file name does — a share carries
+        /// the name the sending app gave it, which a temporary file name has lost.
+        named: String? = nil,
         projectID: UUID? = nil,
         now: Date = Date()
     ) async throws -> KnowledgeDocument {
@@ -200,10 +203,13 @@ public actor PersonalIntelligence {
         let chunks = chunker.chunks(of: parsed, documentID: documentID)
         // The file's own name wins: the user chose it and will look for it under it. A parsed title
         // only steps in when the name says nothing (a web page saved as "page.html", pasted text).
-        let named = (fileName as NSString).deletingPathExtension.trimmingCharacters(in: .whitespacesAndNewlines)
-        let isGeneric = named.isEmpty || Self.genericFileNames.contains(named.lowercased())
-        let title = (isGeneric ? parsed.title?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty : nil)
-            ?? named.nilIfEmpty ?? parsed.title?.nilIfEmpty ?? "Document"
+        let fromFile = (fileName as NSString).deletingPathExtension.trimmingCharacters(in: .whitespacesAndNewlines)
+        let given = named?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+        let isGeneric = given == nil
+            && (fromFile.isEmpty || Self.genericFileNames.contains(fromFile.lowercased()))
+        let title = given
+            ?? (isGeneric ? parsed.title?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty : nil)
+            ?? fromFile.nilIfEmpty ?? parsed.title?.nilIfEmpty ?? "Document"
         let document = try await store.importDocument(
             parsed, chunks: chunks, title: title, origin: origin, sourceID: sourceID,
             mediaType: mediaType, bytes: Int64(data.count), projectID: projectID, now: now
@@ -211,8 +217,8 @@ public actor PersonalIntelligence {
         try await store.record(ActivityEntry(
             kind: .imported,
             headline: document.title,
-            detail: document.pageCount.map { "\($0) pages, \(document.chunkCount) passages" }
-                ?? "\(document.chunkCount) passages",
+            detail: document.pageCount.map { "\(Self.count($0, "page")), \(Self.count(document.chunkCount, "passage"))" }
+                ?? Self.count(document.chunkCount, "passage"),
             entityID: document.id, undo: .forget(document.id), createdAt: now
         ))
         knownNamesLoadedAt = .distantPast
@@ -223,6 +229,12 @@ public actor PersonalIntelligence {
     private static let genericFileNames: Set<String> = [
         "untitled", "document", "documents", "shared", "pasted", "page", "index", "text", "file", "download",
     ]
+
+    /// "1 passage", "4 passages". The user reads these lines; "1 passages" is the kind of thing that
+    /// makes software feel unattended.
+    static func count(_ number: Int, _ noun: String) -> String {
+        "\(number) \(noun)\(number == 1 ? "" : "s")"
+    }
 
     /// The things the user named in what they just said, by title. Used to decide scope without
     /// letting the name of a project widen what a job may do.

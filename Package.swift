@@ -29,9 +29,12 @@ let package = Package(
             targets: [
                 "Telemetry", "Core", "Permissions", "Storage", "Models", "Tools",
                 "LLM", "ASR", "TTS", "Audio", "Agent", "VoiceLoop", "DeviceBenchmark",
-                "Intelligence",
+                "Intelligence", "ShareInbox",
             ]
         ),
+        // The share extension links this one alone: a handful of Foundation types, so the extension
+        // stays inside the memory limit the system gives it.
+        .library(name: "ShareInbox", targets: ["ShareInbox"]),
         // Kokoro/MLX is a separate product: MLX cannot link for (or run in) the iOS Simulator, so
         // only the device app target links it (see App/project.yml).
         .library(name: "KokoroTTS", targets: ["KokoroTTS"]),
@@ -51,6 +54,8 @@ let package = Package(
         .binaryTarget(name: "whisper", path: "Vendor/Frameworks/whisper.xcframework"),
 
         .target(name: "Telemetry", path: "Telemetry"),
+        // Deliberately depends on nothing: it is shared with the share extension.
+        .target(name: "ShareInbox", path: "ShareInbox"),
         .target(name: "Core", dependencies: ["Telemetry"], path: "Core"),
         .target(name: "Permissions", dependencies: ["Core", "Telemetry"], path: "Permissions"),
         .target(name: "Storage", dependencies: ["Core", "Telemetry"], path: "Storage"),
@@ -101,6 +106,7 @@ let package = Package(
         ),
 
         // Tests (Swift Testing). None require private user data or network access.
+        .testTarget(name: "ShareInboxTests", dependencies: ["ShareInbox"], path: "Tests/Unit/ShareInbox"),
         .testTarget(name: "CoreTests", dependencies: ["Core", "Telemetry"], path: "Tests/Unit/Core"),
         .testTarget(name: "PermissionsTests", dependencies: ["Permissions", "Core"], path: "Tests/Unit/Permissions"),
         .testTarget(name: "StorageTests", dependencies: ["Storage", "Core"], path: "Tests/Unit/Storage"),

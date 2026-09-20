@@ -135,6 +135,16 @@ and `IngestionService` is the only place they live:
 
 Each sync leaves one line in Activity ("2 new events, 1 you already had"), never one row per item.
 
+The other way in is the share sheet, which is the highest-value path and the least invasive one: the
+user chooses each thing, one at a time. The extension does as little as an extension can — it names
+what it is about to keep, copies the bytes into the App Group container and writes a small manifest;
+no parsing, no network, no model. An app extension runs under a hard memory limit and is killed
+without ceremony when it exceeds it, so the reading happens in the app, on launch and when it comes
+forward, where a parse failure is visible and recoverable. The inbox is a queue, not a library:
+every item is deleted the moment it has been read, so the group container never becomes a second
+copy of the user's documents. A shared link is kept as an address — fetching it is a network
+request, and those go through the policy the user set, not through a share sheet.
+
 ## Attention
 
 "What needs my attention?" is answered by rules, not by the model: late first (nothing outranks

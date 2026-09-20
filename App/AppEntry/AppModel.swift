@@ -286,6 +286,7 @@ final class AppModel {
         }
         self.coordinator = coordinator
         Task { @MainActor in
+            await drainShareInbox()
             await syncIngestion()
             await refreshIntelligence()
         }
@@ -571,9 +572,11 @@ final class AppModel {
         observers.append(center.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in await self?.handleThermalChange() }
         })
-        // Coming forward is when the user's week is most likely to have moved under us.
+        // Coming forward is when the user's week is most likely to have moved under us — and when
+        // whatever they shared while they were elsewhere is waiting to be read.
         observers.append(center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in
+                await self?.drainShareInbox()
                 await self?.syncIngestion()
                 await self?.refreshIntelligence()
             }
