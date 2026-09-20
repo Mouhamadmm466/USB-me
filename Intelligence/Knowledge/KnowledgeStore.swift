@@ -68,7 +68,7 @@ extension IntelligenceStore {
 
         // A document that belongs to a project is findable from it, and vice versa.
         if let projectID {
-            try? record(Assertion(
+            _ = try? record(Assertion(
                 subjectID: document.id, predicate: .about, objectID: projectID, type: .observed,
                 authority: .observation, provenance: Provenance(sourceType: origin.sourceType, sourceID: sourceID),
                 validFrom: now, createdAt: now, updatedAt: now

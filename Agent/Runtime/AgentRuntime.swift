@@ -114,7 +114,7 @@ public actor AgentRuntime {
         if var plan = try? await store.plan(planID), !plan.isFinished {
             plan.state = .cancelled
             plan.finishedAt = clock.now()
-            try? await store.save(plan)
+            _ = try? await store.save(plan)
             emit(.cancelled(planID))
         }
     }
@@ -129,7 +129,7 @@ public actor AgentRuntime {
         plan.state = .running
         plan.blocker = nil
         plan.startedAt = plan.startedAt ?? clock.now()
-        try? await store.save(plan)
+        _ = try? await store.save(plan)
         emit(.started(plan.id))
         logger?.log(.counter(name: "runtime.plan.started", value: 1))
 
@@ -232,13 +232,13 @@ public actor AgentRuntime {
         plan.summary = summary ?? plan.summary
         plan.updatedAt = clock.now()
         if state.isFinished { plan.finishedAt = clock.now() }
-        try? await store.save(plan)
+        _ = try? await store.save(plan)
 
         switch state {
         case .completed:
             emit(.finished(plan.id, summary: plan.summary ?? "Done."))
             logger?.log(.counter(name: "runtime.plan.completed", value: 1))
-            try? await store.record(ActivityEntry(
+            _ = try? await store.record(ActivityEntry(
                 kind: .acted, headline: plan.title, detail: plan.summary,
                 entityID: plan.id, createdAt: clock.now()
             ))

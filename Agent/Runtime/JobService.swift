@@ -57,7 +57,7 @@ public actor JobService {
     ) async -> Plan? {
         guard var plan = try? await store.plan(planID), !plan.isFinished else { return nil }
         plan.state = .approved
-        try? await store.save(plan)
+        _ = try? await store.save(plan)
 
         var token: UUID?
         if let onUpdate {

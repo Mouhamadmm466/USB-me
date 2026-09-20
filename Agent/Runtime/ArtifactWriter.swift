@@ -73,7 +73,7 @@ public struct LanguageModelArtifactWriter: ArtifactWriting {
             subjectID: subjectID, sourceIDs: sourceIDs, createdAt: now, updatedAt: now
         )
         let saved = try await store.save(artifact)
-        try? await store.record(ActivityEntry(
+        _ = try? await store.record(ActivityEntry(
             kind: .acted, headline: saved.summaryLine, detail: kind.displayName,
             entityID: saved.id, undo: .forget(saved.id), createdAt: now
         ))
