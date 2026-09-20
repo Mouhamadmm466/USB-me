@@ -23,8 +23,6 @@ struct AssistantIntents {
     var openSystemSettings: @MainActor (_ kind: PermissionKind) -> Void
     /// "Not now" on a permission card.
     var dismissPermission: @MainActor () -> Void
-    /// The history sheet opened (the screen presents it from `presentation.turns`).
-    var showHistory: @MainActor () -> Void
     /// "Go ahead" on a job card.
     var approveJob: @MainActor (_ id: UUID) -> Void
     /// "Not now" or "Stop" on a job card.
@@ -41,7 +39,6 @@ struct AssistantIntents {
         openSettings: @escaping @MainActor () -> Void,
         openSystemSettings: @escaping @MainActor (_ kind: PermissionKind) -> Void,
         dismissPermission: @escaping @MainActor () -> Void,
-        showHistory: @escaping @MainActor () -> Void = {},
         approveJob: @escaping @MainActor (_ id: UUID) -> Void = { _ in },
         cancelJob: @escaping @MainActor (_ id: UUID) -> Void = { _ in },
         openArtifact: @escaping @MainActor (_ id: UUID) -> Void = { _ in }
@@ -54,7 +51,6 @@ struct AssistantIntents {
         self.openSettings = openSettings
         self.openSystemSettings = openSystemSettings
         self.dismissPermission = dismissPermission
-        self.showHistory = showHistory
         self.approveJob = approveJob
         self.cancelJob = cancelJob
         self.openArtifact = openArtifact
@@ -74,38 +70,27 @@ struct AssistantIntents {
 struct AssistantScreen: View {
     let presentation: AssistantPresentation
     let intents: AssistantIntents
-    /// What needs the person, shown under the orb while nothing else is going on.
-    var standby: AssistantStandby = .empty
-    var standbyIntents: StandbyIntents = .inert
 
     private let bannerDuration: Duration
     @State private var inputMode: AssistantInputMode
     @State private var draft = ""
-    @State private var isHistoryPresented: Bool
     @State private var visibleBanner: ResultBanner?
     @FocusState private var isFieldFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// - Parameters:
     ///   - inputMode: Starting input mode (UI state; the gallery uses `.keyboard`).
-    ///   - showsHistory: Starts with the history sheet open (gallery).
     ///   - bannerDuration: How long a result banner stays before it fades.
     init(
         presentation: AssistantPresentation,
         intents: AssistantIntents,
-        standby: AssistantStandby = .empty,
-        standbyIntents: StandbyIntents = .inert,
         inputMode: AssistantInputMode = .voice,
-        showsHistory: Bool = false,
         bannerDuration: Duration = .seconds(4)
     ) {
         self.presentation = presentation
         self.intents = intents
-        self.standby = standby
-        self.standbyIntents = standbyIntents
         self.bannerDuration = bannerDuration
         _inputMode = State(initialValue: inputMode)
-        _isHistoryPresented = State(initialValue: showsHistory)
         DesignSystemAppearance.install()
     }
 
@@ -115,12 +100,6 @@ struct AssistantScreen: View {
     private var needsAttention: Bool {
         presentation.actionCard != nil || presentation.jobCard != nil
             || !presentation.clarificationChoices.isEmpty || presentation.permissionPrompt != nil
-    }
-
-    /// At rest, with nothing said yet and nothing waiting on an answer.
-    private var showsStandby: Bool {
-        !needsAttention && !standby.isEmpty && state == .idle
-            && presentation.assistantText == nil && presentation.partialTranscript == nil
     }
 
     private var layoutAnimation: Animation { Motion.adaptive(Motion.smooth, reduceMotion: reduceMotion) }
@@ -136,8 +115,7 @@ struct AssistantScreen: View {
                         partialTranscript: presentation.partialTranscript,
                         lastUserUtterance: presentation.lastUserUtterance,
                         assistantText: presentation.assistantText,
-                        isCompact: needsAttention,
-                        showsHint: !showsStandby
+                        isCompact: needsAttention
                     )
                     .padding(.horizontal, Spacing.xxl + 4)
                     .padding(.top, needsAttention ? Spacing.m : Spacing.xxl)
@@ -146,19 +124,6 @@ struct AssistantScreen: View {
                         .frame(maxWidth: Measure.content)
                         .padding(.horizontal, Spacing.screenMargin)
                         .padding(.top, needsAttention ? Spacing.xl : 0)
-
-                    if showsStandby {
-                        StandbyView(
-                            standby: standby,
-                            onOpen: standbyIntents.open,
-                            onConfirm: standbyIntents.confirm,
-                            onReject: standbyIntents.reject
-                        )
-                        .frame(maxWidth: Measure.content)
-                        .padding(.horizontal, Spacing.screenMargin)
-                        .padding(.top, Spacing.xl)
-                        .transition(.opacity)
-                    }
                 }
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: proxy.size.height, alignment: needsAttention ? .top : .center)
@@ -166,8 +131,8 @@ struct AssistantScreen: View {
             }
             // When a card makes the content taller than the screen, keep its end (Confirm and
             // Cancel) in view rather than the orb.
-            .defaultScrollAnchor(showsStandby ? .top : .bottom, for: .initialOffset)
-            .defaultScrollAnchor(showsStandby ? .top : .bottom, for: .sizeChanges)
+            .defaultScrollAnchor(.bottom, for: .initialOffset)
+            .defaultScrollAnchor(.bottom, for: .sizeChanges)
             .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
             .overlay(alignment: .top) {
@@ -197,10 +162,6 @@ struct AssistantScreen: View {
                     isFieldFocused = false
                     intents.submitText(text)
                 },
-                onShowHistory: {
-                    isHistoryPresented = true
-                    intents.showHistory()
-                }
             )
         }
         .background {
@@ -208,17 +169,12 @@ struct AssistantScreen: View {
                 .ignoresSafeArea()
         }
         .animation(layoutAnimation, value: needsAttention)
-        .animation(layoutAnimation, value: showsStandby)
-        .animation(layoutAnimation, value: standby)
         .animation(layoutAnimation, value: presentation.actionCard)
         .animation(layoutAnimation, value: presentation.jobCard)
         .animation(layoutAnimation, value: presentation.clarificationChoices)
         .animation(layoutAnimation, value: presentation.permissionPrompt)
         .animation(layoutAnimation, value: presentation.partialTranscript == nil)
         .animation(layoutAnimation, value: presentation.assistantText)
-        .sheet(isPresented: $isHistoryPresented) {
-            HistorySheet(turns: presentation.turns)
-        }
         .task(id: presentation.resultBanner) { await showBanner(presentation.resultBanner) }
         .onChange(of: state) { _, newState in
             if newState.announcesToVoiceOver {
@@ -241,23 +197,19 @@ struct AssistantScreen: View {
     // MARK: Stage
 
     private func stage(width: CGFloat) -> some View {
-        // The orb is the whole screen when there is nothing else to say, and steps back when
-        // there is: a card that needs an answer, or the day's own list.
+        // The orb is the whole screen when there is nothing else to say, and steps back when a
+        // card needs an answer.
         let heroSize = min(248, max(160, width * 0.6))
-        let size = needsAttention ? 104 : (showsStandby ? min(132, heroSize) : heroSize)
+        let size = needsAttention ? 104 : heroSize
         return VStack(spacing: needsAttention ? Spacing.s : Spacing.l) {
             OrbView(mode: state.orbMode, inputLevel: presentation.inputLevel, outputLevel: presentation.outputLevel)
                 .frame(width: size, height: size)
-            // "Ready" under the orb, above a sentence about the day, is the app saying two things
-            // where one will do. The orb already reads as at rest; the day is the better opener.
-            if !showsStandby {
-                Text(state.displayLabel)
+            Text(state.displayLabel)
                 .textStyle(needsAttention ? .headline : .title3, weight: .semibold)
                 .foregroundStyle(state == .error ? Palette.danger : Palette.ink)
                 .contentTransition(.opacity)
                 .animation(Motion.adaptive(.easeInOut(duration: 0.25), reduceMotion: reduceMotion), value: state.displayLabel)
                 .accessibilityLabel("Status: \(state.displayLabel)")
-            }
         }
         .padding(.top, needsAttention ? Spacing.xs : 0)
     }

@@ -46,15 +46,13 @@ struct RootView: View {
             case .onboarding:
                 OnboardingFlow(models: model.downloads, actions: OnboardingActions(models: model.modelActions, finish: { model.finishOnboarding() }))
             case .assistant:
-                // One screen. Everything that is not the conversation lives behind the gear, and
-                // everything the assistant wants to raise comes to this screen rather than waiting
-                // in a tab the person has to think to visit.
+                // One screen, and it is the conversation. Everything else — what I know, what I
+                // can reach, what I have been allowed to do — lives behind the gear. What needs
+                // the person is something they ask for, not something the screen pushes at them.
                 AssistantScreen(
                     presentation: model.coordinator?.presentation
                         ?? AssistantPresentation(state: .warmingModels, assistantText: model.warmUpMessage),
-                    intents: model.assistantIntents,
-                    standby: model.standby,
-                    standbyIntents: model.standbyIntents
+                    intents: model.assistantIntents
                 )
             }
         }
@@ -114,6 +112,7 @@ struct RootView: View {
                 worldIntents: model.intelligenceIntents,
                 connectors: model.connectors,
                 connectorIntents: model.connectorIntents,
+                turns: model.coordinator?.presentation.turns ?? [],
                 initialSection: model.settingsInitialSection
             )
                 .fileImporter(isPresented: $model.isFolderPickerPresented, allowedContentTypes: [.folder]) { result in

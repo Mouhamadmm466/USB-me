@@ -29,6 +29,7 @@ struct SettingsScreen: View {
     var worldIntents: IntelligenceIntents = .inert
     var connectors: ConnectorsViewState = ConnectorsViewState()
     var connectorIntents: ConnectorsIntents = .inert
+    var turns: [ConversationTurn] = []
     var initialSection: SettingsSection?
 
     @State private var path: [SettingsSection] = []
@@ -40,6 +41,7 @@ struct SettingsScreen: View {
         worldIntents: IntelligenceIntents = .inert,
         connectors: ConnectorsViewState = ConnectorsViewState(),
         connectorIntents: ConnectorsIntents = .inert,
+        turns: [ConversationTurn] = [],
         initialSection: SettingsSection? = nil
     ) {
         self.state = state
@@ -48,6 +50,7 @@ struct SettingsScreen: View {
         self.worldIntents = worldIntents
         self.connectors = connectors
         self.connectorIntents = connectorIntents
+        self.turns = turns
         self.initialSection = initialSection
         DesignSystemAppearance.install()
     }
@@ -206,7 +209,7 @@ struct SettingsScreen: View {
         case .models:
             ModelsScreen(state: state, actions: actions).navigationTitle("Models & storage")
         case .history:
-            HistoryScreen(state: state, actions: actions).navigationTitle("Conversation history")
+            HistoryScreen(state: state, actions: actions, turns: turns).navigationTitle("Conversation history")
         case .about:
             AboutScreen(state: state, actions: actions).navigationTitle("About")
         }

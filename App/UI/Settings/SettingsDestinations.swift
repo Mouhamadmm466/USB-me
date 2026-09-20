@@ -315,11 +315,25 @@ struct ModelsScreen: View {
 struct HistoryScreen: View {
     let state: SettingsViewState
     let actions: SettingsActions
+    /// The conversation itself. It lives here rather than on the talking screen: reading back is a
+    /// thing you do occasionally and on purpose, not something a microphone should offer.
+    var turns: [ConversationTurn] = []
 
     @State private var confirmsClear = false
 
     var body: some View {
         List {
+            if !turns.isEmpty {
+                Section {
+                    NavigationLink {
+                        HistoryTranscript(turns: turns).navigationTitle("Recent conversation")
+                    } label: {
+                        RowLabel(title: "Recent conversation",
+                                 subtitle: turns.count == 1 ? "1 turn" : "\(turns.count) turns")
+                    }
+                }
+            }
+
             Section {
                 Toggle(isOn: Binding(get: { state.privacy.keepHistory }, set: { actions.setKeepHistory($0) })) {
                     RowLabel(title: "Keep history", subtitle: "Save recent conversations on this iPhone.")

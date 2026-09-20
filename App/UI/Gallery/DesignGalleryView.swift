@@ -137,7 +137,7 @@ enum GalleryCatalog {
                 AnyView(GalleryAssistantPage(presentation: GallerySamples.presentation(for: .idle), inputMode: .keyboard))
             },
             GalleryItem(id: "assistant.history", section: "Assistant scenarios", title: "History sheet") {
-                AnyView(GalleryAssistantPage(presentation: GallerySamples.presentation(for: .idle), showsHistory: true))
+                AnyView(HistorySheet(turns: GallerySamples.presentation(for: .idle).turns))
             },
         ]
     }
@@ -349,7 +349,6 @@ private struct GalleryItemHost: View {
 private struct GalleryAssistantPage: View {
     let presentation: AssistantPresentation
     var inputMode: AssistantInputMode = .voice
-    var showsHistory = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -369,7 +368,7 @@ private struct GalleryAssistantPage: View {
         if let level {
             if p.state.orbMode == .speaking { p.outputLevel = level } else { p.inputLevel = level }
         }
-        return AssistantScreen(presentation: p, intents: .inert, inputMode: inputMode, showsHistory: showsHistory, bannerDuration: .seconds(600))
+        return AssistantScreen(presentation: p, intents: .inert, inputMode: inputMode, bannerDuration: .seconds(600))
     }
 }
 

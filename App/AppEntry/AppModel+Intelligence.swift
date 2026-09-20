@@ -375,17 +375,6 @@ extension AppModel {
         if openedEntityID == nil { openedEntityID = id } else { entityPath.append(id) }
     }
 
-    /// What the main screen holds up when it is at rest, and what the person can do with it.
-    var standby: AssistantStandby { intelligenceState.standby }
-
-    var standbyIntents: StandbyIntents {
-        StandbyIntents(
-            open: { [weak self] id in self?.showEntity(id) },
-            confirm: { [weak self] id in self?.answerQuestion(id, yes: true) },
-            reject: { [weak self] id in self?.answerQuestion(id, yes: false) }
-        )
-    }
-
     var entityDetailIntents: EntityDetailIntents {
         EntityDetailIntents(
             confirmFact: { [weak self] id in self?.answerQuestion(id, yes: true) },

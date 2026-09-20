@@ -152,7 +152,13 @@ request, and those go through the policy the user set, not through a share sheet
 
 ## Attention
 
-"What needs my attention?" is answered by rules, not by the model: late first (nothing outranks
+"What needs my attention?" is answered by rules, not by the model — and only when the user asks.
+It briefly had a home on the talking screen, under the orb; it was removed deliberately. A screen
+that opens with a list of what is late is a to-do app with a microphone attached, and it makes the
+first thing the assistant does every day an interruption. The rules are the same; the person decides
+when to run them.
+
+The rules: late first (nothing outranks
 something already missed), then today, then a deadline with nothing under it, then undated
 promises, then questions the system is holding, then live work nothing has touched. Every item
 carries its own sentence — "due 3 days ago", "you promised Sarah, no date on it" — and the Home

@@ -15,9 +15,6 @@ struct ConversationTextView: View {
     let assistantText: String?
     /// A card is showing: text steps down a size to leave it room.
     var isCompact = false
-    /// The day's own list is on screen and speaks for itself — the usage hint would be a second
-    /// opening line saying something else.
-    var showsHint = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
@@ -31,7 +28,7 @@ struct ConversationTextView: View {
                     .accessibilityLabel("You said: \(heard)")
                     .accessibilityAddTraits(.updatesFrequently)
                     .transition(.opacity)
-            } else if showsHint, state == .idle, assistantText.nonEmpty == nil {
+            } else if state == .idle, assistantText.nonEmpty == nil {
                 Text("Try \u{201C}Text Alex I\u{2019}m running late\u{201D} or \u{201C}What\u{2019}s on tomorrow?\u{201D}")
                     .textStyle(.callout)
                     .foregroundStyle(Palette.inkSecondary)

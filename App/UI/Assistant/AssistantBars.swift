@@ -66,7 +66,6 @@ struct AssistantBottomBar: View {
     var isFieldFocused: FocusState<Bool>.Binding
     let onToggleSession: @MainActor () -> Void
     let onSubmit: @MainActor (String) -> Void
-    let onShowHistory: @MainActor () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -105,12 +104,11 @@ struct AssistantBottomBar: View {
                 .disabled(!canStartSession && !isSessionActive)
             Spacer(minLength: Spacing.l)
 
-            Button(action: onShowHistory) {
-                Image(systemName: "clock.arrow.circlepath")
-            }
-            .buttonStyle(.glassCircle(diameter: 50))
-            .accessibilityLabel("History")
-            .accessibilityShowsLargeContentViewer()
+            // Balances the keyboard button so the microphone sits in the middle of the screen
+            // rather than in the middle of what is left of it.
+            Color.clear
+                .frame(width: 50, height: 50)
+                .accessibilityHidden(true)
         }
         .padding(.horizontal, Spacing.s)
         .transition(.opacity)
